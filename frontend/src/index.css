@@ -1,0 +1,223 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/assets/fonts/Cinzel-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@theme {
+  --font-cinzel: 'Cinzel', serif;
+  
+  /* Navy Blue Primary Scale (from Thesis_Project) */
+  --color-brand-50: #eff3f9;
+  --color-brand-100: #daddf0;
+  --color-brand-200: #b0bfd9;
+  --color-brand-400: #1a62cc;
+  --color-brand-500: #0a4fbc;
+  --color-brand-600: #0740a0;
+  --color-brand-700: #053b96;
+  --color-brand-800: #04388e;
+  --color-brand-900: #022868;
+
+  /* Crimson Red Accent */
+  --color-brand-red: #bc0c31;
+  --color-brand-red-hover: #9c0928;
+  
+  /* Charcoal Grey */
+  --color-brand-charcoal: #545454;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 antialiased transition-colors duration-300;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+/* Titles of the tables in CINZEL font with subtle letter spacing */
+table thead th {
+  font-family: 'Cinzel', serif;
+  @apply text-slate-500 dark:text-slate-400 tracking-tighter uppercase font-bold text-xs;
+  letter-spacing: -0.02em;
+}
+
+/* Sidebar and Navigation Menu font */
+nav a, .menu-item {
+  font-family: 'Cinzel', serif;
+  @apply tracking-wider uppercase;
+}
+
+/* Mobile Sidebar Drawer */
+.sidebar-backdrop {
+  @apply fixed inset-0 bg-black/50 z-40 transition-opacity duration-300;
+}
+.sidebar-backdrop-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.sidebar-backdrop-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-drawer {
+  @apply fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-in-out;
+  width: 280px;
+}
+.sidebar-drawer-closed {
+  transform: translateX(-100%);
+}
+.sidebar-drawer-open {
+  transform: translateX(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-zoom-in {
+  animation: zoomIn 0.25s ease-out;
+}
+
+/* Accessibility Mode */
+html.accessible-mode {
+  font-size: 105%;
+}
+
+html.accessible-mode button {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  padding-left: 1.2rem;
+  padding-right: 1.2rem;
+}
+
+html.accessible-mode input, html.accessible-mode select, html.accessible-mode textarea {
+  padding: 0.6rem !important;
+  font-size: 1rem !important;
+}
+
+html.accessible-mode .text-sm {
+  font-size: 0.95rem !important;
+}
+
+html.accessible-mode .text-xs {
+  font-size: 0.85rem !important;
+}
+
+html.accessible-mode .dark {
+  --tw-bg-opacity: 1;
+  background-color: rgb(15 23 42 / var(--tw-bg-opacity));
+}
+
+/* Global Scrollbar Styles */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+.dark *::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+.dark * {
+  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+
+/* Print Layout CSS */
+@media print {
+  @page {
+    margin: 10mm 8mm;
+    size: portrait;
+  }
+  
+  .print-page {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    display: block;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    overflow: hidden;
+  }
+  
+  .print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  
+  body {
+    background-color: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10pt !important;
+  }
+  
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+  * {
+    scrollbar-width: none !important;
+  }
+  
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .printable-area .bg-white,
+  .printable-area li,
+  .printable-area tr,
+  .printable-area .grid > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .printable-area .shadow-sm,
+  .printable-area .shadow-md,
+  .printable-area .shadow-xl {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+}
