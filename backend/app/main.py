@@ -30,16 +30,24 @@ app.include_router(expenses.router)
 app.include_router(dashboard.router)
 
 
+def init_db():
+    try:
+        db = SessionLocal()
+        seed_database(db)
+        db.close()
+    except Exception as e:
+        print(f"Database initialization note: {e}")
+
+init_db()
+
+
 @app.on_event("startup")
 def startup_event():
-    db = SessionLocal()
-    try:
-        seed_database(db)
-    finally:
-        db.close()
+    init_db()
 
 
 @app.get("/")
+@app.get("/api")
 def root():
     return {
         "system": "CCA CashFlow Management System",

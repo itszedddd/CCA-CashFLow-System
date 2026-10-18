@@ -2,7 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cashflow.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    if os.environ.get("VERCEL"):
+        DATABASE_URL = "sqlite:////tmp/cashflow.db"
+    else:
+        DATABASE_URL = "sqlite:///./cashflow.db"
 
 engine = create_engine(
     DATABASE_URL, 

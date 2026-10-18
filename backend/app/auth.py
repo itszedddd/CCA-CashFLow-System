@@ -11,6 +11,12 @@ SECRET_KEY = "cca-cashflow-secret-key-2026-calvary-christian-academy"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 720  # 12 hours
 
+import bcrypt
+if not hasattr(bcrypt, "__about__"):
+    class About:
+        __version__ = getattr(bcrypt, "__version__", "4.0.1")
+    bcrypt.__about__ = About()
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
