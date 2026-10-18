@@ -46,9 +46,33 @@ def startup_event():
     init_db()
 
 
+import os
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Check for built frontend dist directory
+dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+assets_dir = os.path.join(dist_dir, "assets")
+
+if os.path.exists(assets_dir):
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+
 @app.get("/")
-@app.get("/api")
 def root():
+    index_file = os.path.join(dist_dir, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return {
+        "system": "CCA CashFlow Management System",
+        "school": "Calvary Christian Academy",
+        "version": "1.0.0",
+        "status": "running"
+    }
+
+
+@app.get("/api")
+def api_root():
     return {
         "system": "CCA CashFlow Management System",
         "school": "Calvary Christian Academy",
@@ -60,3 +84,20 @@ def root():
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/{full_path:path}")
+def serve_frontend_or_spa(full_path: str):
+    if full_path.startswith("api"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    file_path = os.path.join(dist_dir, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    index_file = os.path.join(dist_dir, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+
+    return {"system": "CCA CashFlow Management System", "status": "running"}
