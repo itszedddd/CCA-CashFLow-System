@@ -11,8 +11,14 @@ import json
 import math
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-import numpy as np
-from sklearn.ensemble import IsolationForest
+try:
+    import numpy as np
+    from sklearn.ensemble import IsolationForest
+    SKLEARN_AVAILABLE = True
+except Exception:
+    SKLEARN_AVAILABLE = False
+    np = None
+    IsolationForest = None
 from sqlalchemy.orm import Session
 from ..models.models import Income, IncomeCategory, AuditLog
 
@@ -320,8 +326,8 @@ class AnomalyEngine:
                 1.0 if inc.is_partial else 0.0,
             ])
 
-        # 5. Fit IsolationForest if enough samples
-        if len(feature_matrix) >= 10:
+        # 5. Fit IsolationForest if enough samples and scikit-learn is available
+        if SKLEARN_AVAILABLE and len(feature_matrix) >= 10:
             X = np.array(feature_matrix)
             iso = IsolationForest(n_estimators=100, contamination=0.12, random_state=42)
             iso.fit(X)
@@ -332,7 +338,13 @@ class AnomalyEngine:
             denom = (max_s - min_s) if max_s != min_s else 1.0
             iso_anomaly_scores = [float((max_s - s) / denom * 70.0) for s in raw_scores]
         else:
-            iso_anomaly_scores = [15.0] * len(incomes)
+            # Statistical fallback when scikit-learn is not installed in serverless env
+            iso_anomaly_scores = []
+            for feat in feature_matrix:
+                dev = abs(feat[0] - 1.0) * 20.0
+                iso_anomaly_scores.append(min(50.0, max(5.0, dev)))
+            if not iso_anomaly_scores:
+                iso_anomaly_scores = [15.0] * len(incomes)
 
         # 6. Evaluate each income and store results
         high_count = 0

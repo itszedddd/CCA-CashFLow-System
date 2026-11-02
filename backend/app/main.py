@@ -73,6 +73,8 @@ def root():
 
 
 @app.get("/api")
+@app.get("/api/")
+@app.get("/api/index")
 def api_root():
     return {
         "system": "CCA CashFlow Management System",
