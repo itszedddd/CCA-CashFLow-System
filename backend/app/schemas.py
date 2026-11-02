@@ -36,6 +36,12 @@ class IncomeCreate(BaseModel):
     reference_number: Optional[str] = None
     school_year: str = "2026-2027"
     remarks: Optional[str] = None
+    expected_amount: Optional[float] = None
+    is_partial: Optional[int] = 0
+    remaining_balance: Optional[float] = 0.0
+    student_id: Optional[str] = None
+    grade_level: Optional[str] = None
+    envelope_verified: Optional[int] = 0
 
 class IncomeUpdate(BaseModel):
     category_id: Optional[int] = None
@@ -47,12 +53,23 @@ class IncomeUpdate(BaseModel):
     payment_method: Optional[str] = None
     reference_number: Optional[str] = None
     remarks: Optional[str] = None
+    expected_amount: Optional[float] = None
+    is_partial: Optional[int] = None
+    remaining_balance: Optional[float] = None
+    grade_level: Optional[str] = None
+    envelope_verified: Optional[int] = None
 
 class IncomeResponse(BaseModel):
     id: int
     category_id: int
     category_name: Optional[str] = None
     amount: float
+    expected_amount: Optional[float] = None
+    is_partial: Optional[int] = 0
+    remaining_balance: Optional[float] = 0.0
+    student_id: Optional[str] = None
+    grade_level: Optional[str] = None
+    envelope_verified: Optional[int] = 0
     description: str
     or_number: Optional[str]
     payer_name: Optional[str]
@@ -65,6 +82,10 @@ class IncomeResponse(BaseModel):
     recorder_name: Optional[str] = None
     remarks: Optional[str]
     is_voided: int
+    anomaly_score: Optional[float] = 0.0
+    anomaly_level: Optional[str] = "Low"
+    anomaly_status: Optional[str] = "Normal"
+    cashier_notes: Optional[str] = None
 
     class Config:
         from_attributes = True

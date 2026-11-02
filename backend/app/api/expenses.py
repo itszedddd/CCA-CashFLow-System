@@ -110,7 +110,7 @@ def update_expense(
 def approve_expense(
     expense_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("Admin", "Principal"))
+    current_user: User = Depends(require_role("Cashier", "Admin", "Principal"))
 ):
     expense = db.query(Expense).filter(Expense.id == expense_id).first()
     if not expense:

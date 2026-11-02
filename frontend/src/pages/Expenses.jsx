@@ -24,7 +24,7 @@ export default function Expenses() {
   const [page, setPage] = useState(0);
   const addToast = useToast();
   const user = JSON.parse(localStorage.getItem('cca_cf_user') || '{}');
-  const canApprove = ['Admin', 'Principal'].includes(user?.role);
+  const canApprove = ['Cashier', 'Admin', 'Principal'].includes(user?.role);
 
   const [form, setForm] = useState({
     category_id: '',

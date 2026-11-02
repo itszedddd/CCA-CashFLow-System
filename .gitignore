@@ -7,9 +7,9 @@ env/
 .env
 *.env
 
-# Database
-*.db
-*.sqlite3
+# Database (tracked per user request)
+# *.db
+# *.sqlite3
 
 # Node / Frontend
 node_modules/

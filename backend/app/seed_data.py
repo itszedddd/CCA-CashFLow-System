@@ -20,34 +20,28 @@ def seed_database(db: Session):
     
     print("[*] Seeding database...")
 
-    # ── Default Users ──
+    # ── Default User (Only Cashier per CCA SOP) ──
     users = [
-        User(username="admin@cca.edu.ph", full_name="System Administrator",
-             hashed_password=get_password_hash("password123"), role="Admin",
-             created_at=datetime.now().isoformat()),
         User(username="cashier@cca.edu.ph", full_name="Maria Santos",
              hashed_password=get_password_hash("password123"), role="Cashier",
-             created_at=datetime.now().isoformat()),
-        User(username="accountant@cca.edu.ph", full_name="Juan Dela Cruz",
-             hashed_password=get_password_hash("password123"), role="Accountant",
-             created_at=datetime.now().isoformat()),
-        User(username="principal@cca.edu.ph", full_name="Dr. Rebecca Lim",
-             hashed_password=get_password_hash("password123"), role="Principal",
              created_at=datetime.now().isoformat()),
     ]
     db.add_all(users)
     db.flush()
 
-    # ── Income Categories ──
+    cashier_user_id = users[0].id
+
+    # ── Income Categories (Official CCA Fee Structure) ──
     income_cats = [
-        IncomeCategory(name="Tuition Fees", description="Monthly and yearly tuition payments from students", color="#10b981"),
-        IncomeCategory(name="Registration & Misc Fees", description="Registration, ID, exam fees, and other miscellaneous charges", color="#3b82f6"),
-        IncomeCategory(name="Books & Materials", description="Revenue from textbook and school supply sales", color="#8b5cf6"),
-        IncomeCategory(name="Energy Fees", description="Monthly energy/utility contributions from students", color="#f59e0b"),
-        IncomeCategory(name="Donations", description="Monetary donations from parents, alumni, and organizations", color="#ec4899"),
-        IncomeCategory(name="Events & Activities", description="Revenue from school events, fairs, fundraisers", color="#06b6d4"),
-        IncomeCategory(name="Canteen", description="Canteen and cafeteria revenue", color="#84cc16"),
-        IncomeCategory(name="Other Income", description="Any other miscellaneous income sources", color="#6b7280"),
+        IncomeCategory(name="Tuition Fees", description="Monthly and yearly tuition payments from students", color="#10b981", expected_amount=1906.0),
+        IncomeCategory(name="Registration & Misc Fees", description="Registration, ID, exam fees, and other miscellaneous charges", color="#3b82f6", expected_amount=5700.0),
+        IncomeCategory(name="Books & Materials", description="Revenue from textbook and school supply sales", color="#8b5cf6", expected_amount=6900.0),
+        IncomeCategory(name="Energy Fees", description="Monthly energy/utility contributions from students", color="#f59e0b", expected_amount=300.0),
+        IncomeCategory(name="Swimming Class Fees", description="Special physical education and swimming fees", color="#06b6d4", expected_amount=1200.0),
+        IncomeCategory(name="Donations", description="Monetary donations from parents, alumni, and organizations", color="#ec4899", expected_amount=0.0),
+        IncomeCategory(name="Events & Activities", description="Revenue from school events, fairs, fundraisers", color="#f97316", expected_amount=1000.0),
+        IncomeCategory(name="Canteen", description="Canteen and cafeteria revenue", color="#84cc16", expected_amount=0.0),
+        IncomeCategory(name="Other Income", description="Any other miscellaneous income sources", color="#6b7280", expected_amount=500.0),
     ]
     db.add_all(income_cats)
     db.flush()
@@ -203,10 +197,10 @@ def seed_database(db: Session):
             description=f"Staff payroll - {month_date.strftime('%B %Y')}",
             payee="Teaching & Admin Staff", payment_method="Bank Transfer",
             voucher_number=f"DV-{voucher_counter}", school_year="2026-2027",
-            status="Approved", approved_by=1,
+            status="Approved", approved_by=cashier_user_id,
             date_recorded=(month_date + timedelta(days=random.randint(25, 28))).isoformat(),
             date_approved=(month_date + timedelta(days=random.randint(25, 28))).isoformat(),
-            recorded_by=3
+            recorded_by=cashier_user_id
         ))
         voucher_counter += 1
 
@@ -217,10 +211,10 @@ def seed_database(db: Session):
                 description=f"{utility} bill - {month_date.strftime('%B %Y')}",
                 payee=random.choice(payees[2]), payment_method="Bank Transfer",
                 voucher_number=f"DV-{voucher_counter}", school_year="2026-2027",
-                status="Approved", approved_by=1,
+                status="Approved", approved_by=cashier_user_id,
                 date_recorded=(month_date + timedelta(days=random.randint(10, 20))).isoformat(),
                 date_approved=(month_date + timedelta(days=random.randint(12, 22))).isoformat(),
-                recorded_by=3
+                recorded_by=cashier_user_id
             ))
             voucher_counter += 1
 
@@ -231,10 +225,10 @@ def seed_database(db: Session):
                 description="Office and school supplies purchase",
                 payee=random.choice(payees[3]), payment_method="Cash",
                 voucher_number=f"DV-{voucher_counter}", school_year="2026-2027",
-                status="Approved", approved_by=1,
+                status="Approved", approved_by=cashier_user_id,
                 date_recorded=(month_date + timedelta(days=random.randint(5, 20))).isoformat(),
                 date_approved=(month_date + timedelta(days=random.randint(6, 21))).isoformat(),
-                recorded_by=3
+                recorded_by=cashier_user_id
             ))
             voucher_counter += 1
 
@@ -245,10 +239,10 @@ def seed_database(db: Session):
                 description=random.choice(["AC unit repair", "Plumbing repair", "Classroom repainting", "Electrical maintenance"]),
                 payee=random.choice(payees[4]), payment_method="Cash",
                 voucher_number=f"DV-{voucher_counter}", school_year="2026-2027",
-                status="Approved", approved_by=4,
+                status="Approved", approved_by=cashier_user_id,
                 date_recorded=(month_date + timedelta(days=random.randint(1, 25))).isoformat(),
                 date_approved=(month_date + timedelta(days=random.randint(3, 27))).isoformat(),
-                recorded_by=3
+                recorded_by=cashier_user_id
             ))
             voucher_counter += 1
 
@@ -269,7 +263,7 @@ def seed_database(db: Session):
             school_year="2026-2027",
             status="Pending",
             date_recorded=datetime.now().isoformat(),
-            recorded_by=3
+            recorded_by=cashier_user_id
         ))
         voucher_counter += 1
 
@@ -280,13 +274,10 @@ def seed_database(db: Session):
         db.add(Budget(
             category_id=cat.id, school_year="2026-2027",
             allocated_amount=cat.budget_limit * 12,
-            spent_amount=0, created_by=1,
+            spent_amount=0, created_by=cashier_user_id,
             created_at=datetime.now().isoformat()
         ))
 
     db.commit()
     print("[OK] Database seeded successfully!")
-    print("   Admin: admin@cca.edu.ph / password123")
     print("   Cashier: cashier@cca.edu.ph / password123")
-    print("   Accountant: accountant@cca.edu.ph / password123")
-    print("   Principal: principal@cca.edu.ph / password123")

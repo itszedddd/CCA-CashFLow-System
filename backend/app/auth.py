@@ -12,21 +12,23 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 720  # 12 hours
 
 import bcrypt
-if not hasattr(bcrypt, "__about__"):
-    class About:
-        __version__ = getattr(bcrypt, "__version__", "4.0.1")
-    bcrypt.__about__ = About()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        pw_bytes = plain_password.encode('utf-8')[:72]
+        hash_bytes = hashed_password.encode('utf-8') if isinstance(hashed_password, str) else hashed_password
+        return bcrypt.checkpw(pw_bytes, hash_bytes)
+    except Exception:
+        return False
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    pw_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pw_bytes, salt).decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -50,7 +52,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise credentials_exception
     
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(
+        (User.username == username) |
+        (User.username == f"{username}@cca.edu.ph")
+    ).first()
+    if user is None:
+        # If single-user cashier system, fallback to cashier
+        user = db.query(User).filter(User.role == "Cashier").first()
     if user is None:
         raise credentials_exception
     return user

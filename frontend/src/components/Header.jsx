@@ -275,7 +275,7 @@ export default function Header({
                       Disbursement Approvals Required
                     </p>
                     <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
-                      There are {pendingCount} expense voucher(s) awaiting review and principal/admin approval.
+                      There are {pendingCount} expense voucher(s) awaiting cashier review and approval.
                     </p>
                     <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 mt-2 inline-block">
                       Review Expense Vouchers →

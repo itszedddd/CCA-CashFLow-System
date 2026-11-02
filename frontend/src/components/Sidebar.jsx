@@ -2,13 +2,11 @@ import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, TrendingUp, TrendingDown,
-  Wallet, FileBarChart, ClipboardList, LogOut, X
+  Wallet, FileBarChart, ClipboardList, LogOut, X,
+  Cpu, Sparkles
 } from 'lucide-react';
 
 const ROLE_COLORS = {
-  Admin: 'bg-brand-600',
-  Principal: 'bg-purple-600',
-  Accountant: 'bg-indigo-600',
   Cashier: 'bg-emerald-600',
   Staff: 'bg-slate-600',
 };
@@ -39,8 +37,9 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/income', label: 'Income Records', icon: TrendingUp },
-    { to: '/expenses', label: 'Expenses', icon: TrendingDown, hasBadge: true },
+    { to: '/income', label: 'Collections', icon: TrendingUp },
+    { to: '/anomaly', label: 'ML Anomaly Detection', icon: Cpu, isAI: true },
+    { to: '/expenses', label: 'Disbursements', icon: TrendingDown, hasBadge: true },
     { to: '/budget', label: 'Budget Allocations', icon: Wallet },
     { to: '/reports', label: 'Financial Reports', icon: FileBarChart },
     { to: '/audit-log', label: 'Audit Trail', icon: ClipboardList },
@@ -121,6 +120,11 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
                         <span className="flex-1 text-left leading-tight break-words truncate">
                           {item.label}
                         </span>
+                        {item.isAI && (
+                          <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 ml-1.5 font-sans tracking-normal">
+                            AI
+                          </span>
+                        )}
                       </div>
 
                       {item.hasBadge && pendingCount > 0 && (

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base, SessionLocal
 from .models.models import *  # Import all models for table creation
-from .api import auth, income, expenses, dashboard
+from .api import auth, income, expenses, dashboard, anomaly
 from .seed_data import seed_database
 
 # Create all tables
@@ -28,6 +28,7 @@ app.include_router(auth.router)
 app.include_router(income.router)
 app.include_router(expenses.router)
 app.include_router(dashboard.router)
+app.include_router(anomaly.router)
 
 
 def init_db():

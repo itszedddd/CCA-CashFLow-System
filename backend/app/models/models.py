@@ -29,6 +29,7 @@ class IncomeCategory(Base):
     name = Column(String, unique=True, index=True)  # Tuition, Registration, Donations, Misc Fees, etc.
     description = Column(String, nullable=True)
     color = Column(String, default="#3b82f6")  # For chart color coding
+    expected_amount = Column(Float, default=0.0)  # Official CCA benchmark fee
 
     incomes = relationship("Income", back_populates="category")
 
@@ -57,6 +58,12 @@ class Income(Base):
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("income_categories.id"))
     amount = Column(Float)
+    expected_amount = Column(Float, nullable=True)  # Standard fee amount per SOP
+    is_partial = Column(Integer, default=0)  # 0: Full Payment, 1: Partial Payment
+    remaining_balance = Column(Float, default=0.0)  # Remaining balance for partial payments
+    student_id = Column(String, nullable=True)  # Student ID / LRN
+    grade_level = Column(String, nullable=True)  # Kindergarten, Grade 1 to 10
+    envelope_verified = Column(Integer, default=0)  # 0: Pending, 1: Verified in Envelope, 2: Discrepancy
     description = Column(String)
     or_number = Column(String, nullable=True, index=True)  # Official Receipt Number
     payer_name = Column(String, nullable=True)  # Student name, donor, etc.
@@ -68,6 +75,13 @@ class Income(Base):
     recorded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     remarks = Column(Text, nullable=True)
     is_voided = Column(Integer, default=0)  # Soft-delete / void
+
+    # ML-Based Anomaly Detection Fields (Feature #6)
+    anomaly_score = Column(Float, default=0.0)  # 0.0 to 100.0 Anomaly Score
+    anomaly_level = Column(String, default="Low")  # "Low", "Medium", "High" (3-level threshold)
+    anomaly_reasons = Column(Text, nullable=True)  # JSON-encoded array of flagged reasons
+    anomaly_status = Column(String, default="Normal")  # "Normal", "Flagged", "Verified_Cleared", "Pending_Correction"
+    cashier_notes = Column(Text, nullable=True)  # Cashier review & verification notes
 
     category = relationship("IncomeCategory", back_populates="incomes")
     recorder = relationship("User")

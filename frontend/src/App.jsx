@@ -10,6 +10,7 @@ import Expenses from './pages/Expenses';
 import Budget from './pages/Budget';
 import Reports from './pages/Reports';
 import AuditLog from './pages/AuditLog';
+import AnomalyDetection from './pages/AnomalyDetection';
 import api from './api';
 
 function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode, setIsAccessibleMode }) {
@@ -23,7 +24,9 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
       case '/':
         return 'Financial Dashboard';
       case '/income':
-        return 'Income & Collections';
+        return 'Tuition & Collections';
+      case '/anomaly':
+        return 'ML Anomaly Detection (Feature #6)';
       case '/expenses':
         return 'Disbursements & Expenses';
       case '/budget':
@@ -86,6 +89,7 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/income" element={<Income />} />
+              <Route path="/anomaly" element={<AnomalyDetection />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/budget" element={<Budget />} />
               <Route path="/reports" element={<Reports />} />
