@@ -7,17 +7,14 @@
       "includeFiles": "backend/**,cashflow.db"
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
+      "source": "/api(.*)",
+      "destination": "/api/index.py"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/.*",
-      "dest": "/index.html"
+      "source": "/((?!assets/|cca-logo|favicon|.*\\..*).*)",
+      "destination": "/index.html"
     }
   ]
 }
