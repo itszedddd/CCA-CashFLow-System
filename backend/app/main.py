@@ -23,6 +23,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Vercel Serverless Path Normalization Middleware
+class VercelPathMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = dict(scope.get("headers", []))
+            matched_header = (
+                headers.get(b"x-matched-path") or 
+                headers.get(b"x-forwarded-uri") or 
+                headers.get(b"x-original-url") or
+                headers.get(b"x-vercel-original-path") or
+                headers.get(b"x-rewrite-url")
+            )
+            raw_path = scope.get("path", "")
+            if matched_header:
+                path_str = matched_header.decode("utf-8").split("?")[0]
+            else:
+                path_str = raw_path
+
+            # If path was stripped of /api, prepend /api
+            if path_str.startswith(("/auth", "/income", "/expenses", "/dashboard", "/ai")):
+                path_str = "/api" + path_str
+
+            scope["path"] = path_str
+            scope["raw_path"] = path_str.encode("utf-8")
+        await self.app(scope, receive, send)
+
+app.add_middleware(VercelPathMiddleware)
+
 # Include routers
 app.include_router(auth.router)
 app.include_router(income.router)
