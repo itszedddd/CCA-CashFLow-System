@@ -15,7 +15,7 @@ if os.environ.get("VERCEL"):
     seed_db = os.path.join(repo_root, "backend", "cashflow.db")
     if not os.path.exists(seed_db):
         seed_db = os.path.join(repo_root, "cashflow.db")
-    if os.path.exists(seed_db) and not os.path.exists(tmp_db):
+    if os.path.exists(seed_db) and (not os.path.exists(tmp_db) or os.path.getsize(tmp_db) == 0):
         try:
             shutil.copyfile(seed_db, tmp_db)
         except Exception as e:

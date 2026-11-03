@@ -23,6 +23,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import urllib.parse
+
 # Vercel Serverless Path Normalization Middleware
 class VercelPathMiddleware:
     def __init__(self, app):
@@ -30,23 +32,37 @@ class VercelPathMiddleware:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            headers = dict(scope.get("headers", []))
-            matched_header = (
-                headers.get(b"x-matched-path") or 
-                headers.get(b"x-forwarded-uri") or 
-                headers.get(b"x-original-url") or
-                headers.get(b"x-vercel-original-path") or
-                headers.get(b"x-rewrite-url")
-            )
             raw_path = scope.get("path", "")
-            if matched_header:
-                path_str = matched_header.decode("utf-8").split("?")[0]
-            else:
-                path_str = raw_path
+            raw_qs = scope.get("query_string", b"").decode("utf-8", "ignore")
+            headers = dict(scope.get("headers", []))
 
-            # If path was stripped of /api, prepend /api
-            if path_str.startswith(("/auth", "/income", "/expenses", "/dashboard", "/ai")):
-                path_str = "/api" + path_str
+            # 1. Check if rewrite passed dynamic subpath via query param __path
+            q_dict = urllib.parse.parse_qs(raw_qs)
+            if "__path" in q_dict:
+                sub_path = q_dict.pop("__path")[0].lstrip("/")
+                path_str = f"/api/{sub_path}" if sub_path else "/api"
+                # Strip __path from query string so it doesn't pollute API handlers
+                new_qs = urllib.parse.urlencode(q_dict, doseq=True)
+                scope["query_string"] = new_qs.encode("utf-8")
+            else:
+                # 2. Check headers for original incoming URI
+                orig_uri = (
+                    headers.get(b"x-forwarded-uri") or 
+                    headers.get(b"x-original-url") or 
+                    headers.get(b"x-vercel-original-path") or
+                    headers.get(b"x-rewrite-url")
+                )
+                if orig_uri:
+                    path_str = orig_uri.decode("utf-8").split("?")[0]
+                else:
+                    path_str = raw_path
+
+            # 3. If path is missing /api prefix, add it for known routes
+            if not path_str.startswith("/api"):
+                if path_str.startswith(("/auth", "/income", "/expenses", "/dashboard", "/ai")):
+                    path_str = "/api" + path_str
+                elif path_str in ("/health", "/stats"):
+                    path_str = "/api" + path_str
 
             scope["path"] = path_str
             scope["raw_path"] = path_str.encode("utf-8")
@@ -120,7 +136,7 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/{full_path:path}")
+@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 def serve_frontend_or_spa(full_path: str):
     if full_path.startswith("api"):
         from fastapi import HTTPException

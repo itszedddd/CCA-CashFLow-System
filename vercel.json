@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm --prefix frontend install && npm --prefix frontend run build",
+  "buildCommand": "rm -rf frontend/node_modules && npm --prefix frontend install && npm --prefix frontend run build",
   "outputDirectory": "frontend/dist",
   "functions": {
     "api/index.py": {
@@ -9,7 +9,11 @@
   },
   "rewrites": [
     {
-      "source": "/api(.*)",
+      "source": "/api/(.*)",
+      "destination": "/api/index.py?__path=$1"
+    },
+    {
+      "source": "/api",
       "destination": "/api/index.py"
     },
     {
