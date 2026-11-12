@@ -78,10 +78,10 @@ class IncomeResponse(BaseModel):
     reference_number: Optional[str]
     school_year: str
     date_recorded: str
-    recorded_by: Optional[int]
+    recorded_by: Optional[int] = None
     recorder_name: Optional[str] = None
-    remarks: Optional[str]
-    is_voided: int
+    remarks: Optional[str] = None
+    is_voided: Optional[int] = 0
     anomaly_score: Optional[float] = 0.0
     anomaly_level: Optional[str] = "Low"
     anomaly_status: Optional[str] = "Normal"
@@ -129,10 +129,10 @@ class ExpenseResponse(BaseModel):
     approver_name: Optional[str] = None
     date_recorded: str
     date_approved: Optional[str]
-    recorded_by: Optional[int]
+    recorded_by: Optional[int] = None
     recorder_name: Optional[str] = None
-    remarks: Optional[str]
-    is_voided: int
+    remarks: Optional[str] = None
+    is_voided: Optional[int] = 0
 
     class Config:
         from_attributes = True
@@ -216,6 +216,105 @@ class AuditLogResponse(BaseModel):
     entity_id: Optional[int]
     details: Optional[str]
     timestamp: str
+
+    class Config:
+        from_attributes = True
+
+
+# ──────────────────────────────────────────────
+# ── Student & Fee Schedules (Adjustments) ──
+# ──────────────────────────────────────────────
+class StudentFeeScheduleBase(BaseModel):
+    category_name: str
+    sub_description: Optional[str] = None
+    total_due: float = 0.0
+    total_paid: float = 0.0
+    remaining_balance: float = 0.0
+    school_year: str = "2026-2027"
+    due_date: Optional[str] = None
+    remarks: Optional[str] = None
+
+class StudentFeeScheduleResponse(StudentFeeScheduleBase):
+    id: int
+    student_id: int
+
+    class Config:
+        from_attributes = True
+
+class StudentBase(BaseModel):
+    student_id: str
+    full_name: str
+    grade_level: str
+    section: Optional[str] = "Faith"
+    gender: Optional[str] = None
+    birthdate: Optional[str] = None
+    parent_name: Optional[str] = None
+    parent_contact: Optional[str] = None
+    parent_email: Optional[str] = None
+    address: Optional[str] = None
+    school_year: Optional[str] = "2026-2027"
+    enrollment_status: Optional[str] = "Enrolled"
+
+class StudentCreate(StudentBase):
+    pass
+
+class StudentUpdate(BaseModel):
+    full_name: Optional[str] = None
+    grade_level: Optional[str] = None
+    section: Optional[str] = None
+    gender: Optional[str] = None
+    birthdate: Optional[str] = None
+    parent_name: Optional[str] = None
+    parent_contact: Optional[str] = None
+    parent_email: Optional[str] = None
+    address: Optional[str] = None
+    enrollment_status: Optional[str] = None
+
+class StudentResponse(StudentBase):
+    id: int
+    created_at: Optional[str] = None
+    total_due: Optional[float] = 0.0
+    total_paid: Optional[float] = 0.0
+    outstanding_balance: Optional[float] = 0.0
+    payment_status: Optional[str] = "Pending"
+
+    class Config:
+        from_attributes = True
+
+class StudentDetailResponse(StudentResponse):
+    fee_schedules: List[StudentFeeScheduleResponse] = []
+    payments: List[IncomeResponse] = []
+
+class RecordStudentPaymentRequest(BaseModel):
+    fee_type: str  # "Tuition Fee", "Registration Fee", "Books", "Energy Fee", "Other Fees"
+    amount: float
+    description: Optional[str] = None
+    payment_method: str = "Cash"
+    reference_number: Optional[str] = None
+    school_year: Optional[str] = "2026-2027"
+    remarks: Optional[str] = None
+    envelope_verified: Optional[int] = 1
+
+class PaymentNotificationCreate(BaseModel):
+    student_id: Optional[int] = None
+    grade_level: Optional[str] = None
+    title: str
+    fee_type: str
+    description: str
+    amount: float = 0.0
+    due_date: Optional[str] = None
+
+class PaymentNotificationResponse(BaseModel):
+    id: int
+    student_id: Optional[int] = None
+    grade_level: Optional[str] = None
+    title: str
+    fee_type: str
+    description: str
+    amount: float
+    due_date: Optional[str] = None
+    is_read: int
+    created_at: str
 
     class Config:
         from_attributes = True

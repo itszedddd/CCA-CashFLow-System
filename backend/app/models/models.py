@@ -13,10 +13,79 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     full_name = Column(String, nullable=True)
     hashed_password = Column(String)
-    role = Column(String)  # Admin, Cashier, Accountant, Principal
+    role = Column(String)  # Admin, Cashier, Accountant, Principal, Parent
     is_active = Column(Integer, default=1)
     profile_picture = Column(String, nullable=True)
     created_at = Column(String, nullable=True)
+
+
+# ──────────────────────────────────────────────
+# STUDENT MODEL (ICC-Style Individual Student Profiles)
+# ──────────────────────────────────────────────
+class Student(Base):
+    __tablename__ = "students"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(String, unique=True, index=True)  # LRN / Student ID (e.g. "LRN-2026-001")
+    full_name = Column(String, index=True)
+    grade_level = Column(String, index=True)  # Kindergarten, Grade 1 to Grade 10
+    section = Column(String, default="Faith")
+    gender = Column(String, nullable=True)  # Male, Female
+    birthdate = Column(String, nullable=True)
+    parent_name = Column(String, nullable=True)
+    parent_contact = Column(String, nullable=True)
+    parent_email = Column(String, nullable=True)
+    parent_username = Column(String, nullable=True)
+    parent_password_hash = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    school_year = Column(String, default="2026-2027")
+    enrollment_status = Column(String, default="Enrolled")  # Enrolled, Pending, Transferred
+    created_at = Column(String, nullable=True)
+
+    # Relationships
+    payments = relationship("Income", back_populates="student", cascade="all, delete-orphan")
+    fee_schedules = relationship("StudentFeeSchedule", back_populates="student", cascade="all, delete-orphan")
+    notifications = relationship("PaymentNotification", back_populates="student", cascade="all, delete-orphan")
+
+
+# ──────────────────────────────────────────────
+# STUDENT FEE SCHEDULE (Tuition, Registration, Books, Energy, Other)
+# ──────────────────────────────────────────────
+class StudentFeeSchedule(Base):
+    __tablename__ = "student_fee_schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), index=True)
+    category_name = Column(String, index=True)  # Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees
+    sub_description = Column(String, nullable=True)  # e.g., "Educational Tour", "Swimming Class", "Graduation"
+    total_due = Column(Float, default=0.0)
+    total_paid = Column(Float, default=0.0)
+    remaining_balance = Column(Float, default=0.0)
+    school_year = Column(String, default="2026-2027")
+    due_date = Column(String, nullable=True)
+    remarks = Column(String, nullable=True)
+
+    student = relationship("Student", back_populates="fee_schedules")
+
+
+# ──────────────────────────────────────────────
+# PAYMENT NOTIFICATION (Fee announcements & reminders)
+# ──────────────────────────────────────────────
+class PaymentNotification(Base):
+    __tablename__ = "payment_notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True, index=True)  # Null = Broadcast to grade/all
+    grade_level = Column(String, nullable=True)  # Null = All grades
+    title = Column(String)
+    fee_type = Column(String)  # Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees
+    description = Column(Text)
+    amount = Column(Float, default=0.0)
+    due_date = Column(String, nullable=True)
+    is_read = Column(Integer, default=0)
+    created_at = Column(String)
+
+    student = relationship("Student", back_populates="notifications")
 
 
 # ──────────────────────────────────────────────
@@ -26,7 +95,7 @@ class IncomeCategory(Base):
     __tablename__ = "income_categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)  # Tuition, Registration, Donations, Misc Fees, etc.
+    name = Column(String, unique=True, index=True)  # Tuition Fees, Registration Fee, Books, Energy Fee, Other Fees
     description = Column(String, nullable=True)
     color = Column(String, default="#3b82f6")  # For chart color coding
     expected_amount = Column(Float, default=0.0)  # Official CCA benchmark fee
@@ -41,50 +110,53 @@ class ExpenseCategory(Base):
     __tablename__ = "expense_categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)  # Salaries, Utilities, Supplies, Maintenance, etc.
+    name = Column(String, unique=True, index=True)
     description = Column(String, nullable=True)
     color = Column(String, default="#ef4444")
-    budget_limit = Column(Float, default=0.0)  # Monthly budget cap
+    budget_limit = Column(Float, default=0.0)
 
     expenses = relationship("Expense", back_populates="category")
 
 
 # ──────────────────────────────────────────────
-# INCOME RECORDS (All school revenue)
+# INCOME RECORDS (All school collections & student payments)
 # ──────────────────────────────────────────────
 class Income(Base):
     __tablename__ = "incomes"
 
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("income_categories.id"))
+    student_id_ref = Column(Integer, ForeignKey("students.id"), nullable=True, index=True)
     amount = Column(Float)
-    expected_amount = Column(Float, nullable=True)  # Standard fee amount per SOP
+    expected_amount = Column(Float, nullable=True)
     is_partial = Column(Integer, default=0)  # 0: Full Payment, 1: Partial Payment
-    remaining_balance = Column(Float, default=0.0)  # Remaining balance for partial payments
-    student_id = Column(String, nullable=True)  # Student ID / LRN
+    remaining_balance = Column(Float, default=0.0)
+    student_id = Column(String, nullable=True)  # Student LRN string for quick search
     grade_level = Column(String, nullable=True)  # Kindergarten, Grade 1 to 10
-    envelope_verified = Column(Integer, default=0)  # 0: Pending, 1: Verified in Envelope, 2: Discrepancy
+    fee_type = Column(String, default="Tuition Fee")  # Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees
+    envelope_verified = Column(Integer, default=0)
     description = Column(String)
     or_number = Column(String, nullable=True, index=True)  # Official Receipt Number
-    payer_name = Column(String, nullable=True)  # Student name, donor, etc.
-    payer_type = Column(String, default="Student")  # Student, Parent, Donor, Organization, Other
-    payment_method = Column(String, default="Cash")  # Cash, Bank Transfer, Check, GCash, etc.
-    reference_number = Column(String, nullable=True)  # Bank ref, check number, etc.
+    payer_name = Column(String, nullable=True)
+    payer_type = Column(String, default="Student")
+    payment_method = Column(String, default="Cash")  # Cash, Bank Transfer, Check, GCash
+    reference_number = Column(String, nullable=True)
     school_year = Column(String, default="2026-2027")
     date_recorded = Column(String)
     recorded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     remarks = Column(Text, nullable=True)
-    is_voided = Column(Integer, default=0)  # Soft-delete / void
+    is_voided = Column(Integer, default=0)
 
-    # ML-Based Anomaly Detection Fields (Feature #6)
-    anomaly_score = Column(Float, default=0.0)  # 0.0 to 100.0 Anomaly Score
-    anomaly_level = Column(String, default="Low")  # "Low", "Medium", "High" (3-level threshold)
-    anomaly_reasons = Column(Text, nullable=True)  # JSON-encoded array of flagged reasons
-    anomaly_status = Column(String, default="Normal")  # "Normal", "Flagged", "Verified_Cleared", "Pending_Correction"
-    cashier_notes = Column(Text, nullable=True)  # Cashier review & verification notes
+    # ML-Based Anomaly Detection Fields
+    anomaly_score = Column(Float, default=0.0)
+    anomaly_level = Column(String, default="Low")
+    anomaly_reasons = Column(Text, nullable=True)
+    anomaly_status = Column(String, default="Normal")
+    cashier_notes = Column(Text, nullable=True)
 
     category = relationship("IncomeCategory", back_populates="incomes")
     recorder = relationship("User")
+    student = relationship("Student", back_populates="payments")
 
 
 # ──────────────────────────────────────────────

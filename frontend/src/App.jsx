@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Income from './pages/Income';
-import Expenses from './pages/Expenses';
-import Budget from './pages/Budget';
+import StudentProfile from './pages/StudentProfile';
+import Notifications from './pages/Notifications';
+import ParentPortal from './pages/ParentPortal';
 import Reports from './pages/Reports';
 import AuditLog from './pages/AuditLog';
 import AnomalyDetection from './pages/AnomalyDetection';
@@ -18,19 +20,23 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
 
+  const isParent = user?.role === 'Parent';
+
   // Get active page title based on path
   const getPageTitle = (pathname) => {
+    if (pathname.startsWith('/collections/')) return 'Student Profile & Payment Records';
     switch (pathname) {
       case '/':
-        return 'Financial Dashboard';
+        return isParent ? 'Child Payment Account' : 'Collections & Financial Overview';
       case '/income':
-        return 'Tuition & Collections';
+      case '/collections':
+        return 'Student Collections & Profiles';
+      case '/notifications':
+        return 'Payment Notices & Fee Announcements';
+      case '/parent':
+        return 'Child Payment Account & Receipts';
       case '/anomaly':
         return 'ML Anomaly Detection (Feature #6)';
-      case '/expenses':
-        return 'Disbursements & Expenses';
-      case '/budget':
-        return 'Budget Allocations';
       case '/reports':
         return 'Financial Statements & Reports';
       case '/audit-log':
@@ -40,21 +46,20 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
     }
   };
 
-  // Fetch pending voucher count for notification bell & sidebar badge
   const fetchPendingCount = async () => {
     try {
-      const res = await api.get('/dashboard/stats');
-      if (res.data?.pending_expenses !== undefined) {
-        setPendingCount(res.data.pending_expenses);
+      const res = await api.get('/notifications/');
+      if (Array.isArray(res.data)) {
+        setPendingCount(res.data.length);
       }
     } catch {
-      // Quiet fail if network glitch
+      // Quiet fail if offline
     }
   };
 
   useEffect(() => {
     fetchPendingCount();
-    const interval = setInterval(fetchPendingCount, 30000);
+    const interval = setInterval(fetchPendingCount, 45000);
     return () => clearInterval(interval);
   }, [location.pathname]);
 
@@ -87,14 +92,27 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
         <main className="flex-1 overflow-x-hidden overflow-y-auto print:overflow-visible print:h-auto bg-slate-50 dark:bg-slate-900 p-4 md:p-8 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/income" element={<Income />} />
-              <Route path="/anomaly" element={<AnomalyDetection />} />
-              <Route path="/expenses" element={<Expenses />} />
-              <Route path="/budget" element={<Budget />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/audit-log" element={<AuditLog />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {isParent ? (
+                <>
+                  <Route path="/" element={<ParentPortal user={user} />} />
+                  <Route path="/parent" element={<ParentPortal user={user} />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="*" element={<Navigate to="/parent" replace />} />
+                </>
+              ) : (
+                <>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/income" element={<Income />} />
+                  <Route path="/collections" element={<Income />} />
+                  <Route path="/collections/:id" element={<StudentProfile />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/parent" element={<ParentPortal user={user} />} />
+                  <Route path="/anomaly" element={<AnomalyDetection />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/audit-log" element={<AuditLog />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </>
+              )}
             </Routes>
           </div>
         </main>
@@ -113,7 +131,7 @@ function AppContent() {
     return saved !== null ? saved === 'true' : false;
   });
 
-  // Accessible Mode State (Larger text, higher contrast)
+  // Accessible Mode State
   const [isAccessibleMode, setIsAccessibleMode] = useState(() => {
     const saved = localStorage.getItem('cca_cf_accessible');
     return saved !== null ? saved === 'true' : false;
@@ -157,7 +175,7 @@ function AppContent() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-semibold text-slate-400 font-cinzel">Initializing CCA CashFlow...</p>
+          <p className="text-xs font-semibold text-slate-400 font-cinzel">Initializing CCA FlowSys...</p>
         </div>
       </div>
     );
@@ -195,10 +213,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

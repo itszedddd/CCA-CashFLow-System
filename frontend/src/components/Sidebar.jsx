@@ -1,17 +1,17 @@
 import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, TrendingUp, TrendingDown,
-  Wallet, FileBarChart, ClipboardList, LogOut, X,
-  Cpu, Sparkles
+  LayoutDashboard, Users, TrendingUp, Cpu, FileBarChart,
+  ClipboardList, Bell, LogOut, X, Sparkles, GraduationCap
 } from 'lucide-react';
 
 const ROLE_COLORS = {
   Cashier: 'bg-emerald-600',
+  Parent: 'bg-blue-600',
   Staff: 'bg-slate-600',
 };
 
-export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount = 0 }) {
+export default function Sidebar({ user, onLogout, isOpen, onClose }) {
   const navigate = useNavigate();
 
   // Lock body scroll on mobile drawer open
@@ -35,15 +35,25 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
     navigate('/login');
   };
 
-  const navItems = [
+  const isParent = user?.role === 'Parent';
+
+  // Navigation Items - Adjusted strictly to study objectives:
+  // Removed Disbursements & Budget Allocations per SYSTEM-ADJUSTMENTS.docx
+  const staffNavItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/income', label: 'Collections', icon: TrendingUp },
+    { to: '/income', label: 'Collections', icon: Users, badge: 'Profiles' },
     { to: '/anomaly', label: 'ML Anomaly Detection', icon: Cpu, isAI: true },
-    { to: '/expenses', label: 'Disbursements', icon: TrendingDown, hasBadge: true },
-    { to: '/budget', label: 'Budget Allocations', icon: Wallet },
+    { to: '/notifications', label: 'Payment Notices', icon: Bell },
     { to: '/reports', label: 'Financial Reports', icon: FileBarChart },
     { to: '/audit-log', label: 'Audit Trail', icon: ClipboardList },
   ];
+
+  const parentNavItems = [
+    { to: '/parent', label: 'My Child Account', icon: GraduationCap },
+    { to: '/notifications', label: 'Fee Announcements', icon: Bell },
+  ];
+
+  const navItems = isParent ? parentNavItems : staffNavItems;
 
   const sidebarContent = (
     <div className="flex flex-col h-full w-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors duration-300">
@@ -69,7 +79,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
             />
             <div className="flex items-center gap-1.5 mt-1">
               <span className="text-[10px] uppercase font-cinzel font-bold text-brand-600 dark:text-brand-400 tracking-widest">
-                CashFlow System
+                {isParent ? 'Parent Portal' : 'CashFlow System'}
               </span>
             </div>
           </div>
@@ -88,7 +98,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto font-cinzel sidebar-scroll">
         <div className="px-4 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-          Main Navigation
+          {isParent ? 'Parent Services' : 'Main Navigation'}
         </div>
         <ul className="space-y-1 px-3">
           {navItems.map((item) => {
@@ -97,7 +107,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
               <li key={item.to}>
                 <NavLink
                   to={item.to}
-                  end={item.to === '/'}
+                  end={item.to === '/' || item.to === '/parent'}
                   onClick={handleLinkClick}
                   className={({ isActive }) =>
                     `w-full flex justify-between items-center px-3 py-2.5 transition-colors group text-xs uppercase tracking-widest font-bold rounded-lg ${
@@ -125,14 +135,12 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
                             AI
                           </span>
                         )}
+                        {item.badge && (
+                          <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 ml-1.5 font-sans tracking-normal">
+                            {item.badge}
+                          </span>
+                        )}
                       </div>
-
-                      {item.hasBadge && pendingCount > 0 && (
-                        <span className="relative flex h-2.5 w-2.5 ml-2 flex-shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                        </span>
-                      )}
                     </>
                   )}
                 </NavLink>
@@ -140,6 +148,37 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
             );
           })}
         </ul>
+
+        {/* The 5 Core Fee Categories Quick Filter Reference */}
+        {!isParent && (
+          <div className="mt-6 px-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+            <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 font-cinzel">
+              Institutional Fee Scope
+            </p>
+            <div className="space-y-1.5 text-[11px] font-sans font-medium text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Tuition Fee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                <span>Registration Fee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                <span>Books & Materials</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span>Energy Fee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                <span>Other Fees (Tours/Activities)</span>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* User Info & Logout — Pinned to bottom */}
@@ -158,7 +197,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
                 {user.full_name || user.username}
               </p>
               <p className="text-[10px] text-brand-600 dark:text-brand-400 font-bold uppercase tracking-wider truncate">
-                {user.role}
+                {user.role} {user.student_name ? `(${user.student_name})` : ''}
               </p>
             </div>
           </div>
@@ -166,7 +205,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose, pendingCount 
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-xs font-semibold group uppercase tracking-wider font-cinzel"
+          className="w-full flex items-center px-3 py-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-xs font-semibold group uppercase tracking-wider font-cinzel cursor-pointer"
         >
           <LogOut className="w-4 h-4 mr-2.5 text-slate-400 group-hover:text-red-500 transition-colors" />
           Sign Out

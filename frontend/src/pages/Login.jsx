@@ -46,6 +46,12 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
     setError('');
   };
 
+  const fillParentAccount = () => {
+    setUsername('parent');
+    setPassword('password123');
+    setError('');
+  };
+
   return (
     <div
       className={`flex flex-col lg:flex-row min-h-screen w-full transition-colors duration-700 font-sans ${
@@ -195,26 +201,49 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                 <span className="text-[10px] text-slate-400 font-mono">pass: password123</span>
               </div>
               
-              <button
-                type="button"
-                onClick={fillCashierAccount}
-                className="w-full py-2.5 px-3.5 border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 rounded-xl text-left transition flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center font-cinzel">
-                    C
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={fillCashierAccount}
+                  className="w-full py-2.5 px-3.5 border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 rounded-xl text-left transition flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center font-cinzel">
+                      C
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                        Maria Santos <span className="font-normal text-[10px] text-emerald-700 dark:text-emerald-400">(Cashier Portal)</span>
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                        cashier@cca.edu.ph
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                      Maria Santos <span className="font-normal text-[10px] text-emerald-700 dark:text-emerald-400">(Cashier)</span>
-                    </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                      cashier@cca.edu.ph
-                    </p>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={fillParentAccount}
+                  className="w-full py-2.5 px-3.5 border border-blue-200 dark:border-blue-800/80 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 rounded-xl text-left transition flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center font-cinzel">
+                      P
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-blue-900 dark:text-blue-200">
+                        Student Parent Portal <span className="font-normal text-[10px] text-blue-700 dark:text-blue-400">(Parent of Liam Noah Ramos)</span>
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                        user: parent • pass: password123
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              </button>
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

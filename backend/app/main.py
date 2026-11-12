@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from .database import engine, Base, SessionLocal
 from .models.models import *  # Import all models for table creation
-from .api import auth, income, expenses, dashboard, anomaly
+from .api import auth, income, expenses, dashboard, anomaly, students, notifications
 from .seed_data import seed_database
+import urllib.parse
+import os
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -23,59 +26,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import urllib.parse
-
-# Vercel Serverless Path Normalization Middleware
-class VercelPathMiddleware:
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] == "http":
-            raw_path = scope.get("path", "")
-            raw_qs = scope.get("query_string", b"").decode("utf-8", "ignore")
-            headers = dict(scope.get("headers", []))
-
-            # 1. Check if rewrite passed dynamic subpath via query param __path
-            q_dict = urllib.parse.parse_qs(raw_qs)
-            if "__path" in q_dict:
-                sub_path = q_dict.pop("__path")[0].lstrip("/")
-                path_str = f"/api/{sub_path}" if sub_path else "/api"
-                # Strip __path from query string so it doesn't pollute API handlers
-                new_qs = urllib.parse.urlencode(q_dict, doseq=True)
-                scope["query_string"] = new_qs.encode("utf-8")
-            else:
-                # 2. Check headers for original incoming URI
-                orig_uri = (
-                    headers.get(b"x-forwarded-uri") or 
-                    headers.get(b"x-original-url") or 
-                    headers.get(b"x-vercel-original-path") or
-                    headers.get(b"x-rewrite-url")
-                )
-                if orig_uri:
-                    path_str = orig_uri.decode("utf-8").split("?")[0]
-                else:
-                    path_str = raw_path
-
-            # 3. If path is missing /api prefix, add it for known routes
-            if not path_str.startswith("/api"):
-                if path_str.startswith(("/auth", "/income", "/expenses", "/dashboard", "/ai")):
-                    path_str = "/api" + path_str
-                elif path_str in ("/health", "/stats"):
-                    path_str = "/api" + path_str
-
-            scope["path"] = path_str
-            scope["raw_path"] = path_str.encode("utf-8")
-        await self.app(scope, receive, send)
-
-app.add_middleware(VercelPathMiddleware)
-
 # Include routers
 app.include_router(auth.router)
 app.include_router(income.router)
 app.include_router(expenses.router)
 app.include_router(dashboard.router)
 app.include_router(anomaly.router)
+app.include_router(students.router)
+app.include_router(notifications.router)
 
 
 def init_db():
@@ -94,7 +52,6 @@ def startup_event():
     init_db()
 
 
-import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
@@ -134,6 +91,22 @@ def api_root():
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/debug")
+def debug_info():
+    """Debug endpoint to check Vercel environment."""
+    import glob
+    return {
+        "is_vercel": bool(os.environ.get("VERCEL")),
+        "db_exists": os.path.exists("/tmp/cashflow.db") if os.environ.get("VERCEL") else "N/A",
+        "db_url": os.environ.get("DATABASE_URL", "not set"),
+        "routes": [
+            {"path": r.path, "methods": list(r.methods) if hasattr(r, "methods") else []}
+            for r in app.routes
+            if hasattr(r, "path") and r.path.startswith("/api")
+        ],
+    }
 
 
 @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
