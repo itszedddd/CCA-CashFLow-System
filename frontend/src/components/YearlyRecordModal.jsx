@@ -213,3 +213,4 @@ export default function YearlyRecordModal({ recordData, onClose }) {
     </div>
   );
 }
+

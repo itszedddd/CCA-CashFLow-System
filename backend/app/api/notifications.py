@@ -86,3 +86,4 @@ def mark_as_read(notification_id: int, db: Session = Depends(get_db)):
     notif.is_read = 1
     db.commit()
     return {"status": "success", "message": "Notification marked as read"}
+
