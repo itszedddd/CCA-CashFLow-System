@@ -121,32 +121,32 @@ export default function Notifications() {
               className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between hover:shadow-md transition"
             >
               <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-slate-900 dark:text-brand-400 border border-brand-200 dark:border-slate-700">
+                <div className="flex items-start justify-between gap-2 mb-2 min-w-0">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-slate-900 dark:text-brand-400 border border-brand-200 dark:border-slate-700 shrink-0">
                     {n.fee_type}
                   </span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-slate-400 truncate">
                     {n.grade_level ? `Target: ${n.grade_level}` : 'All Students'}
                   </span>
                 </div>
 
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 font-cinzel">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 font-cinzel break-words">
                   {n.title}
                 </h3>
 
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4 break-words">
                   {n.description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
-                <div>
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs gap-2">
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Amount Due</p>
-                  <p className="text-base font-black text-brand-600 dark:text-brand-400 font-mono">
+                  <p className="text-base font-black text-brand-600 dark:text-brand-400 font-mono truncate">
                     {formatPeso(n.amount)}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Due Date</p>
                   <p className="font-semibold text-slate-700 dark:text-slate-200">
                     {n.due_date || 'Standard'}
@@ -167,7 +167,7 @@ export default function Notifications() {
       {/* Post Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
             <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">

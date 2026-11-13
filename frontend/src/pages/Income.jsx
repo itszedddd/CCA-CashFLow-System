@@ -218,58 +218,58 @@ export default function Collections() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
-          <div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Total Students</p>
-            <h3 className="text-2xl font-black text-slate-800 dark:text-white mt-1 font-mono">
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white mt-1 font-mono truncate">
               {students.length}
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
               {selectedGrade === 'All' ? 'Across all 11 grades' : `Enrolled in ${selectedGrade}`}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
-          <div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Total Assessment</p>
-            <h3 className="text-xl font-black text-slate-800 dark:text-white mt-1 font-mono">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white mt-1 font-mono truncate">
               {formatPeso(totalDueAll)}
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Assessed for SY 2026-2027</p>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">Assessed for SY 2026-2027</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
             <DollarSign className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
-          <div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 font-cinzel">Total Collected</p>
-            <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+            <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono truncate">
               {formatPeso(totalPaidAll)}
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
               {totalDueAll > 0 ? `${Math.round((totalPaidAll / totalDueAll) * 100)}% overall collection` : '0%'}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center shrink-0">
             <ArrowUpRight className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
-          <div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-rose-500 font-cinzel">Outstanding Due</p>
-            <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono">
+            <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono truncate">
               {formatPeso(totalOutstandingAll)}
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Unpaid tuition & fees</p>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">Unpaid tuition & fees</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center shrink-0">
             <AlertCircle className="w-5 h-5" />
           </div>
         </div>
@@ -315,7 +315,7 @@ export default function Collections() {
         </div>
 
         {/* Status Pill Filters */}
-        <div className="flex items-center gap-1.5 self-stretch sm:self-auto justify-end">
+        <div className="flex flex-wrap items-center gap-1.5 self-stretch sm:self-auto justify-start sm:justify-end">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-cinzel">
             Status:
           </span>
@@ -341,15 +341,15 @@ export default function Collections() {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700 text-slate-400 text-[10px] uppercase font-cinzel font-bold">
-                <th className="text-left py-3.5 px-4">Student Name</th>
-                <th className="text-left py-3.5 px-4">Grade & Section</th>
-                <th className="text-left py-3.5 px-4">Student ID / LRN</th>
-                <th className="text-left py-3.5 px-4">Parent / Guardian</th>
-                <th className="text-right py-3.5 px-4">Total Assessed</th>
-                <th className="text-right py-3.5 px-4">Total Paid</th>
-                <th className="text-right py-3.5 px-4">Remaining Balance</th>
-                <th className="text-center py-3.5 px-4">Status</th>
-                <th className="text-right py-3.5 px-4">Actions</th>
+                <th className="text-left py-3.5 px-4 whitespace-nowrap">Student Name</th>
+                <th className="text-left py-3.5 px-4 whitespace-nowrap">Grade & Section</th>
+                <th className="text-left py-3.5 px-4 whitespace-nowrap">Student ID / LRN</th>
+                <th className="text-left py-3.5 px-4 whitespace-nowrap">Parent / Guardian</th>
+                <th className="text-right py-3.5 px-4 whitespace-nowrap">Total Assessed</th>
+                <th className="text-right py-3.5 px-4 whitespace-nowrap">Total Paid</th>
+                <th className="text-right py-3.5 px-4 whitespace-nowrap">Remaining Balance</th>
+                <th className="text-center py-3.5 px-4 whitespace-nowrap">Status</th>
+                <th className="text-right py-3.5 px-4 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -369,42 +369,42 @@ export default function Collections() {
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition group cursor-pointer"
                     onClick={() => navigate(`/collections/${s.id}`)}
                   >
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-bold text-brand-600 dark:text-brand-400 text-xs">
+                        <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-bold text-brand-600 dark:text-brand-400 text-xs shrink-0">
                           {s.full_name.charAt(0)}
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-900 dark:text-white uppercase font-sans">
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 dark:text-white uppercase font-sans truncate">
                             {s.full_name}
                           </p>
                           <p className="text-[10px] text-slate-400">{s.gender || 'Student'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <span className="font-semibold text-slate-800 dark:text-slate-200">
                         {s.grade_level}
                       </span>
                       <p className="text-[10px] text-slate-400">{s.section || 'Faith'}</p>
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-600 dark:text-slate-300">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
                       {s.student_id}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <p className="font-medium text-slate-700 dark:text-slate-300">{s.parent_name || 'N/A'}</p>
                       <p className="text-[10px] text-slate-400 font-mono">{s.parent_contact || ''}</p>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
+                    <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       {formatPeso(s.total_due)}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                       {formatPeso(s.total_paid)}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-black text-rose-600 dark:text-rose-400">
+                    <td className="py-3.5 px-4 text-right font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
                       {formatPeso(s.outstanding_balance)}
                     </td>
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel border ${
                         s.payment_status === 'Fully Paid'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
@@ -415,11 +415,11 @@ export default function Collections() {
                         {s.payment_status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => openQuickPay(s)}
-                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
                           title="Record payment for this student"
                         >
                           <CreditCard className="w-3 h-3" />
@@ -428,7 +428,7 @@ export default function Collections() {
                         {s.outstanding_balance > 0 && (
                           <button
                             onClick={() => openNoticeLetter(s.id)}
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
                             title="Generate payment notice letter"
                           >
                             <FileText className="w-3 h-3" />
@@ -437,7 +437,7 @@ export default function Collections() {
                         )}
                         <button
                           onClick={() => navigate(`/collections/${s.id}`)}
-                          className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer shrink-0"
                           title="View student profile"
                         >
                           <ChevronRight className="w-4 h-4" />
@@ -461,7 +461,7 @@ export default function Collections() {
       {/* Add New Student Modal */}
       {showAddStudentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
             <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">
@@ -603,7 +603,7 @@ export default function Collections() {
       {/* Quick Payment Modal */}
       {showQuickPayModal && selectedStudentForPay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
             <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">

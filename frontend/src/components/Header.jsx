@@ -76,30 +76,30 @@ export default function Header({
   return (
     <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 flex items-center justify-between px-4 md:px-8 z-30 print:hidden transition-colors duration-300">
       {/* Left: Mobile hamburger & Page Title */}
-      <div className="flex items-center space-x-3 min-w-0">
+      <div className="flex items-center space-x-3 min-w-0 flex-1 mr-2">
         <button
           onClick={onMenuToggle}
-          className="md:hidden p-2 -ml-1 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-white transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+          className="md:hidden p-2 -ml-1 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-white transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0"
           aria-label="Toggle menu"
         >
           <Menu className="w-6 h-6" />
         </button>
 
-        <div>
-          <h1 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white truncate font-cinzel tracking-tight">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-800 dark:text-white truncate font-cinzel tracking-tight">
             {activeTitle}
           </h1>
         </div>
 
-        <div className="hidden lg:flex items-center ml-2">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-50 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-100 dark:border-brand-800">
+        <div className="hidden lg:flex items-center ml-2 shrink-0">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-50 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-100 dark:border-brand-800 whitespace-nowrap">
             SY 2026-2027
           </span>
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center space-x-2 md:space-x-3">
+      <div className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-3 shrink-0">
         {/* Search Bar with live preview */}
         <div className="relative hidden sm:block" ref={searchRef}>
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">

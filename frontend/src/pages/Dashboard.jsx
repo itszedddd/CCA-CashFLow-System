@@ -92,29 +92,29 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Top Banner & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight truncate">
             Financial Dashboard
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Real-time cashflow metrics, income streams, and disbursements for School Year 2026-2027.
+            Real-time cashflow metrics, tuition collections, and student profiles for School Year 2026-2027.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Link
             to="/income"
             className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
           >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Record Income
+            <Plus className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+            <span>Manage Collections</span>
           </Link>
           <Link
-            to="/expenses"
-            className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition"
+            to="/notifications"
+            className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition"
           >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Record Expense
+            <Plus className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+            <span>Post Payment Notice</span>
           </Link>
         </div>
       </div>
