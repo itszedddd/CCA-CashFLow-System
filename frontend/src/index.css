@@ -158,79 +158,10 @@ html.accessible-mode .dark {
 /* Print Layout CSS */
 @media print {
   @page {
-    size: letter portrait;
-    margin: 8mm 10mm;
+    margin: 10mm 8mm;
+    size: portrait;
   }
   
-  html, body {
-    height: 100% !important;
-    overflow: visible !important;
-    background-color: white !important;
-    color: black !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    font-size: 10pt !important;
-  }
-  
-  ::-webkit-scrollbar {
-    display: none !important;
-  }
-  * {
-    scrollbar-width: none !important;
-  }
-
-  /* Default hide everything on print */
-  body * {
-    visibility: hidden;
-  }
-  
-  /* Show only printable modals / areas */
-  #printable-letter,
-  #printable-letter *,
-  #printable-receipt,
-  #printable-receipt *,
-  #printable-yearly-record,
-  #printable-yearly-record *,
-  .printable-area,
-  .printable-area * {
-    visibility: visible;
-  }
-  
-  #printable-letter,
-  #printable-receipt,
-  #printable-yearly-record,
-  .printable-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    background: white !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  /* Force Payment Notice Letter to fit on exactly 1 single page */
-  #printable-letter {
-    max-height: 255mm !important;
-    overflow: hidden !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  #printable-receipt {
-    max-height: 260mm !important;
-    overflow: hidden !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
   .print-page {
     width: 100%;
     height: auto;
@@ -247,5 +178,46 @@ html.accessible-mode .dark {
   .print-page:last-child {
     page-break-after: auto;
     break-after: auto;
+  }
+  
+  body {
+    background-color: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10pt !important;
+  }
+  
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+  * {
+    scrollbar-width: none !important;
+  }
+  
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .printable-area .bg-white,
+  .printable-area li,
+  .printable-area tr,
+  .printable-area .grid > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .printable-area .shadow-sm,
+  .printable-area .shadow-md,
+  .printable-area .shadow-xl {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
   }
 }
