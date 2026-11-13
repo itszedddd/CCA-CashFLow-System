@@ -139,7 +139,7 @@ class Income(Base):
     or_number = Column(String, nullable=True, index=True)  # Official Receipt Number
     payer_name = Column(String, nullable=True)
     payer_type = Column(String, default="Student")
-    payment_method = Column(String, default="Cash")  # Cash, Bank Transfer, Check, GCash
+    payment_method = Column(String, default="Cash")  # Cash, Check
     reference_number = Column(String, nullable=True)
     school_year = Column(String, default="2026-2027")
     date_recorded = Column(String)

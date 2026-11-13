@@ -169,7 +169,7 @@ def seed_database(db: Session):
 
         # 5. ── Generate Sample Payment Receipts Linked to Students ──
         or_counter = 20260100
-        payment_methods = ["Cash", "GCash", "Bank Transfer"]
+        payment_methods = ["Cash", "Cash", "Cash", "Check"]
         now = datetime.now()
 
         for s in created_students:

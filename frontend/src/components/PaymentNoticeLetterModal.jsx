@@ -159,7 +159,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
           {/* Call to action & Payment instructions */}
           <div className="text-xs text-slate-700 space-y-2 leading-relaxed mb-5 print:mb-4 print:space-y-1.5 text-justify">
             <p>
-              We kindly request you to settle the outstanding balance at the <strong>Calvary Christian Academy Cashier Window</strong> during regular school hours (Monday to Friday, 8:00 AM to 4:00 PM). Payment can be made in Cash, GCash, or Bank Transfer.
+              We kindly request you to settle the outstanding balance at the <strong>Calvary Christian Academy Cashier Window</strong> during regular school hours (Monday to Friday, 8:00 AM to 4:00 PM). Payments can be made in Cash (via Cashier Window or Student Brown Envelope).
             </p>
             <p>
               If payment has recently been made, please present your Official Receipt to the Cashier for immediate verification and ledger updating. If you have any inquiries regarding the balance breakdown, feel free to visit our office or contact our cashier.

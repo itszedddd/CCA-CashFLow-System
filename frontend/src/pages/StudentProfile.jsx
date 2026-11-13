@@ -581,9 +581,7 @@ export default function StudentProfile() {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-800 dark:text-white outline-none"
                   >
-                    <option value="Cash">Cash (Window)</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cash">Cash (Window / Brown Envelope)</option>
                     <option value="Check">Check</option>
                   </select>
                 </div>

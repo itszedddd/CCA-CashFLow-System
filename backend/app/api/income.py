@@ -399,9 +399,9 @@ def download_csv_template(current_user: User = Depends(get_current_user)):
     writer.writerow(["Date", "OR Number", "Student Name", "Grade Level", "Category", "Amount", "Payment Method", "Remarks"])
     writer.writerow(["2026-11-01", "OR-2026-0001", "Juan Dela Cruz", "Grade 7-10", "Tuition Fees", "1906.00", "Cash", "Monthly tuition November"])
     writer.writerow(["2026-11-01", "OR-2026-0002", "Maria Clara", "Grade 1-6", "Tuition Fees", "1701.00", "Cash", "Monthly tuition November"])
-    writer.writerow(["2026-11-01", "OR-2026-0003", "Pedro Penduko", "Kindergarten", "Energy Fees", "150.00", "GCash", "Energy utility"])
+    writer.writerow(["2026-11-01", "OR-2026-0003", "Pedro Penduko", "Kindergarten", "Energy Fees", "150.00", "Cash", "Energy utility"])
     writer.writerow(["2026-11-01", "OR-2026-0004", "Jose Rizal", "Grade 7-10", "Registration & Misc Fees", "5700.00", "Cash", "Annual registration"])
-    writer.writerow(["2026-11-01", "OR-2026-0005", "Gabriela Silang", "Grade 1-6", "Books & Materials", "6900.00", "Bank Transfer", "Books and supplies"])
+    writer.writerow(["2026-11-01", "OR-2026-0005", "Gabriela Silang", "Grade 1-6", "Books & Materials", "6900.00", "Check", "Books and supplies"])
 
     output.seek(0)
     return StreamingResponse(

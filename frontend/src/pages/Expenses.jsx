@@ -462,7 +462,6 @@ export default function Expenses() {
               >
                 <option value="Cash">Cash</option>
                 <option value="Check">Check</option>
-                <option value="Bank Transfer">Bank Transfer</option>
                 <option value="Petty Cash">Petty Cash</option>
               </select>
             </div>
