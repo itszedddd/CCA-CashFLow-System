@@ -25,6 +25,15 @@ export default function AnomalyDetection() {
   const [cashierNotes, setCashierNotes] = useState('');
   const addToast = useToast();
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('cca_cf_user') || '{}');
+    } catch {
+      return {};
+    }
+  })();
+  const canClearHighRisk = ['Admin', 'admin', 'Principal', 'principal', 'Accountant', 'accountant'].includes(currentUser?.role);
+
   useEffect(() => {
     fetchSummary();
   }, []);
@@ -94,7 +103,7 @@ export default function AnomalyDetection() {
       fetchTransactions();
       fetchSummary();
     } catch (err) {
-      addToast('Failed to update resolution status', 'error');
+      addToast(err.response?.data?.detail || 'Failed to update resolution status', 'error');
     }
   };
 
@@ -723,6 +732,16 @@ export default function AnomalyDetection() {
               />
             </div>
 
+            {/* Role restriction banner for High-Risk anomalies */}
+            {selectedTx.anomaly_level === 'High' && !canClearHighRisk && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                <span>
+                  High-Risk anomalies require <strong>Administrator, Principal, or Accountant</strong> clearance.
+                </span>
+              </div>
+            )}
+
             {/* Modal Actions */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
               <button
@@ -744,8 +763,10 @@ export default function AnomalyDetection() {
                 </button>
                 <button
                   type="button"
+                  disabled={selectedTx.anomaly_level === 'High' && !canClearHighRisk}
+                  title={selectedTx.anomaly_level === 'High' && !canClearHighRisk ? 'Requires Admin, Principal, or Accountant role to clear' : 'Verify and clear this transaction'}
                   onClick={() => handleResolve(selectedTx.id, 'verify_clear')}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition font-cinzel uppercase tracking-wider"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition font-cinzel uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Verify & Clear
                 </button>

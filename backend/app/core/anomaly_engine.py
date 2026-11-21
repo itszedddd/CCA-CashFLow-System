@@ -86,6 +86,32 @@ def _get_category_expected_fee(category_name: str, grade_level: Optional[str] = 
     return 500.0
 
 
+def _get_category_fee_ceiling(category_name: str, grade_level: Optional[str] = None) -> float:
+    """Returns the maximum official assessment ceiling for a category."""
+    cat_lower = (category_name or "").lower()
+    if "tuition" in cat_lower:
+        if grade_level and "kinder" in grade_level.lower():
+            return 16060.0
+        elif grade_level and any(g in grade_level.lower() for g in ["1", "2", "3", "4", "5", "6"]):
+            return 17010.0
+        return 19060.0
+    elif "energy" in cat_lower:
+        if grade_level and "kinder" in grade_level.lower():
+            return 1500.0
+        return 3000.0
+    elif "registration" in cat_lower:
+        return 5700.0
+    elif "book" in cat_lower:
+        if grade_level and any(g in grade_level.lower() for g in ["7", "8", "9", "10"]):
+            return 9200.0
+        elif grade_level and "kinder" in grade_level.lower():
+            return 5500.0
+        return 6900.0
+    elif "swim" in cat_lower:
+        return 1200.0
+    return 5000.0
+
+
 def evaluate_single_transaction(
     amount: float,
     category_id: int,
@@ -100,6 +126,7 @@ def evaluate_single_transaction(
     category_mean: Optional[float] = None,
     category_std: Optional[float] = None,
     current_balance: Optional[float] = None,
+    duplicate_count: int = 0,
 ) -> Dict[str, Any]:
     """
     Evaluates a single transaction on-the-fly and produces:
@@ -117,6 +144,20 @@ def evaluate_single_transaction(
 
     cat_name = category_name or "General"
     cat_lower = cat_name.lower()
+
+    # ── Pre-compute: Multi-Month Advance Payment flag ──
+    # For tuition/energy, check if amount is an exact multiple of the monthly fee
+    is_valid_multi_month = False
+    multi_month_count = 0
+    monthly_fee_for_cat = 0.0
+    if "tuition" in cat_lower or "energy" in cat_lower:
+        monthly_fee_for_cat = _get_category_expected_fee(cat_name, grade_level)
+        if monthly_fee_for_cat and monthly_fee_for_cat > 0 and amount > monthly_fee_for_cat * 1.5:
+            months_ratio = amount / monthly_fee_for_cat
+            nearest_months = round(months_ratio)
+            if 2 <= nearest_months <= 10 and abs(months_ratio - nearest_months) < 0.02:
+                is_valid_multi_month = True
+                multi_month_count = nearest_months
 
     # ──────────────────────────────────────────────────────────
     # CHECK 0: Outstanding Balance Overpayment (Direct Ledger Check)
@@ -149,23 +190,23 @@ def evaluate_single_transaction(
     # ──────────────────────────────────────────────────────────
     # CHECK 1: Expected Fee Schedule Deviation (SOP Feature #2)
     # ──────────────────────────────────────────────────────────
-    if expected_amount > 0:
-        diff_ratio = (amount - expected_amount) / expected_amount
-        abs_diff_pct = abs(diff_ratio) * 100
-
-        if amount > expected_amount:
+    fee_ceiling = max(expected_amount, _get_category_fee_ceiling(category_name, grade_level))
+    if fee_ceiling > 0:
+        if amount > fee_ceiling:
             # Overpayment beyond official fee ceiling (e.g. > ₱19,060 tuition, > ₱5,700 reg, > ₱3,000 energy)
-            overpay_diff = amount - expected_amount
-            # Ensure overpayment of official ceiling is flagged as High Severity (>= 75 points)
-            anomaly_points += min(95.0, 75.0 + (overpay_diff / expected_amount) * 20.0)
+            overpay_diff = amount - fee_ceiling
+            abs_diff_pct = (overpay_diff / fee_ceiling) * 100.0
+            anomaly_points += min(95.0, 75.0 + (overpay_diff / fee_ceiling) * 20.0)
             reasons.append(
-                f"EXCESS ASSESSMENT OVERPAYMENT: Payment amount (₱{amount:,.2f}) exceeds official fee ceiling (₱{expected_amount:,.2f}) "
+                f"EXCESS ASSESSMENT OVERPAYMENT: Payment amount (₱{amount:,.2f}) exceeds official fee ceiling (₱{fee_ceiling:,.2f}) "
                 f"by ₱{overpay_diff:,.2f} (+{abs_diff_pct:.1f}%). Possible category misclassification or overcollection."
             )
             recommendations.append(
                 "Verify whether the payment was misclassified or erroneously combines fees for multiple categories."
             )
         elif amount < expected_amount and (current_balance is None or amount <= current_balance):
+            diff_ratio = (amount - expected_amount) / expected_amount
+            abs_diff_pct = abs(diff_ratio) * 100.0
             if not is_partial:
                 # Underpayment without marking as partial
                 anomaly_points += 40.0
@@ -252,6 +293,79 @@ def evaluate_single_transaction(
                 f"Moderate Variance (Z={z_score:.1f}) relative to category distribution (₱{category_mean:,.2f})."
             )
 
+    # ──────────────────────────────────────────────────────────
+    # CHECK 6: Duplicate / Rapid Submission Detection
+    # ──────────────────────────────────────────────────────────
+    if duplicate_count > 0:
+        anomaly_points += 80.0
+        reasons.append(
+            f"DUPLICATE ENTRY: An identical payment of ₱{amount:,.2f} for {cat_name} was recorded "
+            f"for this student within the last 60 minutes ({duplicate_count} prior match(es))."
+        )
+        recommendations.append(
+            "Void the duplicate transaction or confirm with student's brown envelope if multiple installments were intended."
+        )
+
+    # ──────────────────────────────────────────────────────────
+    # CHECK 7: Cross-Category Fee Dumping Detection
+    # ──────────────────────────────────────────────────────────
+    if not is_valid_multi_month:
+        _cross_cat_benchmarks = {
+            "tuition": [1606.0, 1701.0, 1706.0, 1801.0, 1906.0, 2006.0],
+            "registration": [5700.0],
+            "book": [5500.0, 6300.0, 6900.0, 8500.0, 9200.0],
+            "energy": [150.0, 300.0, 1500.0, 3000.0],
+        }
+        for other_cat_key, benchmarks in _cross_cat_benchmarks.items():
+            if other_cat_key in cat_lower:
+                continue  # skip the category the payment is actually filed under
+            for bench_val in benchmarks:
+                if bench_val > 0 and (abs(amount - bench_val) <= 1.0 or abs(amount - bench_val) / bench_val < 0.005):
+                    other_label = other_cat_key.replace("book", "Books & Materials").replace(
+                        "tuition", "Tuition Fee").replace("registration", "Registration Fee").replace(
+                        "energy", "Energy Fee")
+                    anomaly_points += 60.0
+                    reasons.append(
+                        f"CROSS-CATEGORY MISMATCH: Amount ₱{amount:,.2f} precisely matches the {other_label} "
+                        f"benchmark (₱{bench_val:,.2f}) but was filed under {cat_name}. Possible fee dumping."
+                    )
+                    recommendations.append(
+                        f"Verify brown envelope: this payment may belong under {other_label} instead of {cat_name}."
+                    )
+                    break  # one match per foreign category is enough
+
+    # ──────────────────────────────────────────────────────────
+    # CHECK 8: Multi-Month Advance Payment Validation
+    # ──────────────────────────────────────────────────────────
+    if "tuition" in cat_lower or "energy" in cat_lower:
+        monthly_fee = _get_category_expected_fee(cat_name, grade_level)
+        if monthly_fee and monthly_fee > 0 and amount > monthly_fee * 1.5:
+            months_ratio = amount / monthly_fee
+            nearest_months = round(months_ratio)
+            if nearest_months >= 2 and nearest_months <= 10 and abs(months_ratio - nearest_months) < 0.02:
+                # Valid multi-month advance — reduce any partial-payment penalty already applied
+                if current_balance is not None and amount <= current_balance:
+                    reasons.append(
+                        f"Multi-month advance payment detected: ₱{amount:,.2f} covers {nearest_months} months "
+                        f"of {cat_name} at ₱{monthly_fee:,.2f}/mo. Within outstanding balance — legitimate."
+                    )
+                    # Don't add extra points; this is a legitimate multi-month payment
+                else:
+                    reasons.append(
+                        f"Multi-month advance payment detected: ₱{amount:,.2f} covers {nearest_months} months "
+                        f"of {cat_name} at ₱{monthly_fee:,.2f}/mo."
+                    )
+            else:
+                # Amount is big but doesn't align with monthly multiples
+                anomaly_points += 40.0
+                reasons.append(
+                    f"Irregular installment amount: ₱{amount:,.2f} does not align with standard monthly "
+                    f"fee multiples for {cat_name} (₱{monthly_fee:,.2f}/mo, ratio={months_ratio:.2f}x)."
+                )
+                recommendations.append(
+                    "Confirm payment breakdown with student or parent. Amount may combine fees from multiple categories."
+                )
+
     # Base noise baseline for healthy entries
     if not reasons:
         anomaly_points = max(2.0, min(18.0, abs(amount % 100) / 10.0))
@@ -324,14 +438,20 @@ class AnomalyEngine:
                     "expected": cat.expected_amount or 0.0,
                 }
 
-        # 2. Compute student historical payment averages
-        student_history = {}
+        # 2. Compute student historical payment averages (by student_id_ref FK, fallback to payer_name)
+        student_history_by_id = {}
+        student_history_by_name = {}
         for inc in incomes:
-            name = (inc.payer_name or "").strip()
-            if name:
-                student_history.setdefault(name, []).append(inc.amount)
+            sid = inc.student_id_ref
+            if sid:
+                student_history_by_id.setdefault(sid, []).append(inc.amount)
+            else:
+                name = (inc.payer_name or "").strip()
+                if name:
+                    student_history_by_name.setdefault(name, []).append(inc.amount)
 
-        student_avg = {name: float(np.mean(amounts)) for name, amounts in student_history.items()}
+        student_avg_by_id = {sid: float(np.mean(amounts)) for sid, amounts in student_history_by_id.items()}
+        student_avg_by_name = {name: float(np.mean(amounts)) for name, amounts in student_history_by_name.items()}
 
         # 3. Compute recent voids per payer
         voided_counts = {}
@@ -342,7 +462,8 @@ class AnomalyEngine:
                 voided_counts[pname] = voided_counts.get(pname, 0) + 1
 
         # 4. Prepare feature vectors for IsolationForest
-        # Features: [log(amount + 1), category_id, expected_amount_diff_ratio, ratio_to_cat_mean]
+        # Features: [log(amount + 1), *one_hot_category, expected_diff_ratio, ratio_to_cat_mean, is_partial]
+        all_cat_ids = sorted(categories.keys())
         feature_matrix = []
         for inc in incomes:
             cat_name = categories.get(inc.category_id).name if inc.category_id in categories else ""
@@ -351,9 +472,12 @@ class AnomalyEngine:
             ratio_mean = (inc.amount / c_mean) if c_mean > 0 else 1.0
             exp_diff = (abs(inc.amount - expected) / expected) if expected > 0 else 0.0
 
+            # One-hot encode category_id instead of using raw integer
+            one_hot_cat = [1.0 if inc.category_id == cid else 0.0 for cid in all_cat_ids]
+
             feature_matrix.append([
                 math.log1p(inc.amount),
-                float(inc.category_id),
+                *one_hot_cat,
                 float(exp_diff),
                 float(ratio_mean),
                 1.0 if inc.is_partial else 0.0,
@@ -362,7 +486,8 @@ class AnomalyEngine:
         # 5. Fit IsolationForest if enough samples and scikit-learn is available
         if SKLEARN_AVAILABLE and len(feature_matrix) >= 10:
             X = np.array(feature_matrix)
-            iso = IsolationForest(n_estimators=100, contamination=0.12, random_state=42)
+            # Adaptive contamination: use 'auto' to prevent data-poisoning over time
+            iso = IsolationForest(n_estimators=100, contamination="auto", random_state=42)
             iso.fit(X)
             # decision_function: lower means more anomalous (negative for outliers)
             raw_scores = iso.decision_function(X)
@@ -390,7 +515,7 @@ class AnomalyEngine:
             cat_name = cat_obj.name if cat_obj else "Unknown"
             exp_amt = inc.expected_amount or cat_stats.get(inc.category_id, {}).get("expected") or _get_category_expected_fee(cat_name, inc.grade_level)
             payer = (inc.payer_name or "").strip()
-            hist_avg = student_avg.get(payer)
+            hist_avg = student_avg_by_id.get(inc.student_id_ref) if inc.student_id_ref else student_avg_by_name.get(payer)
             void_cnt = voided_counts.get(payer, 0)
             c_stat = cat_stats.get(inc.category_id, {})
 

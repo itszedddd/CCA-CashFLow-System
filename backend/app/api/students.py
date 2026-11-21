@@ -1,8 +1,9 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ..database import get_db
 from ..models.models import (
@@ -382,6 +383,17 @@ def record_student_payment(
     # Capture outstanding balance BEFORE payment is applied
     outstanding_before_pay = float(fs.remaining_balance)
 
+    # ── Duplicate / Rapid Submission Detection ──
+    # Check for identical payments (same student, same category, same amount) within last 60 minutes
+    cutoff_time = (datetime.now() - timedelta(minutes=60)).isoformat()
+    duplicate_count = db.query(Income).filter(
+        Income.student_id_ref == student.id,
+        Income.fee_type == data.fee_type,
+        Income.amount == data.amount,
+        Income.date_recorded > cutoff_time,
+        Income.is_voided == 0,
+    ).count()
+
     # Update fee schedule balance
     fs.total_paid += data.amount
     fs.remaining_balance = max(0.0, fs.total_due - fs.total_paid)
@@ -429,7 +441,8 @@ def record_student_payment(
         payment_method=data.payment_method,
         expected_amount=fs.total_due,
         is_partial=income.is_partial,
-        current_balance=outstanding_before_pay
+        current_balance=outstanding_before_pay,
+        duplicate_count=duplicate_count,
     )
     income.anomaly_score = eval_res.get("anomaly_score", 0.0)
     income.anomaly_level = eval_res.get("anomaly_level", "Low")

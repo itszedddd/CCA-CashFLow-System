@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 import io
 import re
@@ -83,6 +83,18 @@ def create_income(
     # ────────────────────────────────────────────────────────
     # FEATURE #6: ML Anomaly Scoring
     # ────────────────────────────────────────────────────────
+    # Check for duplicate payments within last 60 minutes
+    cutoff_time = (datetime.now() - timedelta(minutes=60)).isoformat()
+    dup_query = db.query(Income).filter(
+        Income.amount == data.amount,
+        Income.category_id == data.category_id,
+        Income.date_recorded > cutoff_time,
+        Income.is_voided == 0
+    )
+    if data.payer_name:
+        dup_query = dup_query.filter(Income.payer_name == data.payer_name)
+    duplicate_count = dup_query.count()
+
     anomaly_eval = evaluate_single_transaction(
         amount=data.amount,
         category_id=data.category_id,
@@ -92,6 +104,7 @@ def create_income(
         payment_method=data.payment_method or "Cash",
         expected_amount=expected_amt,
         is_partial=is_partial,
+        duplicate_count=duplicate_count,
     )
 
     income_dict = data.model_dump()

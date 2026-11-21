@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -131,6 +131,18 @@ def evaluate_transaction_endpoint(
     cat = db.query(IncomeCategory).filter(IncomeCategory.id == data.category_id).first()
     category_name = data.fee_type or (cat.name if cat else "General")
 
+    # Real-time duplicate check within last 60 minutes
+    cutoff_time = (datetime.now() - timedelta(minutes=60)).isoformat()
+    duplicate_count = 0
+    if data.payer_name and data.amount and data.amount > 0:
+        duplicate_count = db.query(Income).filter(
+            Income.amount == data.amount,
+            Income.category_id == data.category_id,
+            Income.payer_name.ilike(f"%{data.payer_name.strip()}%"),
+            Income.date_recorded > cutoff_time,
+            Income.is_voided == 0
+        ).count()
+
     res = evaluate_single_transaction(
         amount=data.amount,
         category_id=data.category_id,
@@ -141,6 +153,7 @@ def evaluate_transaction_endpoint(
         expected_amount=data.expected_amount or (cat.expected_amount if cat else 0.0),
         is_partial=data.is_partial or 0,
         current_balance=data.current_balance,
+        duplicate_count=duplicate_count,
     )
     return res
 
@@ -178,10 +191,24 @@ def resolve_anomaly(
     """
     Cashier resolves a flagged anomaly by either marking it as verified & cleared,
     or flagging it for manual correction.
+    High-Risk anomalies require Admin or Principal clearance.
     """
     income = db.query(Income).filter(Income.id == income_id).first()
     if not income:
         raise HTTPException(status_code=404, detail="Transaction record not found")
+
+    # Role-based authorization: High-Risk anomalies cannot be cleared by Cashiers
+    if data.action == "verify_clear" and income.anomaly_level == "High":
+        allowed_roles = {"Admin", "admin", "Principal", "principal", "Accountant", "accountant"}
+        user_role = (current_user.role or "").strip()
+        if user_role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "High-Risk anomalies require Administrator, Principal, or Accountant clearance. "
+                    "Please request approval from the Head Cashier or School Administration."
+                )
+            )
 
     if data.action == "verify_clear":
         income.anomaly_status = "Verified_Cleared"
@@ -199,7 +226,7 @@ def resolve_anomaly(
         action=action_text,
         entity_type="Income",
         entity_id=income.id,
-        details=f"Cashier {current_user.full_name} resolved transaction {income.or_number}. Notes: {data.cashier_notes or 'None'}",
+        details=f"User {current_user.full_name} (Role: {current_user.role}) resolved transaction {income.or_number}. Level: {income.anomaly_level}. Notes: {data.cashier_notes or 'None'}",
         timestamp=datetime.now().isoformat()
     )
     db.add(log)
