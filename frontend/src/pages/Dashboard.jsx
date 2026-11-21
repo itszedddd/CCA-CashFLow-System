@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  TrendingUp, TrendingDown, DollarSign, Clock,
+  TrendingUp, TrendingDown, Clock,
   ArrowUpRight, ArrowDownRight, BarChart3, AlertCircle,
   Plus, Calendar, ArrowRight, ShieldCheck, Wallet
 } from 'lucide-react';
+import PesoSign from '../components/PesoSign';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
@@ -145,7 +146,7 @@ export default function Dashboard() {
           label="Net CashFlow"
           value={formatPeso(stats.net_cashflow)}
           sub={isNetPositive ? 'Healthy Operating Surplus' : 'Disbursements Exceed Inflow'}
-          icon={DollarSign}
+          icon={PesoSign}
           color={isNetPositive ? 'text-brand-600 dark:text-brand-400' : 'text-rose-500'}
           accentBg={isNetPositive ? 'bg-brand-50 dark:bg-brand-950/60' : 'bg-rose-50 dark:bg-rose-950/60'}
           trendUp={isNetPositive}

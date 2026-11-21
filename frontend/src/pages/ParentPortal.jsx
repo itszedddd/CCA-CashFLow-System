@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   User, ShieldCheck, Printer, CheckCircle2, Clock, AlertCircle,
   Bell, GraduationCap, BookOpen, Zap, Sparkles, FileText,
-  DollarSign, ArrowUpRight
+  ArrowUpRight
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';

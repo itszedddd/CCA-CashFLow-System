@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Filter, Plus, CreditCard, ChevronRight,
   GraduationCap, AlertCircle, AlertTriangle, CheckCircle2, Clock, FileText,
-  DollarSign, ArrowUpRight, ShieldCheck, Eye, Sparkles
+  ArrowUpRight, ShieldCheck, Eye, Sparkles
 } from 'lucide-react';
+import PesoSign from '../components/PesoSign';
 import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
@@ -246,7 +247,7 @@ export default function Collections() {
             <p className="text-[11px] text-slate-400 mt-0.5 truncate">Assessed for SY 2026-2027</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
-            <DollarSign className="w-5 h-5" />
+            <PesoSign className="w-5 h-5" />
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Bell, Plus, Calendar, DollarSign, Send, CheckCircle2,
+  Bell, Plus, Calendar, Send, CheckCircle2,
   AlertCircle, Users, Sparkles, Filter, Megaphone
 } from 'lucide-react';
 import api from '../api';

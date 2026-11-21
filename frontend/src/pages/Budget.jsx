@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Wallet, Plus, AlertTriangle, CheckCircle2,
-  Trash2, Edit3, ArrowUpRight, TrendingUp, DollarSign
+  Trash2, Edit3, ArrowUpRight, TrendingUp
 } from 'lucide-react';
+import PesoSign from '../components/PesoSign';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
@@ -173,7 +174,7 @@ export default function Budget() {
           label="Remaining Allocation"
           value={formatPeso(totalRemaining)}
           sub={totalRemaining >= 0 ? 'Surplus capital available' : 'Budget deficit occurred'}
-          icon={DollarSign}
+          icon={PesoSign}
           color={totalRemaining >= 0 ? 'text-emerald-500' : 'text-rose-500'}
           accentBg={totalRemaining >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/60' : 'bg-rose-50 dark:bg-rose-950/60'}
           trendUp={totalRemaining >= 0}

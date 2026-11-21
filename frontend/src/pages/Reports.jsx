@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   FileBarChart, Printer, Calendar, Download,
-  TrendingUp, TrendingDown, DollarSign, CheckCircle2,
+  TrendingUp, TrendingDown, CheckCircle2,
   Filter, Layers, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import api from '../api';
