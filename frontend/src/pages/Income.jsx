@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Filter, Plus, CreditCard, ChevronRight,
-  GraduationCap, AlertCircle, CheckCircle2, Clock, FileText,
+  GraduationCap, AlertCircle, AlertTriangle, CheckCircle2, Clock, FileText,
   DollarSign, ArrowUpRight, ShieldCheck, Eye, Sparkles
 } from 'lucide-react';
 import api from '../api';
@@ -158,7 +158,11 @@ export default function Collections() {
         envelope_verified: 1
       });
 
-      addToast(res.data.message || 'Payment recorded successfully!', 'success');
+      if (res.data.anomaly && res.data.anomaly.status === 'Flagged') {
+        addToast(`⚠️ Anomaly Flagged: ${res.data.anomaly.level} Risk (Score: ${res.data.anomaly.score}). Logged in ML Anomaly Ledger!`, 'warning');
+      } else {
+        addToast(res.data.message || 'Payment recorded successfully!', 'success');
+      }
       setShowQuickPayModal(false);
 
       if (res.data.receipt) {
@@ -635,22 +639,46 @@ export default function Collections() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                  Fee Category
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block font-cinzel">
+                    Fee Category
+                  </label>
+                  {(() => {
+                    const sched = selectedStudentForPay?.fee_schedules?.find(
+                      (fs) => (fs.category_name || '').toLowerCase() === (payFeeType || '').toLowerCase()
+                    );
+                    if (!sched) return null;
+                    const bal = Math.max(0, (sched.total_due || 0) - (sched.total_paid || 0));
+                    return (
+                      <span className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded-md ${
+                        bal === 0
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                          : 'bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
+                      }`}>
+                        Remaining: {formatPeso(bal)}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <select
                   value={payFeeType}
                   onChange={(e) => {
-                    setPayFeeType(e.target.value);
-                    if (e.target.value === 'Tuition Fee') setPayAmount('1906.00');
-                    else if (e.target.value === 'Energy Fee') setPayAmount('300.00');
+                    const newType = e.target.value;
+                    setPayFeeType(newType);
+                    const sched = selectedStudentForPay?.fee_schedules?.find(
+                      (fs) => (fs.category_name || '').toLowerCase() === (newType || '').toLowerCase()
+                    );
+                    const bal = sched ? Math.max(0, (sched.total_due || 0) - (sched.total_paid || 0)) : 0;
+                    if (newType === 'Tuition Fee') setPayAmount(bal > 0 ? (bal < 1906 ? bal.toFixed(2) : '1906.00') : '0.00');
+                    else if (newType === 'Energy Fee') setPayAmount(bal > 0 ? (bal < 300 ? bal.toFixed(2) : '300.00') : '0.00');
+                    else setPayAmount(bal > 0 ? bal.toFixed(2) : '0.00');
                   }}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-800 dark:text-white outline-none"
                 >
-                  <option value="Tuition Fee">Tuition Fee</option>
-                  <option value="Registration Fee">Registration Fee</option>
-                  <option value="Books">Books & Materials</option>
-                  <option value="Energy Fee">Energy Fee</option>
+                  <option value="Tuition Fee">Tuition Fee (Monthly ₱1,906 / Annual ₱19,060)</option>
+                  <option value="Registration Fee">Registration Fee (Annual ₱5,700)</option>
+                  <option value="Books">Books & Materials (₱6,900)</option>
+                  <option value="Energy Fee">Energy Fee (Monthly ₱300 / Annual ₱3,000)</option>
                   <option value="Other Fees">Other Fees (Tours, Swimming, Activities)</option>
                 </select>
               </div>
@@ -668,6 +696,51 @@ export default function Collections() {
                   placeholder="0.00"
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-mono font-bold text-slate-800 dark:text-white outline-none"
                 />
+
+                {/* Real-time ML/AI Anomaly Alert */}
+                {(() => {
+                  const sched = selectedStudentForPay?.fee_schedules?.find(
+                    (fs) => (fs.category_name || '').toLowerCase() === (payFeeType || '').toLowerCase()
+                  );
+                  if (!sched) return null;
+                  const bal = Math.max(0, (sched.total_due || 0) - (sched.total_paid || 0));
+                  const amt = parseFloat(payAmount) || 0;
+
+                  if (bal === 0 && amt > 0) {
+                    return (
+                      <div className="mt-2.5 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold font-cinzel text-rose-700 dark:text-rose-300 uppercase tracking-wide">
+                          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 animate-pulse" />
+                          <span>ML Alert: Account Already Fully Paid</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          Student has <strong>₱0.00</strong> outstanding balance for <strong>{payFeeType}</strong>. Recording payment of <strong>{formatPeso(amt)}</strong> will be flagged as an invalid excess collection anomaly.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  if (bal > 0 && amt > bal) {
+                    const overpay = amt - bal;
+                    const pct = ((overpay / bal) * 100).toFixed(1);
+                    return (
+                      <div className="mt-2.5 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold font-cinzel text-rose-700 dark:text-rose-300 uppercase tracking-wide">
+                          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 animate-pulse" />
+                          <span>ML Alert: Critical Overpayment Detected</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          Entered amount of <strong>{formatPeso(amt)}</strong> exceeds student's remaining balance of <strong>{formatPeso(bal)}</strong> by <strong>{formatPeso(overpay)}</strong> (+{pct}%).
+                        </p>
+                        <p className="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
+                          • System will flag this as a <strong>CRITICAL ANOMALY (High Risk, Score: 95.0)</strong> in the AI Ledger for Cashier audit.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

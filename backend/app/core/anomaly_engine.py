@@ -99,6 +99,7 @@ def evaluate_single_transaction(
     recent_void_count: int = 0,
     category_mean: Optional[float] = None,
     category_std: Optional[float] = None,
+    current_balance: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Evaluates a single transaction on-the-fly and produces:
@@ -118,6 +119,34 @@ def evaluate_single_transaction(
     cat_lower = cat_name.lower()
 
     # ──────────────────────────────────────────────────────────
+    # CHECK 0: Outstanding Balance Overpayment (Direct Ledger Check)
+    # ──────────────────────────────────────────────────────────
+    if current_balance is not None:
+        if current_balance <= 0.0 and amount > 0:
+            # Student already has zero remaining balance (Already Fully Paid)
+            anomaly_points += 90.0
+            reasons.append(
+                f"CRITICAL OVERPAYMENT: Student {payer_name or 'account'} has ₱0.00 outstanding balance "
+                f"(Already Fully Paid) for {cat_name}. Payment of ₱{amount:,.2f} is an invalid excess/duplicate collection."
+            )
+            recommendations.append(
+                "Do NOT collect payment. Confirm student fee ledger and brown envelope records or refund duplicate payment."
+            )
+        elif current_balance > 0.0 and amount > current_balance:
+            overpay_bal_diff = amount - current_balance
+            overpay_bal_pct = (overpay_bal_diff / current_balance) * 100.0
+            # Guaranteed High Anomaly points (>= 75.0)
+            added_pts = min(95.0, 75.0 + (overpay_bal_diff / current_balance) * 20.0)
+            anomaly_points += added_pts
+            reasons.append(
+                f"CRITICAL OVERPAYMENT: Payment amount (₱{amount:,.2f}) exceeds student's remaining outstanding balance "
+                f"(₱{current_balance:,.2f}) by ₱{overpay_bal_diff:,.2f} (+{overpay_bal_pct:.1f}%)."
+            )
+            recommendations.append(
+                f"Adjust payment amount to match exact outstanding balance (₱{current_balance:,.2f}) or verify if advance credit across categories is intended."
+            )
+
+    # ──────────────────────────────────────────────────────────
     # CHECK 1: Expected Fee Schedule Deviation (SOP Feature #2)
     # ──────────────────────────────────────────────────────────
     if expected_amount > 0:
@@ -125,17 +154,18 @@ def evaluate_single_transaction(
         abs_diff_pct = abs(diff_ratio) * 100
 
         if amount > expected_amount:
-            # Overpayment is considered a severe recording error per CCA SOP
+            # Overpayment beyond official fee ceiling (e.g. > ₱19,060 tuition, > ₱5,700 reg, > ₱3,000 energy)
             overpay_diff = amount - expected_amount
-            anomaly_points += min(65.0, 35.0 + (overpay_diff / expected_amount) * 30.0)
+            # Ensure overpayment of official ceiling is flagged as High Severity (>= 75 points)
+            anomaly_points += min(95.0, 75.0 + (overpay_diff / expected_amount) * 20.0)
             reasons.append(
-                f"Payment amount (₱{amount:,.2f}) exceeds the expected fee (₱{expected_amount:,.2f}) "
-                f"by ₱{overpay_diff:,.2f} (+{abs_diff_pct:.1f}%). Possible misclassification."
+                f"EXCESS ASSESSMENT OVERPAYMENT: Payment amount (₱{amount:,.2f}) exceeds official fee ceiling (₱{expected_amount:,.2f}) "
+                f"by ₱{overpay_diff:,.2f} (+{abs_diff_pct:.1f}%). Possible category misclassification or overcollection."
             )
             recommendations.append(
-                "Verify whether the payment was misclassified or includes fees for an additional category."
+                "Verify whether the payment was misclassified or erroneously combines fees for multiple categories."
             )
-        elif amount < expected_amount:
+        elif amount < expected_amount and (current_balance is None or amount <= current_balance):
             if not is_partial:
                 # Underpayment without marking as partial
                 anomaly_points += 40.0
@@ -160,13 +190,16 @@ def evaluate_single_transaction(
     # ──────────────────────────────────────────────────────────
     # Check if amount matches Tuition rather than miscellaneous or energy
     if "energy" in cat_lower and amount in [1606.0, 1701.0, 1801.0, 1906.0, 2006.0]:
-        anomaly_points += 55.0
+        anomaly_points += 75.0
         reasons.append(
             f"Pattern Mismatch: Amount ₱{amount:,.2f} precisely matches a monthly Tuition Fee tier rather than Energy Fee (₱150-₱300)."
         )
         recommendations.append("Check student's brown envelope to confirm if this should be reclassified as Tuition.")
     elif "registration" in cat_lower and amount != 5700.0 and not is_partial:
-        anomaly_points += 50.0
+        if amount > 5700.0:
+            anomaly_points += 75.0
+        else:
+            anomaly_points += 50.0
         reasons.append(
             f"Registration Fee deviation: CCA official registration fee is fixed at ₱5,700.00; entered amount is ₱{amount:,.2f}."
         )
@@ -379,8 +412,13 @@ class AnomalyEngine:
             # Combine rule-based score with ML Isolation Forest score
             ml_component = iso_anomaly_scores[idx]
             rule_component = eval_res["anomaly_score"]
-            # Weighted ensemble: 50% ML Outlier Score + 50% SOP / Heuristic Rules
-            final_score = round(min(100.0, max(0.0, (0.50 * rule_component) + (0.50 * ml_component))), 1)
+            # Weighted ensemble: Do not allow ML baseline to suppress high or medium deterministic SOP rule violations
+            if rule_component >= 70.0:
+                final_score = max(rule_component, round((0.40 * rule_component) + (0.60 * ml_component), 1))
+            elif rule_component >= 40.0:
+                final_score = max(rule_component, round((0.40 * rule_component) + (0.60 * ml_component), 1))
+            else:
+                final_score = round(min(100.0, max(0.0, (0.50 * rule_component) + (0.50 * ml_component))), 1)
 
             # Re-threshold on ensemble score
             if final_score >= 70.0:

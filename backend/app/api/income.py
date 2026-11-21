@@ -70,20 +70,15 @@ def create_income(
     rem_balance = data.remaining_balance or 0.0
 
     # ────────────────────────────────────────────────────────
-    # FEATURE #2 RULE: Automated Validation & Prevention
+    # FEATURE #2 & #6: Automated Validation, Computation & Anomaly Detection
     # ────────────────────────────────────────────────────────
     if expected_amt > 0:
-        if data.amount > expected_amt:
-            # Overpayment prevented per CCA policy
-            raise HTTPException(
-                status_code=400,
-                detail=f"Entered amount (₱{data.amount:,.2f}) exceeds the required fee of ₱{expected_amt:,.2f}. "
-                       f"Over-amount transactions cannot be processed to prevent category misclassification."
-            )
-        elif data.amount < expected_amt:
+        if data.amount < expected_amt:
             # Automatically flag as partial payment and compute remaining balance
             is_partial = 1
             rem_balance = round(expected_amt - data.amount, 2)
+        elif data.amount > expected_amt:
+            rem_balance = 0.0
 
     # ────────────────────────────────────────────────────────
     # FEATURE #6: ML Anomaly Scoring

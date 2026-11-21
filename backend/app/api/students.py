@@ -379,6 +379,9 @@ def record_student_payment(
         db.add(fs)
         db.flush()
 
+    # Capture outstanding balance BEFORE payment is applied
+    outstanding_before_pay = float(fs.remaining_balance)
+
     # Update fee schedule balance
     fs.total_paid += data.amount
     fs.remaining_balance = max(0.0, fs.total_due - fs.total_paid)
@@ -425,21 +428,26 @@ def record_student_payment(
         grade_level=student.grade_level,
         payment_method=data.payment_method,
         expected_amount=fs.total_due,
-        is_partial=income.is_partial
+        is_partial=income.is_partial,
+        current_balance=outstanding_before_pay
     )
     income.anomaly_score = eval_res.get("anomaly_score", 0.0)
     income.anomaly_level = eval_res.get("anomaly_level", "Low")
-    income.anomaly_reasons = str(eval_res.get("reasons", []))
-    income.anomaly_status = "Flagged" if income.anomaly_level == "High" else "Normal"
+    income.anomaly_reasons = json.dumps({
+        "reasons": eval_res.get("reasons", []),
+        "recommendations": eval_res.get("recommendations", [])
+    })
+    income.anomaly_status = "Flagged" if income.anomaly_level in ["High", "Medium"] else "Normal"
 
     db.add(income)
 
     # Audit Trail
+    anomaly_tag = f" [ML Anomaly: {income.anomaly_level} ({income.anomaly_score}) - {income.anomaly_status}]" if income.anomaly_status == "Flagged" else ""
     audit = AuditLog(
         action=f"Recorded Payment {or_number} for {student.full_name}",
         entity_type="Income",
         entity_id=None,
-        details=f"Fee: {data.fee_type}, Amount: ₱{data.amount:,.2f}, Method: {data.payment_method}",
+        details=f"Fee: {data.fee_type}, Amount: ₱{data.amount:,.2f}, Method: {data.payment_method}{anomaly_tag}",
         timestamp=now_iso
     )
     db.add(audit)
@@ -474,7 +482,14 @@ def record_student_payment(
         "message": f"Payment of ₱{data.amount:,.2f} recorded successfully with OR {or_number}",
         "or_number": or_number,
         "income_id": income.id,
-        "receipt": receipt
+        "receipt": receipt,
+        "anomaly": {
+            "score": income.anomaly_score,
+            "level": income.anomaly_level,
+            "status": income.anomaly_status,
+            "reasons": eval_res.get("reasons", []),
+            "recommendations": eval_res.get("recommendations", [])
+        }
     }
 
 

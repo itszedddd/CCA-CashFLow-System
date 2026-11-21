@@ -20,6 +20,8 @@ class EvaluateRequest(BaseModel):
     payment_method: Optional[str] = "Cash"
     is_partial: Optional[int] = 0
     expected_amount: Optional[float] = None
+    current_balance: Optional[float] = None
+    fee_type: Optional[str] = None
 
 
 class ResolveRequest(BaseModel):
@@ -127,7 +129,7 @@ def evaluate_transaction_endpoint(
     as the Cashier inputs payment details in the modal, preventing errors before save.
     """
     cat = db.query(IncomeCategory).filter(IncomeCategory.id == data.category_id).first()
-    category_name = cat.name if cat else "General"
+    category_name = data.fee_type or (cat.name if cat else "General")
 
     res = evaluate_single_transaction(
         amount=data.amount,
@@ -138,6 +140,7 @@ def evaluate_transaction_endpoint(
         payment_method=data.payment_method or "Cash",
         expected_amount=data.expected_amount or (cat.expected_amount if cat else 0.0),
         is_partial=data.is_partial or 0,
+        current_balance=data.current_balance,
     )
     return res
 
