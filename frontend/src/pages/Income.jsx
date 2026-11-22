@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Filter, Plus, CreditCard, ChevronRight,
   GraduationCap, AlertCircle, AlertTriangle, CheckCircle2, Clock, FileText,
-  ArrowUpRight, ShieldCheck, Eye, Sparkles
+  ArrowUpRight, ShieldCheck, Eye, Sparkles, Upload, Download, FileSpreadsheet, X
 } from 'lucide-react';
 import PesoSign from '../components/PesoSign';
 import api from '../api';
@@ -40,6 +40,52 @@ export default function Collections() {
   const [selectedStudentForPay, setSelectedStudentForPay] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [noticeLetterData, setNoticeLetterData] = useState(null);
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [importingCsv, setImportingCsv] = useState(false);
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const res = await api.get('/students/csv-template', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'CCA_Students_Import_Template.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      addToast('CSV Template downloaded successfully', 'info');
+    } catch (err) {
+      addToast('Failed to download CSV template', 'error');
+    }
+  };
+
+  const handleImportCsv = async (e) => {
+    e.preventDefault();
+    if (!csvFile) {
+      addToast('Please select a CSV file to upload', 'error');
+      return;
+    }
+    setImportingCsv(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', csvFile);
+      const res = await api.post('/students/import-csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      addToast(
+        `Imported ${res.data.imported_count} students! (${res.data.updated_existing_count} updated/existing)`,
+        'success'
+      );
+      setShowCsvModal(false);
+      setCsvFile(null);
+      fetchData();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed to import CSV file', 'error');
+    } finally {
+      setImportingCsv(false);
+    }
+  };
 
   // New Student Form State
   const [newStudent, setNewStudent] = useState({
@@ -198,27 +244,43 @@ export default function Collections() {
       {/* Header & Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
-            Collections & Student Profiles
-          </h2>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
+              Collections & Student Profiles
+            </h2>
+            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-cinzel">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              AI Real-Time Ledger Shield Active
+            </span>
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Organized list of students by Grade Level with individual payment records and auto-generated receipts
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setNewStudent(p => ({
-              ...p,
-              student_id: `LRN-2026-${Math.floor(1000 + Math.random() * 9000)}`
-            }));
-            setShowAddStudentModal(true);
-          }}
-          className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Student Profile</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowCsvModal(true)}
+            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <Upload className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+            <span>Import Students (CSV)</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setNewStudent(p => ({
+                ...p,
+                student_id: `LRN-2026-${Math.floor(1000 + Math.random() * 9000)}`
+              }));
+              setShowAddStudentModal(true);
+            }}
+            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Student Profile</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary KPI Cards */}
@@ -807,6 +869,81 @@ export default function Collections() {
           letterData={noticeLetterData}
           onClose={() => setNoticeLetterData(null)}
         />
+      )}
+
+      {/* CSV Import Modal */}
+      {showCsvModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-zoom-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-brand-50 dark:bg-brand-950/60 rounded-xl text-brand-600 dark:text-brand-400">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">
+                    Import Existing Students (CSV)
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Bulk upload old/enrolled student records into the ledger</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowCsvModal(false); setCsvFile(null); }}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleImportCsv} className="space-y-4 pt-4">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                <p className="font-semibold text-slate-800 dark:text-white">Instructions:</p>
+                <p>1. Upload a <code>.csv</code> file with columns: <code>student_id</code>, <code>full_name</code>, <code>grade_level</code>, <code>section</code>, <code>gender</code>, <code>parent_name</code>, <code>parent_contact</code>, <code>parent_email</code>, <code>address</code>.</p>
+                <p>2. The system automatically initializes all 5 official fee schedules (Tuition, Registration, Books, Energy, Other Fees) for each student.</p>
+                <button
+                  type="button"
+                  onClick={handleDownloadTemplate}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Sample Template (.CSV)</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  Choose CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  required
+                  onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setShowCsvModal(false); setCsvFile(null); }}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={importingCsv}
+                  className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{importingCsv ? 'Importing Records...' : 'Upload & Import'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

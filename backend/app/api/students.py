@@ -1,5 +1,7 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException, Query
+import csv
+import io
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import List, Optional
@@ -71,6 +73,149 @@ def calculate_student_balance(student: Student):
 def get_next_or(db: Session = Depends(get_db)):
     """Preview the next auto-generated OR number."""
     return {"next_or_number": generate_next_or_number(db)}
+
+
+@router.get("/csv-template")
+def download_student_csv_template():
+    """Download standard CSV template for bulk importing existing/old student records."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "student_id", "full_name", "grade_level", "section", "gender",
+        "parent_name", "parent_contact", "parent_email", "address", "school_year"
+    ])
+    # Representative sample rows
+    writer.writerow([
+        "LRN-2026-001", "Juan Dela Cruz", "Grade 7", "Faith", "Male",
+        "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027"
+    ])
+    writer.writerow([
+        "LRN-2026-002", "Maria Clara Santos", "Grade 8", "Hope", "Female",
+        "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027"
+    ])
+    writer.writerow([
+        "LRN-2026-003", "Joshua Ramos", "Kindergarten", "Faith", "Male",
+        "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027"
+    ])
+    csv_bytes = output.getvalue().encode("utf-8")
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=CCA_Students_Import_Template.csv"}
+    )
+
+
+@router.post("/import-csv")
+async def import_students_csv(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Import existing/old students in bulk from a CSV file.
+    Automatically initializes the 5 official CCA fee schedules for each student.
+    """
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files (.csv) are supported")
+
+    content = await file.read()
+    try:
+        text = content.decode("utf-8-sig")
+    except Exception:
+        text = content.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text))
+    imported = []
+    skipped = []
+    errors = []
+
+    for row_idx, row in enumerate(reader, start=2):
+        sid = (row.get("student_id") or row.get("lrn") or row.get("Student ID") or "").strip()
+        name = (row.get("full_name") or row.get("name") or row.get("Student Name") or "").strip()
+        grade = (row.get("grade_level") or row.get("grade") or "Grade 7").strip()
+        section = (row.get("section") or "Faith").strip()
+        gender = (row.get("gender") or "Male").strip()
+        parent_name = (row.get("parent_name") or row.get("parent") or "").strip()
+        parent_contact = (row.get("parent_contact") or row.get("contact") or "").strip()
+        parent_email = (row.get("parent_email") or row.get("email") or "").strip()
+        address = (row.get("address") or "").strip()
+        school_year = (row.get("school_year") or "2026-2027").strip()
+
+        if not name:
+            errors.append(f"Row {row_idx}: Missing student name")
+            continue
+
+        if not sid:
+            sid = f"LRN-2026-{db.query(Student).count() + len(imported) + 1:04d}"
+
+        # Check existing student
+        existing = db.query(Student).filter(Student.student_id == sid).first()
+        if existing:
+            existing.full_name = name
+            existing.grade_level = grade
+            existing.section = section
+            if parent_name:
+                existing.parent_name = parent_name
+            if parent_contact:
+                existing.parent_contact = parent_contact
+            if parent_email:
+                existing.parent_email = parent_email
+            skipped.append(sid)
+            continue
+
+        student = Student(
+            student_id=sid,
+            full_name=name,
+            grade_level=grade,
+            section=section,
+            gender=gender,
+            parent_name=parent_name,
+            parent_contact=parent_contact,
+            parent_email=parent_email,
+            address=address,
+            school_year=school_year,
+            enrollment_status="Enrolled",
+            created_at=datetime.now().isoformat()
+        )
+        db.add(student)
+        db.flush()
+
+        # Initialize standard fee schedules
+        for f in DEFAULT_FEES:
+            fs = StudentFeeSchedule(
+                student_id=student.id,
+                category_name=f["category_name"],
+                sub_description=f["sub_description"],
+                total_due=f["total_due"],
+                total_paid=0.0,
+                remaining_balance=f["total_due"],
+                school_year=school_year
+            )
+            db.add(fs)
+
+        imported.append({"student_id": sid, "full_name": name, "grade_level": grade})
+
+    db.commit()
+
+    # Log to audit trail
+    log = AuditLog(
+        user_id=current_user.id if current_user else None,
+        action="Bulk Student CSV Import",
+        entity_type="Student",
+        details=f"Imported {len(imported)} students, updated/skipped {len(skipped)} existing. Errors: {len(errors)}.",
+        timestamp=datetime.now().isoformat()
+    )
+    db.add(log)
+    db.commit()
+
+    return {
+        "status": "success",
+        "imported_count": len(imported),
+        "updated_existing_count": len(skipped),
+        "error_count": len(errors),
+        "imported_students": imported[:10],
+        "errors": errors[:5]
+    }
 
 
 @router.get("/grade-summary")
@@ -534,10 +679,12 @@ def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
 
     return {
         "school": {
-            "name": "CALVARY CHRISTIAN ACADEMY",
+            "name": "Calvary Christian Academy",
             "tagline": "Quality Christian Education for Excellence & Character",
-            "address": "Calvary Christian Academy Campus, Bulacan, Philippines",
-            "contact": "(044) 123-4567 | info@cca.edu.ph"
+            "address": "9-10 Genesis Ave., Sarmiento Townville Subdivision, Poblacion, City of San Jose del Monte, Bulacan",
+            "contact": "Cellphone No. 09561504946 / Globe Landline: 044-3056166",
+            "administrator": "Michelle Jean Gormley",
+            "administrator_title": "Administrator"
         },
         "letter_date": datetime.now().strftime("%B %d, %Y"),
         "student": {
@@ -556,6 +703,8 @@ def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
         "unpaid_fees": unpaid_items,
         "total_outstanding": total_unpaid,
         "signatories": {
+            "administrator": "Michelle Jean Gormley",
+            "administrator_title": "Administrator",
             "cashier": "Maria Santos",
             "cashier_title": "School Cashier",
             "principal": "Pastor David Reyes, M.Div.",

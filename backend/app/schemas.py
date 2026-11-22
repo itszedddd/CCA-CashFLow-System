@@ -318,3 +318,25 @@ class PaymentNotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class LinkStudentRequest(BaseModel):
+    student_id: str  # LRN or Student ID
+    verification_value: str  # Parent Contact Number, Email, or Birthdate
+    parent_password: Optional[str] = "password123"
+
+
+class RegisterStudentRequest(BaseModel):
+    student_id: Optional[str] = None
+    full_name: str
+    grade_level: str
+    section: Optional[str] = "Faith"
+    gender: Optional[str] = "Male"
+    birthdate: Optional[str] = None
+    parent_name: str
+    parent_contact: str
+    parent_email: Optional[str] = None
+    address: Optional[str] = None
+    school_year: Optional[str] = "2026-2027"
+    parent_password: Optional[str] = "password123"
+

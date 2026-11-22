@@ -42,7 +42,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
   const staffNavItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/income', label: 'Collections', icon: Users, badge: 'Profiles' },
-    { to: '/anomaly', label: 'ML Anomaly Detection', icon: Cpu, isAI: true },
+    { to: '/anomaly', label: 'AI Ledger Intelligence', icon: Cpu, isAI: true },
     { to: '/notifications', label: 'Payment Notices', icon: Bell },
     { to: '/reports', label: 'Financial Reports', icon: FileBarChart },
     { to: '/audit-log', label: 'Audit Trail', icon: ClipboardList },

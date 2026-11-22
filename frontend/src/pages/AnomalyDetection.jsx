@@ -168,24 +168,71 @@ export default function AnomalyDetection() {
                 Proposed Feature #6 • Machine Learning Intelligence
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
-                ML-Based Anomaly Detection & Verification
+                ML-Based Anomaly Detection & Ledger Intelligence
               </h2>
             </div>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-            Detect unusual payment spikes, cross-category misclassifications, and student envelope discrepancies.
-            Supports CCA's objective to eliminate the 2–3 monthly recording errors and reduce revenue loss to 0%.
+            Autonomous background intelligence actively monitoring payments, cross-category classifications, and student envelope records.
+            Protects ledger integrity and eliminates monthly recording errors without requiring manual scan clicks.
           </p>
         </div>
 
-        <button
-          onClick={handleScanAll}
-          disabled={scanning}
-          className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition font-cinzel uppercase tracking-wider cursor-pointer disabled:opacity-50 self-start md:self-auto"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
-          {scanning ? 'Running ML Model...' : 'Re-scan All Records'}
-        </button>
+        {/* Autonomous Real-time Status Indicator (Replaced manual scan button) */}
+        <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 self-start md:self-auto shadow-sm">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <div className="text-left">
+            <p className="text-[10px] font-black uppercase font-cinzel tracking-wider leading-none">
+              Autonomous AI Active
+            </p>
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+              Live Background Ledger Monitoring
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 4 Core Pillars of Integrated AI */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-indigo-900/40">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-indigo-400" />
+          <h3 className="text-xs font-bold uppercase tracking-widest font-cinzel text-indigo-200">
+            Integrated AI Intelligence Framework (Demonstrated Core Capabilities)
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">1. Reasoning</span>
+            <p className="font-bold text-white mt-1">Constraint Conformance</p>
+            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+              Deductive logic evaluating payments against official CCA fee schedules, tuition monthly brackets, and outstanding ledger limits.
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">2. Learning</span>
+            <p className="font-bold text-white mt-1">Adaptive Contamination</p>
+            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+              Scikit-Learn IsolationForest with one-hot encoding & historical payment tracking dynamically updating without model drift.
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">3. Perception</span>
+            <p className="font-bold text-white mt-1">Irregularity Recognition</p>
+            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+              Autonomous sensory detection of cross-category fee dumping, rapid 60-min duplicate submissions, and non-bracket payments.
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">4. Problem-Solving</span>
+            <p className="font-bold text-white mt-1">Linguistic Directives</p>
+            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+              Generates plain-language root causes and actionable cashier directives for student brown envelope reconciliation.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 4 Overview Telemetry Cards */}

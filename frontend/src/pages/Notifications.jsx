@@ -23,6 +23,15 @@ export default function Notifications() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('cca_cf_user') || '{}');
+    } catch {
+      return {};
+    }
+  })();
+  const isParent = (currentUser?.role || '').toLowerCase() === 'parent';
+
   // Form state
   const [form, setForm] = useState({
     title: '',
@@ -90,21 +99,31 @@ export default function Notifications() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
-            Payment Notifications & Fee Announcements
-          </h2>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
+              Payment Notifications & Fee Announcements
+            </h2>
+            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-cinzel">
+              <Sparkles className="w-3 h-3 text-indigo-600" />
+              AI Overdue Monitor Active
+            </span>
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Post new fees, event contributions, and payment notices that automatically notify parents
+            {isParent
+              ? 'Official school fee announcements, payment deadlines, and automated balance notices for your reference'
+              : 'Post new fees, event contributions, and automated balance reminders that notify parents'}
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Post Fee Announcement</span>
-        </button>
+        {!isParent && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Post Fee Announcement</span>
+          </button>
+        )}
       </div>
 
       {/* Notifications List */}
