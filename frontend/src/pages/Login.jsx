@@ -120,9 +120,8 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
   return (
     <div
-      className={`flex flex-col lg:flex-row min-h-screen w-full transition-colors duration-700 font-sans ${
-        isDarkMode ? 'bg-slate-900' : 'bg-slate-50'
-      }`}
+      className={`flex flex-col lg:flex-row min-h-screen w-full transition-colors duration-700 font-sans ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'
+        }`}
     >
       {/* Left Panel - Thesis Project Hero Branding */}
       <div className="lg:w-[45%] w-full bg-[#022868] flex flex-col items-center justify-center p-8 lg:p-14 min-h-[35vh] lg:min-h-screen relative overflow-hidden text-center order-1">
@@ -161,11 +160,10 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
         {/* Dark Mode Toggle */}
         <button
           onClick={() => setIsDarkMode((p) => !p)}
-          className={`absolute top-6 right-6 p-2.5 rounded-2xl backdrop-blur-md transition-all z-10 shadow-sm border ${
-            isDarkMode
-              ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
-              : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow-sm'
-          }`}
+          className={`absolute top-6 right-6 p-2.5 rounded-2xl backdrop-blur-md transition-all z-10 shadow-sm border ${isDarkMode
+            ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
+            : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow-sm'
+            }`}
           title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label="Toggle theme"
         >
@@ -179,33 +177,30 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
               <button
                 type="button"
                 onClick={() => { setMode('signin'); setError(''); }}
-                className={`py-2 px-1 text-center rounded-xl text-[10px] sm:text-[11px] font-bold font-cinzel uppercase tracking-wider transition cursor-pointer ${
-                  mode === 'signin'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                }`}
+                className={`py-2 px-1 text-center rounded-xl text-[10px] sm:text-[11px] font-bold font-cinzel uppercase tracking-wider transition cursor-pointer ${mode === 'signin'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                  }`}
               >
                 Sign In
               </button>
               <button
                 type="button"
                 onClick={() => { setMode('link'); setError(''); }}
-                className={`py-2 px-1 text-center rounded-xl text-[10px] sm:text-[11px] font-bold font-cinzel uppercase tracking-wider transition cursor-pointer ${
-                  mode === 'link'
-                    ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                }`}
+                className={`py-2 px-1 text-center rounded-xl text-[10px] sm:text-[11px] font-bold font-cinzel uppercase tracking-wider transition cursor-pointer ${mode === 'link'
+                  ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                  }`}
               >
                 Link Student
               </button>
               <button
                 type="button"
                 onClick={() => { setMode('register'); setError(''); }}
-                className={`py-2 px-1 text-center rounded-xl text-[10px] sm:text-[11px] font-bold font-cinzel uppercase tracking-wider transition cursor-pointer ${
-                  mode === 'register'
-                    ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                }`}
+                className={`py-2 px-1 text-center rounded-xl text-[10px] sm:text-[11px] font-bold font-cinzel uppercase tracking-wider transition cursor-pointer ${mode === 'register'
+                  ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                  }`}
               >
                 New Student
               </button>
@@ -304,7 +299,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                     </span>
                     <span className="text-[10px] text-slate-400 font-mono">pass: password123</span>
                   </div>
-                  
+
                   <div className="space-y-1.5">
                     <button
                       type="button"
@@ -540,8 +535,6 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                 </form>
               </>
             )}
-          </div>
-        </div>
           </div>
         </div>
       </div>

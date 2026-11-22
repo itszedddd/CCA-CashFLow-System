@@ -110,10 +110,9 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
                   end={item.to === '/' || item.to === '/parent'}
                   onClick={handleLinkClick}
                   className={({ isActive }) =>
-                    `w-full flex justify-between items-center px-3 py-2.5 transition-colors group text-xs uppercase tracking-widest font-bold rounded-lg ${
-                      isActive
-                        ? 'bg-brand-50/80 border-r-4 border-brand-red text-brand-900 dark:bg-slate-900 dark:text-brand-400 font-bold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-brand-red-hover'
+                    `w-full flex justify-between items-center px-3 py-2.5 transition-colors group text-xs uppercase tracking-widest font-bold rounded-lg ${isActive
+                      ? 'bg-brand-50/80 border-r-4 border-brand-red text-brand-900 dark:bg-slate-900 dark:text-brand-400 font-bold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-brand-red-hover'
                     }`
                   }
                 >
@@ -121,11 +120,10 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
                     <>
                       <div className="flex items-center flex-1 min-w-0">
                         <Icon
-                          className={`w-4 h-4 mr-3 flex-shrink-0 transition-colors ${
-                            isActive
-                              ? 'text-brand-600 dark:text-brand-400'
-                              : 'text-slate-400 group-hover:text-brand-600'
-                          }`}
+                          className={`w-4 h-4 mr-3 flex-shrink-0 transition-colors ${isActive
+                            ? 'text-brand-600 dark:text-brand-400'
+                            : 'text-slate-400 group-hover:text-brand-600'
+                            }`}
                         />
                         <span className="flex-1 text-left leading-tight break-words truncate">
                           {item.label}
@@ -186,9 +184,8 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
         {user && (
           <div className="flex items-center space-x-3 p-2 rounded-xl bg-slate-50/70 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700/60">
             <div
-              className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-sm flex-shrink-0 ${
-                ROLE_COLORS[user.role] || 'bg-brand-600'
-              }`}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-sm flex-shrink-0 ${ROLE_COLORS[user.role] || 'bg-brand-600'
+                }`}
             >
               {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
             </div>
@@ -223,15 +220,13 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
 
       {/* Mobile backdrop + drawer */}
       <div
-        className={`sidebar-backdrop md:hidden print:hidden ${
-          isOpen ? 'sidebar-backdrop-visible' : 'sidebar-backdrop-hidden'
-        }`}
+        className={`sidebar-backdrop md:hidden print:hidden ${isOpen ? 'sidebar-backdrop-visible' : 'sidebar-backdrop-hidden'
+          }`}
         onClick={onClose}
       />
       <div
-        className={`sidebar-drawer md:hidden print:hidden ${
-          isOpen ? 'sidebar-drawer-open' : 'sidebar-drawer-closed'
-        }`}
+        className={`sidebar-drawer md:hidden print:hidden ${isOpen ? 'sidebar-drawer-open' : 'sidebar-drawer-closed'
+          }`}
       >
         {sidebarContent}
       </div>
