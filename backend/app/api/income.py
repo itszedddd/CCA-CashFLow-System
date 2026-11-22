@@ -119,6 +119,23 @@ def create_income(
         "recommendations": anomaly_eval["recommendations"]
     })
 
+    # Official Receipt (OR) Number validation and duplicate prevention
+    clean_or = (data.or_number or "").strip() if data.or_number else ""
+    if clean_or:
+        existing_or = db.query(Income).filter(
+            func.lower(func.trim(Income.or_number)) == clean_or.lower(),
+            Income.is_voided == 0
+        ).first()
+        if existing_or:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Official Receipt Number '{clean_or}' is already recorded for another transaction (Payer: {existing_or.payer_name}, Amount: ₱{existing_or.amount:,.2f}). Please enter a unique OR number."
+            )
+        income_dict["or_number"] = clean_or
+    else:
+        from .students import generate_next_or_number
+        income_dict["or_number"] = generate_next_or_number(db)
+
     income = Income(
         **income_dict,
         date_recorded=datetime.now().isoformat(),

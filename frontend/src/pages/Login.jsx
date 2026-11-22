@@ -86,6 +86,12 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
   const handleRegisterStudent = async (e) => {
     e.preventDefault();
+    if (!regForm.student_id?.trim()) {
+      const msg = 'Learner Reference Number (LRN) / Student ID is required.';
+      setError(msg);
+      addToast(msg, 'error');
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -436,15 +442,16 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-cinzel">
-                        Student LRN / Student ID
+                        Student LRN / Student ID <span className="text-red-400">*</span>
                       </label>
-                      <span className="text-[9px] text-slate-400 font-mono">Optional • Auto-generated if blank</span>
+                      <span className="text-[9px] text-red-400 font-mono">Required</span>
                     </div>
                     <input
                       type="text"
+                      required
                       value={regForm.student_id}
                       onChange={(e) => setRegForm(p => ({ ...p, student_id: e.target.value }))}
-                      placeholder="e.g. 12026001 or LRN-2026-0045"
+                      placeholder="Enter LRN (e.g. 123456789012)"
                       className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs font-mono font-medium outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>

@@ -108,30 +108,56 @@ def register_student(data: RegisterStudentRequest, db: Session = Depends(get_db)
     """
     New Student Self-Registration:
     Creates student profile, parent access, and sets up the 5 official CCA fee schedules.
+    Strictly verifies and prevents duplicate student records and accounts.
     """
-    sid = data.student_id or f"LRN-2026-{db.query(Student).count() + 1001:04d}"
+    clean_sid = (data.student_id or "").strip()
+    clean_name = (data.full_name or "").strip()
+    clean_grade = (data.grade_level or "").strip()
 
-    existing = db.query(Student).filter(Student.student_id == sid).first()
-    if existing:
+    if not clean_sid:
         raise HTTPException(
             status_code=400,
-            detail="Student ID / LRN already exists. Please choose 'Link Existing Student' instead."
+            detail="Learner Reference Number (LRN) / Student ID is required. LRN cannot be auto-generated."
         )
 
-    # Create Student
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Student full name is required.")
+
+    # 1. Duplicate check by Student ID / LRN (case-insensitive + trimmed)
+    existing_sid = db.query(Student).filter(
+        func.lower(func.trim(Student.student_id)) == clean_sid.lower()
+    ).first()
+    if existing_sid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Student ID / LRN '{clean_sid}' is already registered for {existing_sid.full_name}. Please choose 'Link Student' instead of creating a duplicate profile."
+        )
+
+    # 2. Duplicate check by Student Name + Grade Level (case-insensitive + trimmed)
+    existing_name = db.query(Student).filter(
+        func.lower(func.trim(Student.full_name)) == clean_name.lower(),
+        func.lower(func.trim(Student.grade_level)) == clean_grade.lower()
+    ).first()
+    if existing_name:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A student record for '{clean_name}' in {clean_grade} already exists (LRN: {existing_name.student_id}). Please use 'Link Student' to access this account."
+        )
+
+    # 3. Create Student profile
     student = Student(
-        student_id=sid,
-        full_name=data.full_name,
-        grade_level=data.grade_level,
-        section=data.section or "Faith",
+        student_id=clean_sid,
+        full_name=clean_name,
+        grade_level=clean_grade,
+        section=(data.section or "Faith").strip(),
         gender=data.gender or "Male",
         birthdate=data.birthdate,
-        parent_name=data.parent_name,
-        parent_contact=data.parent_contact,
-        parent_email=data.parent_email,
+        parent_name=(data.parent_name or "").strip(),
+        parent_contact=(data.parent_contact or "").strip(),
+        parent_email=(data.parent_email or "").strip(),
         address=data.address,
         school_year=data.school_year or "2026-2027",
-        parent_username=sid,
+        parent_username=clean_sid,
         parent_password_hash=get_password_hash(data.parent_password or "password123"),
         enrollment_status="Enrolled",
         created_at=datetime.now().isoformat()
@@ -139,19 +165,24 @@ def register_student(data: RegisterStudentRequest, db: Session = Depends(get_db)
     db.add(student)
     db.flush()
 
-    # Initialize standard 5 fee schedules
+    # 4. Initialize standard 5 fee schedules (guarantee zero duplicates)
     from .students import DEFAULT_FEES
     for f in DEFAULT_FEES:
-        fs = StudentFeeSchedule(
-            student_id=student.id,
-            category_name=f["category_name"],
-            sub_description=f["sub_description"],
-            total_due=f["total_due"],
-            total_paid=0.0,
-            remaining_balance=f["total_due"],
-            school_year=student.school_year
-        )
-        db.add(fs)
+        existing_fs = db.query(StudentFeeSchedule).filter(
+            StudentFeeSchedule.student_id == student.id,
+            StudentFeeSchedule.category_name == f["category_name"]
+        ).first()
+        if not existing_fs:
+            fs = StudentFeeSchedule(
+                student_id=student.id,
+                category_name=f["category_name"],
+                sub_description=f["sub_description"],
+                total_due=f["total_due"],
+                total_paid=0.0,
+                remaining_balance=f["total_due"],
+                school_year=student.school_year
+            )
+            db.add(fs)
 
     db.commit()
     db.refresh(student)
@@ -160,7 +191,7 @@ def register_student(data: RegisterStudentRequest, db: Session = Depends(get_db)
     token = create_access_token(data={"sub": student.student_id, "role": "Parent"})
     return {
         "status": "success",
-        "message": f"Student profile registered successfully with Student ID / LRN: {sid}",
+        "message": f"Student profile registered successfully with Student ID / LRN: {clean_sid}",
         "access_token": token,
         "token_type": "bearer",
         "user": {
