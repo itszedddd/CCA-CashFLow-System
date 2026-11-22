@@ -292,9 +292,14 @@ export default function Header({
           )}
         </div>
 
-        {/* User Mini Avatar */}
+        {/* User Mini Avatar and Parent LRN Badge */}
         {user && (
-          <div className="hidden sm:flex items-center pl-2 border-l border-slate-200 dark:border-slate-700">
+          <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
+            {user.role === 'Parent' && (user.student_lrn || user.username) && (
+              <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 text-[10px] font-mono font-bold border border-amber-300 dark:border-amber-700">
+                LRN: {user.student_lrn || user.username}
+              </span>
+            )}
             <div className="w-8 h-8 rounded-xl bg-brand-700 text-white flex items-center justify-center font-bold text-xs shadow-sm">
               {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
             </div>

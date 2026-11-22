@@ -94,8 +94,22 @@ export default function ParentPortal({ user }) {
           </h2>
           <p className="text-xs text-blue-100/80 mt-1">
             Viewing real-time payment ledger, official receipts, and fee balances for{' '}
-            <strong className="text-white underline">{student.full_name}</strong> ({student.grade_level} - {student.section})
+            <strong className="text-white underline">{student.full_name}</strong>
           </p>
+
+          {/* Student LRN and Academic Profile Bar */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <span className="px-3 py-1 rounded-xl bg-amber-400 text-slate-950 font-black font-mono text-xs shadow-md tracking-wider flex items-center gap-1.5">
+              <span className="text-[10px] uppercase font-bold tracking-tight">STUDENT LRN:</span>
+              <span className="underline">{student.student_id}</span>
+            </span>
+            <span className="px-2.5 py-1 rounded-xl bg-white/15 text-white font-bold text-xs tracking-wide">
+              {student.grade_level} — Section {student.section}
+            </span>
+            <span className="px-2.5 py-1 rounded-xl bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 font-bold text-xs">
+              SY {student.school_year}
+            </span>
+          </div>
         </div>
 
         <button

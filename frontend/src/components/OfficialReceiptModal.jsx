@@ -12,10 +12,16 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
-      <div className="bg-white text-slate-800 rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden print:shadow-none print:border-none print:max-w-none print:w-full">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white overflow-y-auto cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white text-slate-800 rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col my-auto relative z-10 cursor-default print:shadow-none print:border-none print:max-w-none print:w-full print:max-h-none print:rounded-none"
+      >
         {/* Header Actions - hidden in print */}
-        <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
+        <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider font-cinzel truncate">
@@ -24,6 +30,7 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
+              type="button"
               onClick={handlePrint}
               className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
             >
@@ -32,8 +39,9 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
               <span className="sm:hidden">Print</span>
             </button>
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition"
+              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition cursor-pointer"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -42,7 +50,7 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
         </div>
 
         {/* Printable Receipt Body */}
-        <div className="p-6 sm:p-8 font-sans print:p-0 print:text-black" id="printable-receipt">
+        <div className="p-6 sm:p-8 font-sans overflow-y-auto print:overflow-visible print:p-0 print:text-black flex-1" id="printable-receipt">
           {/* School Header */}
           <div className="text-center pb-4 border-b-2 border-slate-900/80 mb-3 print:pb-2 print:mb-2">
             <div className="flex justify-center items-center gap-2 mb-1.5">
@@ -184,6 +192,25 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
               CCA FlowSys v1.0 • Calvary Christian Academy Cashiering & Anomaly Detection System
             </p>
           </div>
+        </div>
+
+        {/* Bottom Actions Bar - visible on screen, hidden on print */}
+        <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 print:hidden shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel transition cursor-pointer"
+          >
+            Close Window
+          </button>
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer"
+          >
+            <Printer className="w-4 h-4 shrink-0" />
+            <span>Print Physical Receipt</span>
+          </button>
         </div>
       </div>
     </div>

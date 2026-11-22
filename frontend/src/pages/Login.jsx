@@ -27,6 +27,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
   // New Student Registration Form
   const [regForm, setRegForm] = useState({
+    student_id: '',
     full_name: '',
     grade_level: 'Kindergarten',
     section: 'Faith',
@@ -432,6 +433,22 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                 </div>
 
                 <form onSubmit={handleRegisterStudent} className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-cinzel">
+                        Student LRN / Student ID
+                      </label>
+                      <span className="text-[9px] text-slate-400 font-mono">Optional • Auto-generated if blank</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={regForm.student_id}
+                      onChange={(e) => setRegForm(p => ({ ...p, student_id: e.target.value }))}
+                      placeholder="e.g. 12026001 or LRN-2026-0045"
+                      className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs font-mono font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-cinzel">
                       Student Full Name

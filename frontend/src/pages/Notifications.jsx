@@ -42,9 +42,25 @@ export default function Notifications() {
     due_date: ''
   });
 
+  // Target audience selection
+  const [targetType, setTargetType] = useState('all'); // 'all' | 'grade' | 'student'
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentsList, setStudentsList] = useState([]);
+
   useEffect(() => {
     fetchNotifications();
+    fetchStudents();
   }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const res = await api.get('/students/');
+      setStudentsList(res.data || []);
+    } catch {
+      // Non-critical if fails
+    }
+  };
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -89,12 +105,23 @@ export default function Notifications() {
       addToast('Please enter title and description', 'error');
       return;
     }
+    if (targetType === 'student' && !selectedStudentId) {
+      addToast('Please select a target student / parent', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
+      const selectedStudent = studentsList.find((s) => s.id === Number(selectedStudentId));
       const payload = {
         title: form.title,
         fee_type: form.fee_type,
-        grade_level: form.grade_level === 'All Grades' ? null : form.grade_level,
+        grade_level:
+          targetType === 'student'
+            ? selectedStudent?.grade_level || null
+            : targetType === 'grade' && form.grade_level !== 'All Grades'
+            ? form.grade_level
+            : null,
+        student_id: targetType === 'student' ? Number(selectedStudentId) : null,
         description: form.description,
         amount: parseFloat(form.amount) || 0.0,
         due_date: form.due_date || null
@@ -111,6 +138,9 @@ export default function Notifications() {
         amount: '',
         due_date: ''
       });
+      setTargetType('all');
+      setSelectedStudentId('');
+      setStudentSearch('');
       fetchNotifications();
     } catch (err) {
       addToast('Failed to post notification', 'error');
@@ -209,7 +239,15 @@ export default function Notifications() {
                     )}
                   </div>
                   <span className="text-[10px] text-slate-400 truncate">
-                    {n.grade_level ? `Target: ${n.grade_level}` : 'All Students'}
+                    {(() => {
+                      if (n.student_id) {
+                        const st = studentsList.find((s) => s.id === n.student_id);
+                        return st
+                          ? `Target: ${st.full_name} (${st.grade_level}) • Parent: ${st.parent_name || 'Guardian'}`
+                          : `Target: Student #${n.student_id}`;
+                      }
+                      return n.grade_level ? `Target: ${n.grade_level}` : 'All Students';
+                    })()}
                   </span>
                 </div>
 
@@ -283,6 +321,110 @@ export default function Notifications() {
                 />
               </div>
 
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  Target Audience
+                </label>
+                <div className="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl mb-2">
+                  <button
+                    type="button"
+                    onClick={() => { setTargetType('all'); setSelectedStudentId(''); }}
+                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${
+                      targetType === 'all'
+                        ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                    }`}
+                  >
+                    Entire School
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setTargetType('grade'); setSelectedStudentId(''); }}
+                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${
+                      targetType === 'grade'
+                        ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                    }`}
+                  >
+                    By Grade
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTargetType('student')}
+                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${
+                      targetType === 'student'
+                        ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                    }`}
+                  >
+                    Specific Student/Parent
+                  </button>
+                </div>
+
+                {targetType === 'grade' && (
+                  <div className="pt-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1 font-cinzel">
+                      Select Grade Level
+                    </label>
+                    <select
+                      value={form.grade_level}
+                      onChange={(e) => setForm({ ...form, grade_level: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
+                    >
+                      {GRADE_OPTIONS.map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {targetType === 'student' && (
+                  <div className="space-y-1.5 p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider font-cinzel">
+                        Select Target Student / Parent Account
+                      </label>
+                      <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono">
+                        {studentsList.length} students available
+                      </span>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      placeholder="Filter by student name, LRN, or parent..."
+                      className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-slate-800 dark:text-white outline-none placeholder:text-slate-400"
+                    />
+
+                    <select
+                      required={targetType === 'student'}
+                      value={selectedStudentId}
+                      onChange={(e) => setSelectedStudentId(e.target.value)}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">-- Choose Student & Parent --</option>
+                      {studentsList
+                        .filter((s) => {
+                          if (!studentSearch.trim()) return true;
+                          const q = studentSearch.toLowerCase();
+                          return (
+                            (s.full_name || '').toLowerCase().includes(q) ||
+                            (s.student_id || '').toLowerCase().includes(q) ||
+                            (s.parent_name || '').toLowerCase().includes(q) ||
+                            (s.grade_level || '').toLowerCase().includes(q)
+                          );
+                        })
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.full_name} ({s.grade_level} - {s.section}) • LRN: {s.student_id} • Parent: {s.parent_name || 'N/A'}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
@@ -305,23 +447,6 @@ export default function Notifications() {
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Target Grade
-                  </label>
-                  <select
-                    value={form.grade_level}
-                    onChange={(e) => setForm({ ...form, grade_level: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
-                  >
-                    {GRADE_OPTIONS.map(g => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
                     Amount (₱)
                   </label>
                   <input
@@ -334,18 +459,18 @@ export default function Notifications() {
                     className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono font-bold text-slate-800 dark:text-white outline-none"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    value={form.due_date}
-                    onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
-                  />
-                </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={form.due_date}
+                  onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
+                />
               </div>
 
               <div>

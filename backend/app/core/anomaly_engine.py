@@ -127,6 +127,7 @@ def evaluate_single_transaction(
     category_std: Optional[float] = None,
     current_balance: Optional[float] = None,
     duplicate_count: int = 0,
+    envelope_verified: int = 1,
 ) -> Dict[str, Any]:
     """
     Evaluates a single transaction on-the-fly and produces:
@@ -138,6 +139,18 @@ def evaluate_single_transaction(
     reasons = []
     recommendations = []
     anomaly_points = 0.0
+
+    # ──────────────────────────────────────────────────────────
+    # CHECK 0-A: Brown Envelope Verification Check (CCA Cashier SOP)
+    # ──────────────────────────────────────────────────────────
+    if envelope_verified == 0:
+        anomaly_points += 45.0
+        reasons.append(
+            "UNVERIFIED BROWN ENVELOPE: Cash collection pending physical brown envelope count and parent/cashier reconciliation."
+        )
+        recommendations.append(
+            "Reconcile official receipt with physical brown envelope and obtain authorized cashier signature."
+        )
 
     if not expected_amount or expected_amount <= 0:
         expected_amount = _get_category_expected_fee(category_name, grade_level)
@@ -532,6 +545,7 @@ class AnomalyEngine:
                 recent_void_count=void_cnt,
                 category_mean=c_stat.get("mean"),
                 category_std=c_stat.get("std"),
+                envelope_verified=inc.envelope_verified if inc.envelope_verified is not None else 1,
             )
 
             # Combine rule-based score with ML Isolation Forest score
