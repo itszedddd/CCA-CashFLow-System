@@ -75,27 +75,54 @@ def get_next_or(db: Session = Depends(get_db)):
     return {"next_or_number": generate_next_or_number(db)}
 
 
+def _parse_csv_amount(val) -> float:
+    """Helper to safely parse monetary amounts from CSV strings."""
+    if not val:
+        return 0.0
+    try:
+        cleaned = str(val).replace("₱", "").replace("$", "").replace(",", "").strip()
+        return max(0.0, float(cleaned)) if cleaned else 0.0
+    except Exception:
+        return 0.0
+
+
 @router.get("/csv-template")
 def download_student_csv_template():
-    """Download standard CSV template for bulk importing existing/old student records."""
+    """
+    Download standard CSV template for bulk importing existing/old student records.
+    Includes optional columns for recording previously paid balances per fee category.
+    """
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
         "student_id", "full_name", "grade_level", "section", "gender",
-        "parent_name", "parent_contact", "parent_email", "address", "school_year"
+        "parent_name", "parent_contact", "parent_email", "address", "school_year",
+        "tuition_paid", "registration_paid", "books_paid", "energy_paid", "other_paid", "total_paid"
     ])
-    # Representative sample rows
+    # Representative sample rows demonstrating different student payment states:
+    # 1. Partially paid student (paid registration, books, and partial tuition)
     writer.writerow([
         "LRN-2026-001", "Juan Dela Cruz", "Grade 7", "Faith", "Male",
-        "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027"
+        "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "5718.00", "5700.00", "6900.00", "0.00", "0.00", ""
     ])
+    # 2. Fully paid student (all 5 fee categories settled in full)
     writer.writerow([
         "LRN-2026-002", "Maria Clara Santos", "Grade 8", "Hope", "Female",
-        "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027"
+        "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "19060.00", "5700.00", "6900.00", "3000.00", "1500.00", ""
     ])
+    # 3. Lump-sum advance payer (auto-allocates across Registration, Books, Tuition, etc.)
     writer.writerow([
         "LRN-2026-003", "Joshua Ramos", "Kindergarten", "Faith", "Male",
-        "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027"
+        "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "", "", "", "", "", "12600.00"
+    ])
+    # 4. Enrolled student with zero prior payments (full balance remaining)
+    writer.writerow([
+        "LRN-2026-004", "Ana Marie Reyes", "Grade 1", "Love", "Female",
+        "Elena Reyes", "09192233445", "elena.reyes@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "0.00", "0.00", "0.00", "0.00", "0.00", "0.00"
     ])
     csv_bytes = output.getvalue().encode("utf-8")
     return Response(
@@ -113,7 +140,8 @@ async def import_students_csv(
 ):
     """
     Import existing/old students in bulk from a CSV file.
-    Automatically initializes the 5 official CCA fee schedules for each student.
+    Automatically initializes the 5 official CCA fee schedules for each student
+    and credits any existing/prior paid balances to their official student ledger.
     """
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files (.csv) are supported")
@@ -141,6 +169,31 @@ async def import_students_csv(
         address = (row.get("address") or "").strip()
         school_year = (row.get("school_year") or "2026-2027").strip()
 
+        # Parse paid amounts from CSV columns
+        tuition_paid = _parse_csv_amount(row.get("tuition_paid") or row.get("Tuition Paid") or row.get("tuition"))
+        reg_paid = _parse_csv_amount(row.get("registration_paid") or row.get("Registration Paid") or row.get("registration"))
+        books_paid = _parse_csv_amount(row.get("books_paid") or row.get("Books Paid") or row.get("books"))
+        energy_paid = _parse_csv_amount(row.get("energy_paid") or row.get("Energy Paid") or row.get("energy"))
+        other_paid = _parse_csv_amount(row.get("other_paid") or row.get("Other Paid") or row.get("other"))
+        total_paid_generic = _parse_csv_amount(row.get("total_paid") or row.get("Total Paid") or row.get("balance_paid") or row.get("paid_amount") or row.get("already_paid"))
+
+        # If lump sum total_paid is provided without category breakdowns, distribute in standard priority order:
+        if total_paid_generic > 0 and (tuition_paid + reg_paid + books_paid + energy_paid + other_paid) == 0:
+            rem = total_paid_generic
+            reg_paid = min(5700.0, rem); rem -= reg_paid
+            books_paid = min(6900.0, rem); rem -= books_paid
+            tuition_paid = min(19060.0, rem); rem -= tuition_paid
+            energy_paid = min(3000.0, rem); rem -= energy_paid
+            other_paid = min(1500.0, rem)
+
+        cat_paid_map = {
+            "Tuition Fee": tuition_paid,
+            "Registration Fee": reg_paid,
+            "Books": books_paid,
+            "Energy Fee": energy_paid,
+            "Other Fees": other_paid,
+        }
+
         if not name:
             errors.append(f"Row {row_idx}: Missing student name")
             continue
@@ -160,6 +213,48 @@ async def import_students_csv(
                 existing.parent_contact = parent_contact
             if parent_email:
                 existing.parent_email = parent_email
+
+            # Update existing fee schedules if payment values are supplied
+            has_payments = any(v > 0 for v in cat_paid_map.values())
+            if has_payments:
+                for fs in existing.fee_schedules:
+                    target_paid = min(fs.total_due, cat_paid_map.get(fs.category_name, 0.0))
+                    if target_paid > fs.total_paid:
+                        incremental_pay = target_paid - fs.total_paid
+                        fs.total_paid = target_paid
+                        fs.remaining_balance = max(0.0, fs.total_due - target_paid)
+
+                        cat_match = db.query(IncomeCategory).filter(
+                            IncomeCategory.name.ilike(f"%{fs.category_name[:5]}%")
+                        ).first()
+                        or_num = generate_next_or_number(db)
+                        income = Income(
+                            category_id=cat_match.id if cat_match else 1,
+                            student_id_ref=existing.id,
+                            amount=incremental_pay,
+                            expected_amount=fs.total_due,
+                            is_partial=1 if fs.remaining_balance > 0 else 0,
+                            remaining_balance=fs.remaining_balance,
+                            student_id=existing.student_id,
+                            grade_level=existing.grade_level,
+                            fee_type=fs.category_name,
+                            envelope_verified=1,
+                            description=f"Prior balance payment credited via CSV update for {fs.category_name}",
+                            or_number=or_num,
+                            payer_name=existing.full_name,
+                            payer_type="Student",
+                            payment_method="Cash",
+                            school_year=existing.school_year,
+                            date_recorded=datetime.now().isoformat(),
+                            remarks="Credited payment update from student CSV",
+                            anomaly_score=0.0,
+                            anomaly_level="Normal",
+                            anomaly_status="Normal",
+                            is_flagged=0,
+                            is_voided=0
+                        )
+                        db.add(income)
+
             skipped.append(sid)
             continue
 
@@ -180,18 +275,55 @@ async def import_students_csv(
         db.add(student)
         db.flush()
 
-        # Initialize standard fee schedules
+        # Initialize standard fee schedules with imported paid balances
         for f in DEFAULT_FEES:
+            cat_name = f["category_name"]
+            paid_for_cat = min(f["total_due"], cat_paid_map.get(cat_name, 0.0))
+            rem_bal = max(0.0, f["total_due"] - paid_for_cat)
+
             fs = StudentFeeSchedule(
                 student_id=student.id,
-                category_name=f["category_name"],
+                category_name=cat_name,
                 sub_description=f["sub_description"],
                 total_due=f["total_due"],
-                total_paid=0.0,
-                remaining_balance=f["total_due"],
+                total_paid=paid_for_cat,
+                remaining_balance=rem_bal,
                 school_year=school_year
             )
             db.add(fs)
+
+            # If student already has balance paid for this category, create official historical receipt
+            if paid_for_cat > 0:
+                cat_match = db.query(IncomeCategory).filter(
+                    IncomeCategory.name.ilike(f"%{cat_name[:5]}%")
+                ).first()
+                or_num = generate_next_or_number(db)
+                income = Income(
+                    category_id=cat_match.id if cat_match else 1,
+                    student_id_ref=student.id,
+                    amount=paid_for_cat,
+                    expected_amount=f["total_due"],
+                    is_partial=1 if rem_bal > 0 else 0,
+                    remaining_balance=rem_bal,
+                    student_id=student.student_id,
+                    grade_level=student.grade_level,
+                    fee_type=cat_name,
+                    envelope_verified=1,
+                    description=f"Prior balance payment credited via student CSV import for {cat_name}",
+                    or_number=or_num,
+                    payer_name=student.full_name,
+                    payer_type="Student",
+                    payment_method="Cash",
+                    school_year=student.school_year,
+                    date_recorded=datetime.now().isoformat(),
+                    remarks="Initial credited payment from legacy school records",
+                    anomaly_score=0.0,
+                    anomaly_level="Normal",
+                    anomaly_status="Normal",
+                    is_flagged=0,
+                    is_voided=0
+                )
+                db.add(income)
 
         imported.append({"student_id": sid, "full_name": name, "grade_level": grade})
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -6,7 +6,7 @@ from datetime import datetime
 from ..database import get_db
 from ..models.models import PaymentNotification, Student, StudentFeeSchedule, AuditLog, User
 from ..schemas import PaymentNotificationCreate, PaymentNotificationResponse
-from ..auth import get_current_user
+from ..auth import get_current_user, get_optional_current_user
 
 router = APIRouter(prefix="/api/notifications", tags=["Payment Notifications"])
 
@@ -69,11 +69,14 @@ def auto_ai_detect_overdue_payments(db: Session) -> int:
 def get_notifications(
     student_id: Optional[int] = None,
     grade_level: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
     List notifications. Automatically runs the AI overdue payment monitor
     in the background so parents immediately see updated balance notices.
+    Enforces strict confidentiality: Parents ONLY see general school announcements
+    and notices specifically addressed to their own child.
     """
     try:
         auto_ai_detect_overdue_payments(db)
@@ -82,19 +85,49 @@ def get_notifications(
 
     query = db.query(PaymentNotification)
 
-    if student_id:
+    # 1. Parent Account Privacy Isolation
+    if current_user and current_user.role == "Parent":
+        parent_student_id = getattr(current_user, "student_id", current_user.id)
+        parent_grade = getattr(current_user, "student_grade", None)
+        if not parent_grade and parent_student_id:
+            st = db.query(Student).filter(Student.id == parent_student_id).first()
+            parent_grade = st.grade_level if st else None
+
+        # Parent strictly sees:
+        # A. Notices specific to their child (student_id == parent_student_id)
+        # B. General school announcements with NO student_id (student_id is None)
+        query = query.filter(
+            (PaymentNotification.student_id == parent_student_id) |
+            (
+                (PaymentNotification.student_id.is_(None)) &
+                (
+                    (PaymentNotification.grade_level == parent_grade) |
+                    (PaymentNotification.grade_level.is_(None)) |
+                    (PaymentNotification.grade_level == "All Grades")
+                )
+            )
+        )
+    elif student_id:
         student = db.query(Student).filter(Student.id == student_id).first()
         student_grade = student.grade_level if student else None
-        # Match student-specific, grade-specific, or all-school announcements
+        # Match student-specific or unassigned announcements
         query = query.filter(
             (PaymentNotification.student_id == student_id) |
-            (PaymentNotification.grade_level == student_grade) |
-            ((PaymentNotification.student_id == None) & (PaymentNotification.grade_level == None))
+            (
+                (PaymentNotification.student_id.is_(None)) &
+                (
+                    (PaymentNotification.grade_level == student_grade) |
+                    (PaymentNotification.grade_level.is_(None)) |
+                    (PaymentNotification.grade_level == "All Grades")
+                )
+            )
         )
-    elif grade_level:
+    elif grade_level and grade_level != "All Grades":
+        # Staff filtered by grade level
         query = query.filter(
             (PaymentNotification.grade_level == grade_level) |
-            (PaymentNotification.grade_level == None)
+            (PaymentNotification.grade_level.is_(None)) |
+            (PaymentNotification.grade_level == "All Grades")
         )
 
     notifications = query.order_by(PaymentNotification.id.desc()).all()

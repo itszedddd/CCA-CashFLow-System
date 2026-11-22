@@ -898,9 +898,10 @@ export default function Collections() {
 
             <form onSubmit={handleImportCsv} className="space-y-4 pt-4">
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
-                <p className="font-semibold text-slate-800 dark:text-white">Instructions:</p>
-                <p>1. Upload a <code>.csv</code> file with columns: <code>student_id</code>, <code>full_name</code>, <code>grade_level</code>, <code>section</code>, <code>gender</code>, <code>parent_name</code>, <code>parent_contact</code>, <code>parent_email</code>, <code>address</code>.</p>
-                <p>2. The system automatically initializes all 5 official fee schedules (Tuition, Registration, Books, Energy, Other Fees) for each student.</p>
+                <p className="font-semibold text-slate-800 dark:text-white">Instructions & Format:</p>
+                <p>1. Basic info: <code>student_id</code>, <code>full_name</code>, <code>grade_level</code>, <code>section</code>, <code>gender</code>, <code>parent_name</code>, <code>parent_contact</code>, <code>parent_email</code>, <code>address</code>.</p>
+                <p>2. <strong className="text-emerald-600 dark:text-emerald-400">Prior/Paid Balances:</strong> Include optional columns <code>tuition_paid</code>, <code>registration_paid</code>, <code>books_paid</code>, <code>energy_paid</code>, <code>other_paid</code> (or lump-sum <code>total_paid</code>). The system automatically credits these to the student's ledger and generates historical receipt entries.</p>
+                <p>3. Fee schedules are automatically initialized for all 5 CCA official categories (Tuition, Registration, Books, Energy, Other Fees).</p>
                 <button
                   type="button"
                   onClick={handleDownloadTemplate}

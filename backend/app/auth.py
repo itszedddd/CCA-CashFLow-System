@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
+from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from .database import get_db
-from .models.models import User
+from .models.models import User, Student
 
 SECRET_KEY = "cca-cashflow-secret-key-2026-calvary-christian-academy"
 ALGORITHM = "HS256"
@@ -14,6 +15,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 720  # 12 hours
 import bcrypt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -47,11 +49,32 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
+        role: str = payload.get("role")
         if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
     
+    # 1. Check if Parent role
+    if role == "Parent":
+        student = db.query(Student).filter(
+            (Student.student_id == username) |
+            (Student.parent_username == username)
+        ).first()
+        if student:
+            user = User(
+                id=student.id,
+                username=student.student_id,
+                full_name=student.parent_name or f"Parent of {student.full_name}",
+                role="Parent",
+                is_active=1
+            )
+            user.student_id = student.id
+            user.student_lrn = student.student_id
+            user.student_grade = student.grade_level
+            return user
+
+    # 2. Staff / Cashier / Admin
     user = db.query(User).filter(
         (User.username == username) |
         (User.username == f"{username}@cca.edu.ph")
@@ -62,6 +85,47 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+
+def get_optional_current_user(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Optional user dependency: does not raise 401 if token is omitted."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        role: str = payload.get("role")
+        if not username:
+            return None
+
+        if role == "Parent":
+            student = db.query(Student).filter(
+                (Student.student_id == username) |
+                (Student.parent_username == username)
+            ).first()
+            if student:
+                user = User(
+                    id=student.id,
+                    username=student.student_id,
+                    full_name=student.parent_name or f"Parent of {student.full_name}",
+                    role="Parent",
+                    is_active=1
+                )
+                user.student_id = student.id
+                user.student_lrn = student.student_id
+                user.student_grade = student.grade_level
+                return user
+
+        user = db.query(User).filter(
+            (User.username == username) |
+            (User.username == f"{username}@cca.edu.ph")
+        ).first()
+        return user
+    except Exception:
+        return None
 
 
 def require_role(*roles):

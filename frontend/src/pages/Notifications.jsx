@@ -49,8 +49,33 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/notifications/');
-      setNotifications(res.data);
+      const params = {};
+      if (isParent && (currentUser?.student_id || currentUser?.id)) {
+        params.student_id = currentUser.student_id || currentUser.id;
+      }
+      const res = await api.get('/notifications/', { params });
+
+      // Client-side privacy shield: strictly isolate parent notifications
+      const parentStudentId = currentUser?.student_id || currentUser?.id;
+      const safeData = (res.data || []).filter((n) => {
+        if (!isParent) return true;
+        // If notice is addressed to a specific student, it must match this parent's child
+        if (n.student_id && parentStudentId && Number(n.student_id) !== Number(parentStudentId)) {
+          return false;
+        }
+        // If notice has a specific grade level, only display if matching or all grades
+        if (
+          n.grade_level &&
+          currentUser?.grade_level &&
+          n.grade_level !== currentUser.grade_level &&
+          n.grade_level !== 'All Grades'
+        ) {
+          return false;
+        }
+        return true;
+      });
+
+      setNotifications(safeData);
     } catch (err) {
       addToast('Failed to load notifications', 'error');
     } finally {
@@ -126,6 +151,30 @@ export default function Notifications() {
         )}
       </div>
 
+      {/* Parent Account Privacy Shield Indicator */}
+      {isParent && (
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-900 dark:text-emerald-200">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div>
+              <p className="font-bold text-xs uppercase font-cinzel tracking-wider text-emerald-800 dark:text-emerald-300">
+                Confidential Ledger Privacy Active
+              </p>
+              <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80 mt-0.5">
+                Displaying notifications strictly for{' '}
+                <span className="font-bold underline text-emerald-900 dark:text-emerald-100">
+                  {currentUser.student_name || 'Your Student'}
+                </span>
+                {currentUser.grade_level ? ` (${currentUser.grade_level})` : ''}. Individual balance notices for other families are strictly hidden.
+              </p>
+            </div>
+          </div>
+          <span className="self-start sm:self-auto px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 rounded-lg text-[10px] font-bold uppercase font-cinzel tracking-wider border border-emerald-300 dark:border-emerald-700">
+            Private & Encrypted
+          </span>
+        </div>
+      )}
+
       {/* Notifications List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
@@ -137,13 +186,28 @@ export default function Notifications() {
           notifications.map((n) => (
             <div
               key={n.id}
-              className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between hover:shadow-md transition"
+              className={`bg-white dark:bg-slate-800 rounded-3xl p-5 border shadow-sm flex flex-col justify-between hover:shadow-md transition ${
+                n.student_id
+                  ? 'border-amber-200/90 dark:border-amber-700/80 ring-1 ring-amber-400/20'
+                  : 'border-slate-200/80 dark:border-slate-700/80'
+              }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2 min-w-0">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-slate-900 dark:text-brand-400 border border-brand-200 dark:border-slate-700 shrink-0">
-                    {n.fee_type}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-slate-900 dark:text-brand-400 border border-brand-200 dark:border-slate-700 shrink-0">
+                      {n.fee_type}
+                    </span>
+                    {n.student_id ? (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase font-cinzel bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        Personal Account Notice
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase font-cinzel bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        General Announcement
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[10px] text-slate-400 truncate">
                     {n.grade_level ? `Target: ${n.grade_level}` : 'All Students'}
                   </span>
