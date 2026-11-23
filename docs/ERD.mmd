@@ -1,0 +1,172 @@
+erDiagram
+    users {
+        int id PK
+        string username UK
+        string full_name
+        string hashed_password
+        string role "Admin, Cashier, Accountant, Principal, Parent"
+        int is_active
+        string profile_picture
+        string created_at
+    }
+
+    students {
+        int id PK
+        string student_id UK "LRN / Student ID"
+        string full_name
+        string grade_level "Kindergarten to Grade 10"
+        string section
+        string gender
+        string birthdate
+        string parent_name
+        string parent_contact
+        string parent_email
+        string parent_username
+        string parent_password_hash
+        string address
+        string school_year
+        string enrollment_status "Enrolled, Pending, Transferred"
+        string created_at
+    }
+
+    student_fee_schedules {
+        int id PK
+        int student_id FK
+        string category_name "Tuition, Registration, Books, Energy, Other"
+        string sub_description
+        float total_due
+        float total_paid
+        float remaining_balance
+        string school_year
+        string due_date
+        string remarks
+    }
+
+    payment_notifications {
+        int id PK
+        int student_id FK "Null = Broadcast"
+        string grade_level
+        string title
+        string fee_type
+        text description
+        float amount
+        string due_date
+        int is_read
+        string created_at
+    }
+
+    income_categories {
+        int id PK
+        string name UK "Tuition, Registration, Books, Energy, Other"
+        string description
+        string color
+        float expected_amount
+    }
+
+    expense_categories {
+        int id PK
+        string name UK
+        string description
+        string color
+        float budget_limit
+    }
+
+    incomes {
+        int id PK
+        int category_id FK
+        int student_id_ref FK
+        float amount
+        float expected_amount
+        int is_partial "0=Full 1=Partial"
+        float remaining_balance
+        string student_id "LRN string"
+        string grade_level
+        string fee_type
+        int envelope_verified
+        string description
+        string or_number UK "Official Receipt Number"
+        string payer_name
+        string payer_type
+        string payment_method "Cash, Check"
+        string reference_number
+        string school_year
+        string date_recorded
+        int recorded_by FK
+        text remarks
+        int is_voided
+        float anomaly_score
+        string anomaly_level
+        text anomaly_reasons
+        string anomaly_status
+        text cashier_notes
+    }
+
+    expenses {
+        int id PK
+        int category_id FK
+        float amount
+        string description
+        string payee
+        string payment_method "Cash, Check"
+        string reference_number
+        string voucher_number
+        string school_year
+        string status "Pending, Approved, Rejected, Paid"
+        int approved_by FK
+        string date_recorded
+        string date_approved
+        int recorded_by FK
+        text remarks
+        int is_voided
+    }
+
+    budgets {
+        int id PK
+        int category_id FK
+        string school_year
+        float allocated_amount
+        float spent_amount
+        int created_by FK
+        string created_at
+    }
+
+    cashflow_summaries {
+        int id PK
+        string month
+        string school_year
+        float total_income
+        float total_expenses
+        float net_cashflow
+        float opening_balance
+        float closing_balance
+        string generated_at
+    }
+
+    audit_logs {
+        int id PK
+        int user_id FK
+        string action
+        string entity_type "Income, Expense, Budget"
+        int entity_id
+        text details
+        string ip_address
+        string timestamp
+    }
+
+    system_settings {
+        int id PK
+        string key UK
+        string value
+    }
+
+    students ||--o{ student_fee_schedules : "has fee schedules"
+    students ||--o{ payment_notifications : "receives notifications"
+    students ||--o{ incomes : "has payments"
+    income_categories ||--o{ incomes : "categorizes"
+    expense_categories ||--o{ expenses : "categorizes"
+    expense_categories ||--o{ budgets : "has budget"
+    users ||--o{ incomes : "records"
+    users ||--o{ expenses : "records"
+    users ||--o{ expenses : "approves"
+    users ||--o{ budgets : "creates"
+    users ||--o{ audit_logs : "performs"
