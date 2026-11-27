@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Plus, CreditCard, ChevronRight,
   AlertCircle, AlertTriangle, FileText, ArrowUpRight,
-  Upload, Download, FileSpreadsheet, X, Receipt, Lock
+  Upload, Download, FileSpreadsheet, X, Receipt, Lock, Info
 } from 'lucide-react';
 import PesoSign from '../components/PesoSign';
 import api from '../api';
@@ -765,7 +765,7 @@ export default function Collections() {
                     <Lock className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                     Default Parent Password
                   </span>
-                  <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 rounded-md">
+                  <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-slate-800 border border-brand-200 dark:border-slate-700 rounded-md">
                     {getDefaultStudentPassword(newStudent.last_name)}
                   </span>
                 </div>
@@ -774,11 +774,17 @@ export default function Collections() {
                 </p>
               </div>
 
-              <div className="p-3 bg-brand-50/60 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-800 rounded-xl text-[11px] text-brand-800 dark:text-brand-300">
-                <p className="font-semibold">Fee Assessment Notice:</p>
-                <p className="text-slate-600 dark:text-slate-400 mt-0.5">
-                  New accounts start with <strong>₱0.00</strong> balance. Fees are assessed and activated by the Cashier upon collection/enrollment.
-                </p>
+              {/* Fee Assessment Notice */}
+              <div className="p-3.5 bg-blue-50/90 dark:bg-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="text-[11px] leading-relaxed">
+                  <p className="font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wide font-cinzel">
+                    Fee Assessment Notice
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-300 mt-0.5">
+                    New accounts start with <span className="font-bold text-slate-900 dark:text-white">₱0.00</span> balance. Fees are assessed and activated by the Cashier upon collection/enrollment.
+                  </p>
+                </div>
               </div>
 
               <div className="pt-3 flex gap-2 justify-end">
