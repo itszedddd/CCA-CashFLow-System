@@ -32,7 +32,7 @@ export default function AnomalyDetection() {
       return {};
     }
   })();
-  const canClearHighRisk = ['Admin', 'admin', 'Principal', 'principal', 'Accountant', 'accountant'].includes(currentUser?.role);
+  const canClearHighRisk = ['Admin', 'admin', 'Principal', 'principal'].includes(currentUser?.role);
 
   useEffect(() => {
     fetchSummary();
@@ -165,10 +165,10 @@ export default function AnomalyDetection() {
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-cinzel">
-                Proposed Feature #6 • Machine Learning Intelligence
+                Machine Learning Intelligence
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
-                ML-Based Anomaly Detection & Ledger Intelligence
+                ML-Based Anomaly Detection &amp; Ledger Intelligence
               </h2>
             </div>
           </div>
@@ -784,7 +784,7 @@ export default function AnomalyDetection() {
               <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
                 <span>
-                  High-Risk anomalies require <strong>Administrator, Principal, or Accountant</strong> clearance.
+                  High-Risk anomalies require <strong>Administrator or Principal</strong> clearance.
                 </span>
               </div>
             )}
@@ -811,7 +811,7 @@ export default function AnomalyDetection() {
                 <button
                   type="button"
                   disabled={selectedTx.anomaly_level === 'High' && !canClearHighRisk}
-                  title={selectedTx.anomaly_level === 'High' && !canClearHighRisk ? 'Requires Admin, Principal, or Accountant role to clear' : 'Verify and clear this transaction'}
+                  title={selectedTx.anomaly_level === 'High' && !canClearHighRisk ? 'Requires Administrator or Principal role to clear' : 'Verify and clear this transaction'}
                   onClick={() => handleResolve(selectedTx.id, 'verify_clear')}
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition font-cinzel uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                 >

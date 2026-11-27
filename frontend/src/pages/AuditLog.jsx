@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import {
-  ClipboardList, Search, Shield, User, Clock,
-  ArrowLeft, ArrowRight, Filter, AlertCircle
-} from 'lucide-react';
+import { Shield, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
 import api from '../api';
+import { formatPHDateTime } from '../utils/schoolData';
 
 export default function AuditLog() {
   const [logs, setLogs] = useState([]);
@@ -32,16 +30,16 @@ export default function AuditLog() {
   };
 
   const getActionBadge = (action = '') => {
-    if (action.includes('Created') || action.includes('Record')) {
+    if (action.includes('Created') || action.includes('Record') || action.includes('Published')) {
       return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
     }
-    if (action.includes('Approved')) {
+    if (action.includes('Verified') || action.includes('Cleared') || action.includes('Import')) {
       return 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800';
     }
-    if (action.includes('Voided') || action.includes('Rejected') || action.includes('Deleted')) {
+    if (action.includes('Voided') || action.includes('Flagged') || action.includes('Deleted')) {
       return 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800';
     }
-    if (action.includes('Updated') || action.includes('Modified')) {
+    if (action.includes('Password') || action.includes('Updated')) {
       return 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800';
     }
     return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600';
@@ -59,33 +57,33 @@ export default function AuditLog() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
-            Financial Audit Trail & System Logs
+            Collection Audit Trail &amp; System Logs
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Immutable activity log tracking every collection, disbursement approval, voiding, and budget modification.
+            Immutable activity log tracking student fee collections, OR issuances, ML anomaly resolutions, and account updates (PHT).
           </p>
         </div>
 
-        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200 dark:border-brand-800 self-start sm:self-auto">
           <Shield className="w-3.5 h-3.5 mr-1.5" />
           {total} Total Audit Records
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-md border border-slate-200/80 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors">
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="w-48">
+          <div className="w-56">
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
               className="w-full py-2 px-3 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
             >
               <option value="">All Audit Actions</option>
-              <option value="Income">Income / Collections</option>
-              <option value="Expense">Expense / Disbursements</option>
-              <option value="Approved">Approvals</option>
-              <option value="Budget">Budget Operations</option>
+              <option value="Payment">Fee Collections / Payments</option>
+              <option value="Student">Student Account / CSV Sync</option>
+              <option value="Password">Password Updates &amp; Resets</option>
+              <option value="Anomaly">ML Anomaly Reviews</option>
               <option value="Voided">Voided Records</option>
             </select>
           </div>
@@ -97,12 +95,12 @@ export default function AuditLog() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200/80 dark:border-slate-700 overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700">
-                <th className="py-3.5 px-4">Timestamp</th>
+                <th className="py-3.5 px-4">Timestamp (PH)</th>
                 <th className="py-3.5 px-4">Authorized User</th>
                 <th className="py-3.5 px-4">Action Event</th>
                 <th className="py-3.5 px-4">Entity Target</th>
@@ -129,17 +127,10 @@ export default function AuditLog() {
                     key={log.id}
                     className="hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors"
                   >
-                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap font-mono text-[11px]">
                       <div className="flex items-center space-x-1.5">
                         <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>
-                          {new Date(log.timestamp).toLocaleString('en-PH', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                        <span>{log.timestamp_display || formatPHDateTime(log.timestamp)}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -163,7 +154,7 @@ export default function AuditLog() {
                     </td>
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                        {log.entity_type || 'General'} #{log.entity_id || '—'}
+                        {log.entity_type || 'General'} {log.entity_id ? `#${log.entity_id}` : ''}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-md truncate">
@@ -186,14 +177,14 @@ export default function AuditLog() {
               <button
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
               </button>
               <button
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => p + 1)}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>

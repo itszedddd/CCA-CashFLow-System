@@ -69,7 +69,8 @@ nav a, .menu-item {
 
 .sidebar-drawer {
   @apply fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-in-out;
-  width: 280px;
+  width: 296px;
+  max-width: 86vw;
 }
 .sidebar-drawer-closed {
   transform: translateX(-100%);
@@ -155,11 +156,11 @@ html.accessible-mode .dark {
   scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
 }
 
-/* Print Layout CSS */
+/* Print Layout CSS (Default US Letter 8.5 x 11 inches) */
 @media print {
   @page {
+    size: letter portrait;
     margin: 10mm 8mm;
-    size: portrait;
   }
   
   .print-page {

@@ -13,6 +13,7 @@ import ParentPortal from './pages/ParentPortal';
 import Reports from './pages/Reports';
 import AuditLog from './pages/AuditLog';
 import AnomalyDetection from './pages/AnomalyDetection';
+import AdminStudents from './pages/AdminStudents';
 import api from './api';
 
 function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode, setIsAccessibleMode }) {
@@ -36,13 +37,15 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
       case '/parent':
         return 'Child Payment Account & Receipts';
       case '/anomaly':
-        return 'ML Anomaly Detection (Feature #6)';
+        return 'ML Anomaly Detection';
+      case '/admin/students':
+        return 'Student Accounts & CSV Registry';
       case '/reports':
         return 'Financial Statements & Reports';
       case '/audit-log':
         return 'System Audit Trail';
       default:
-        return 'CCA CashFlow System';
+        return 'CCA FlowSys';
     }
   };
 
@@ -105,12 +108,13 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                   <Route path="/income" element={<Income />} />
                   <Route path="/collections" element={<Income />} />
                   <Route path="/collections/:id" element={<StudentProfile />} />
+                  <Route path="/admin/students" element={<AdminStudents />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/parent" element={<ParentPortal user={user} />} />
                   <Route path="/anomaly" element={<AnomalyDetection />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/audit-log" element={<AuditLog />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<Navigate to={user?.role?.toLowerCase() === 'admin' ? '/admin/students' : '/'} replace />} />
                 </>
               )}
             </Routes>

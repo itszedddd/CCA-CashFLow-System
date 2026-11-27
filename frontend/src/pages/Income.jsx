@@ -1,32 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, Search, Filter, Plus, CreditCard, ChevronRight,
-  GraduationCap, AlertCircle, AlertTriangle, CheckCircle2, Clock, FileText,
-  ArrowUpRight, ShieldCheck, Eye, Sparkles, Upload, Download, FileSpreadsheet, X
+  Users, Search, Plus, CreditCard, ChevronRight,
+  AlertCircle, AlertTriangle, FileText, ArrowUpRight,
+  Upload, Download, FileSpreadsheet, X, Receipt, Lock
 } from 'lucide-react';
 import PesoSign from '../components/PesoSign';
 import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
+import { GRADE_LEVELS, resolveSection, formatPeso } from '../utils/schoolData';
 
-const formatPeso = (val) =>
-  `₱${Number(val || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
-
-const GRADE_LEVELS = [
-  'All',
-  'Kindergarten',
-  'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
-  'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'
-];
+const GRADE_FILTERS = ['All', ...GRADE_LEVELS];
 
 export default function Collections() {
   const navigate = useNavigate();
   const addToast = useToast();
 
   const [students, setStudents] = useState([]);
-  const [gradeSummary, setGradeSummary] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -43,6 +35,7 @@ export default function Collections() {
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
   const [importingCsv, setImportingCsv] = useState(false);
+  const [csvResult, setCsvResult] = useState(null);
 
   const handleDownloadTemplate = async () => {
     try {
@@ -55,7 +48,7 @@ export default function Collections() {
       link.click();
       link.remove();
       addToast('CSV Template downloaded successfully', 'info');
-    } catch (err) {
+    } catch {
       addToast('Failed to download CSV template', 'error');
     }
   };
@@ -77,7 +70,7 @@ export default function Collections() {
         `Imported ${res.data.imported_count} students! (${res.data.updated_existing_count} updated/existing)`,
         'success'
       );
-      setShowCsvModal(false);
+      setCsvResult(res.data);
       setCsvFile(null);
       fetchData();
     } catch (err) {
@@ -87,27 +80,27 @@ export default function Collections() {
     }
   };
 
-  // New Student Form State
+  // New Student Form State (LRN strictly manual, Section auto-synced to Grade Level)
   const [newStudent, setNewStudent] = useState({
     student_id: '',
     full_name: '',
     grade_level: 'Grade 1',
-    section: 'Faith',
+    section: resolveSection('Grade 1'),
     gender: 'Male',
     parent_name: '',
     parent_contact: '',
     parent_email: '',
-    address: 'Bulacan'
+    address: 'City of San Jose del Monte, Bulacan'
   });
   const [creatingStudent, setCreatingStudent] = useState(false);
 
-  // Quick Payment Form State
+  // Quick Payment Form State (Manual Physical OR# Input per Inspection 2.3.3)
+  const [payOrNumber, setPayOrNumber] = useState('');
   const [payFeeType, setPayFeeType] = useState('Tuition Fee');
   const [payAmount, setPayAmount] = useState('1906.00');
   const [payMethod, setPayMethod] = useState('Cash');
   const [payRef, setPayRef] = useState('');
   const [payRemarks, setPayRemarks] = useState('');
-  const [nextOrNumber, setNextOrNumber] = useState('');
   const [recordingPay, setRecordingPay] = useState(false);
 
   useEffect(() => {
@@ -122,14 +115,9 @@ export default function Collections() {
       if (searchQuery.trim()) params.q = searchQuery.trim();
       if (statusFilter !== 'All') params.status = statusFilter;
 
-      const [stuRes, sumRes] = await Promise.all([
-        api.get('/students/', { params }),
-        api.get('/students/grade-summary')
-      ]);
-
+      const stuRes = await api.get('/students/', { params });
       setStudents(stuRes.data);
-      setGradeSummary(sumRes.data);
-    } catch (err) {
+    } catch {
       addToast('Failed to load collections data', 'error');
     } finally {
       setLoading(false);
@@ -138,25 +126,34 @@ export default function Collections() {
 
   const handleCreateStudent = async (e) => {
     e.preventDefault();
-    if (!newStudent.full_name || !newStudent.student_id) {
-      addToast('Please enter full name and Student ID / LRN', 'error');
+    if (!newStudent.student_id.trim() || !newStudent.full_name.trim()) {
+      addToast('Please enter mandatory Student ID / LRN and full name', 'error');
       return;
     }
     setCreatingStudent(true);
     try {
-      const res = await api.post('/students/', newStudent);
-      addToast(`Student profile created for ${res.data.full_name}!`, 'success');
+      const payload = {
+        ...newStudent,
+        student_id: newStudent.student_id.trim(),
+        full_name: newStudent.full_name.trim(),
+        section: resolveSection(newStudent.grade_level),
+      };
+      const res = await api.post('/students/', payload);
+      addToast(
+        `Student profile created for ${res.data.full_name}! Initial Parent Password: ${res.data.initial_password || 'Issued'}`,
+        'success'
+      );
       setShowAddStudentModal(false);
       setNewStudent({
         student_id: '',
         full_name: '',
         grade_level: 'Grade 1',
-        section: 'Faith',
+        section: resolveSection('Grade 1'),
         gender: 'Male',
         parent_name: '',
         parent_contact: '',
         parent_email: '',
-        address: 'Bulacan'
+        address: 'City of San Jose del Monte, Bulacan'
       });
       fetchData();
       navigate(`/collections/${res.data.id}`);
@@ -168,25 +165,24 @@ export default function Collections() {
     }
   };
 
-  const openQuickPay = async (student) => {
+  const openQuickPay = (student) => {
     setSelectedStudentForPay(student);
+    setPayOrNumber('');
     setPayFeeType('Tuition Fee');
     setPayAmount('1906.00');
+    setPayMethod('Cash');
     setPayRemarks('');
     setPayRef('');
-
-    try {
-      const res = await api.get('/students/next-receipt-number');
-      setNextOrNumber(res.data.next_or_number);
-    } catch {
-      setNextOrNumber('Auto-Generated');
-    }
-
     setShowQuickPayModal(true);
   };
 
   const handleRecordQuickPayment = async (e) => {
     e.preventDefault();
+    const cleanOr = payOrNumber.trim();
+    if (!cleanOr) {
+      addToast('Please enter the Official Receipt (OR) Number from the physical receipt.', 'error');
+      return;
+    }
     const amountVal = parseFloat(payAmount);
     if (!amountVal || amountVal <= 0) {
       addToast('Please enter a valid amount', 'error');
@@ -196,6 +192,7 @@ export default function Collections() {
     setRecordingPay(true);
     try {
       const res = await api.post(`/students/${selectedStudentForPay.id}/payments`, {
+        or_number: cleanOr,
         fee_type: payFeeType,
         amount: amountVal,
         payment_method: payMethod,
@@ -206,7 +203,10 @@ export default function Collections() {
       });
 
       if (res.data.anomaly && res.data.anomaly.status === 'Flagged') {
-        addToast(`⚠️ Anomaly Flagged: ${res.data.anomaly.level} Risk (Score: ${res.data.anomaly.score}). Logged in ML Anomaly Ledger!`, 'warning');
+        addToast(
+          `⚠️ Anomaly Flagged: ${res.data.anomaly.level} Risk (Score: ${res.data.anomaly.score}). Logged in ML Anomaly Ledger!`,
+          'warning'
+        );
       } else {
         addToast(res.data.message || 'Payment recorded successfully!', 'success');
       }
@@ -229,12 +229,11 @@ export default function Collections() {
     try {
       const res = await api.get(`/students/${studentId}/notice-letter`);
       setNoticeLetterData(res.data);
-    } catch (err) {
+    } catch {
       addToast('Failed to generate notice letter', 'error');
     }
   };
 
-  // Aggregated totals
   const totalDueAll = students.reduce((sum, s) => sum + (s.total_due || 0), 0);
   const totalPaidAll = students.reduce((sum, s) => sum + (s.total_paid || 0), 0);
   const totalOutstandingAll = students.reduce((sum, s) => sum + (s.outstanding_balance || 0), 0);
@@ -242,40 +241,47 @@ export default function Collections() {
   return (
     <div className="space-y-6">
       {/* Header & Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-1">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
-              Collections & Student Profiles
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-cinzel tracking-tight uppercase">
+              Collections &amp; Student Profiles
             </h2>
             <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-cinzel">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              AI Real-Time Ledger Shield Active
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              ML Ledger Shield Active
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Organized list of students by Grade Level with individual payment records and auto-generated receipts
+            Organized list of enrolled students by Grade Level with physical OR tracking and Digital Receipts.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           <button
-            onClick={() => setShowCsvModal(true)}
-            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+            onClick={() => { setCsvResult(null); setShowCsvModal(true); }}
+            className="px-3.5 py-2.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer"
           >
             <Upload className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-            <span>Import Students (CSV)</span>
+            <span>Import CSV</span>
           </button>
 
           <button
             onClick={() => {
-              setNewStudent(p => ({
-                ...p,
-                student_id: `LRN-2026-${Math.floor(1000 + Math.random() * 9000)}`
-              }));
+              setNewStudent({
+                student_id: '',
+                full_name: '',
+                grade_level: 'Grade 1',
+                section: resolveSection('Grade 1'),
+                gender: 'Male',
+                parent_name: '',
+                parent_contact: '',
+                parent_email: '',
+                address: 'City of San Jose del Monte, Bulacan'
+              });
               setShowAddStudentModal(true);
             }}
-            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer"
+            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Student Profile</span>
@@ -285,14 +291,14 @@ export default function Collections() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Total Students</p>
-            <h3 className="text-2xl font-black text-slate-800 dark:text-white mt-1 font-mono truncate">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono truncate">
               {students.length}
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-              {selectedGrade === 'All' ? 'Across all 11 grades' : `Enrolled in ${selectedGrade}`}
+              {selectedGrade === 'All' ? 'Across all grade levels' : `Enrolled in ${selectedGrade}`}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center shrink-0">
@@ -300,10 +306,10 @@ export default function Collections() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Total Assessment</p>
-            <h3 className="text-xl font-black text-slate-800 dark:text-white mt-1 font-mono truncate">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1 font-mono truncate">
               {formatPeso(totalDueAll)}
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5 truncate">Assessed for SY 2026-2027</p>
@@ -313,7 +319,7 @@ export default function Collections() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 font-cinzel">Total Collected</p>
             <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono truncate">
@@ -328,13 +334,13 @@ export default function Collections() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-rose-500 font-cinzel">Outstanding Due</p>
             <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono truncate">
               {formatPeso(totalOutstandingAll)}
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">Unpaid tuition & fees</p>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">Unpaid tuition &amp; fees</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center shrink-0">
             <AlertCircle className="w-5 h-5" />
@@ -342,13 +348,13 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Grade Level Filter Horizontal Bar */}
-      <div className="bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-x-auto">
+      {/* Grade Level Filter Bar */}
+      <div className="bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-x-auto">
         <div className="flex items-center gap-1.5 min-w-max">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 font-cinzel">
             Grade Level:
           </span>
-          {GRADE_LEVELS.map((g) => {
+          {GRADE_FILTERS.map((g) => {
             const isSelected = selectedGrade === g;
             return (
               <button
@@ -368,8 +374,7 @@ export default function Collections() {
       </div>
 
       {/* Search and Status Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
-        {/* Search input */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
@@ -381,7 +386,6 @@ export default function Collections() {
           />
         </div>
 
-        {/* Status Pill Filters */}
         <div className="flex flex-wrap items-center gap-1.5 self-stretch sm:self-auto justify-start sm:justify-end">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-cinzel">
             Status:
@@ -402,27 +406,26 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Students List Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+      {/* Students Collections Table — Non-Horizontally Scrollable in Full Window Desktop View (Inspection 2.3.2) */}
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
+        {/* Desktop Full-Width Table (No Horizontal Scroll Needed) */}
+        <div className="hidden md:block">
+          <table className="w-full text-xs table-fixed">
             <thead>
-              <tr className="bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700 text-slate-400 text-[10px] uppercase font-cinzel font-bold">
-                <th className="text-left py-3.5 px-4 whitespace-nowrap">Student Name</th>
-                <th className="text-left py-3.5 px-4 whitespace-nowrap">Grade & Section</th>
-                <th className="text-left py-3.5 px-4 whitespace-nowrap">Student ID / LRN</th>
-                <th className="text-left py-3.5 px-4 whitespace-nowrap">Parent / Guardian</th>
-                <th className="text-right py-3.5 px-4 whitespace-nowrap">Total Assessed</th>
-                <th className="text-right py-3.5 px-4 whitespace-nowrap">Total Paid</th>
-                <th className="text-right py-3.5 px-4 whitespace-nowrap">Remaining Balance</th>
-                <th className="text-center py-3.5 px-4 whitespace-nowrap">Status</th>
-                <th className="text-right py-3.5 px-4 whitespace-nowrap">Actions</th>
+              <tr className="bg-slate-50/90 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 text-[10px] uppercase font-cinzel font-bold">
+                <th className="text-left py-3.5 px-3 w-[23%]">Student &amp; Grade</th>
+                <th className="text-left py-3.5 px-2.5 w-[13%]">Student LRN</th>
+                <th className="text-left py-3.5 px-2.5 w-[16%]">Parent / Guardian</th>
+                <th className="text-right py-3.5 px-2.5 w-[13%]">Paid / Assessed</th>
+                <th className="text-right py-3.5 px-2.5 w-[11%]">Balance</th>
+                <th className="text-center py-3.5 px-2 w-[10%]">Status</th>
+                <th className="text-right py-3.5 px-3 w-[14%]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center">
+                  <td colSpan={7} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
                       <p className="text-xs text-slate-400 font-cinzel">Loading students...</p>
@@ -433,60 +436,56 @@ export default function Collections() {
                 students.map((s) => (
                   <tr
                     key={s.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition group cursor-pointer"
+                    className="hover:bg-slate-50/90 dark:hover:bg-slate-700/30 transition group cursor-pointer"
                     onClick={() => navigate(`/collections/${s.id}`)}
                   >
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-bold text-brand-600 dark:text-brand-400 text-xs shrink-0">
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-bold text-brand-700 dark:text-brand-400 text-xs shrink-0">
                           {s.full_name.charAt(0)}
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-slate-900 dark:text-white uppercase font-sans truncate">
                             {s.full_name}
                           </p>
-                          <p className="text-[10px] text-slate-400">{s.gender || 'Student'}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                            {s.grade_level} • {resolveSection(s.grade_level, s.section)}
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {s.grade_level}
-                      </span>
-                      <p className="text-[10px] text-slate-400">{s.section || 'Faith'}</p>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                    <td className="py-3 px-2.5 font-mono font-bold text-slate-700 dark:text-slate-300 truncate">
                       {s.student_id}
                     </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <p className="font-medium text-slate-700 dark:text-slate-300">{s.parent_name || 'N/A'}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">{s.parent_contact || ''}</p>
+                    <td className="py-3 px-2.5 min-w-0">
+                      <p className="font-medium text-slate-700 dark:text-slate-300 truncate">{s.parent_name || 'N/A'}</p>
+                      <p className="text-[10px] text-slate-400 font-mono truncate">{s.parent_contact || ''}</p>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                      {formatPeso(s.total_due)}
+                    <td className="py-3 px-2.5 text-right font-mono">
+                      <p className="font-bold text-emerald-600 dark:text-emerald-400">{formatPeso(s.total_paid)}</p>
+                      <p className="text-[10px] text-slate-400">/ {formatPeso(s.total_due)}</p>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      {formatPeso(s.total_paid)}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                    <td className="py-3 px-2.5 text-right font-mono font-black text-rose-600 dark:text-rose-400">
                       {formatPeso(s.outstanding_balance)}
                     </td>
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel border ${
-                        s.payment_status === 'Fully Paid'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
-                          : s.payment_status === 'Partial'
-                          ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800'
-                          : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
-                      }`}>
+                    <td className="py-3 px-2 text-center">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase font-cinzel border ${
+                          s.payment_status === 'Fully Paid'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
+                            : s.payment_status === 'Partial'
+                            ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
+                        }`}
+                      >
                         {s.payment_status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openQuickPay(s)}
-                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
+                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
                           title="Record payment for this student"
                         >
                           <CreditCard className="w-3 h-3" />
@@ -495,16 +494,15 @@ export default function Collections() {
                         {s.outstanding_balance > 0 && (
                           <button
                             onClick={() => openNoticeLetter(s.id)}
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
+                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg transition cursor-pointer shrink-0"
                             title="Generate payment notice letter"
                           >
-                            <FileText className="w-3 h-3" />
-                            <span>Notice</span>
+                            <FileText className="w-3.5 h-3.5" />
                           </button>
                         )}
                         <button
                           onClick={() => navigate(`/collections/${s.id}`)}
-                          className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer shrink-0"
+                          className="p-1 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer shrink-0"
                           title="View student profile"
                         >
                           <ChevronRight className="w-4 h-4" />
@@ -515,7 +513,7 @@ export default function Collections() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     No students match the current filters.
                   </td>
                 </tr>
@@ -523,9 +521,70 @@ export default function Collections() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Cards List View */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700/60">
+          {loading ? (
+            <div className="py-10 text-center text-xs text-slate-400 font-cinzel">Loading students...</div>
+          ) : students.length > 0 ? (
+            students.map((s) => (
+              <div
+                key={`mob-${s.id}`}
+                onClick={() => navigate(`/collections/${s.id}`)}
+                className="p-4 space-y-2.5 active:bg-slate-50 dark:active:bg-slate-700/40"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-slate-900 dark:text-white uppercase truncate">{s.full_name}</p>
+                    <p className="text-[11px] font-mono text-slate-500">
+                      {s.student_id} • {s.grade_level} ({resolveSection(s.grade_level, s.section)})
+                    </p>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase font-cinzel border shrink-0 ${
+                      s.payment_status === 'Fully Paid'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                        : s.payment_status === 'Partial'
+                        ? 'bg-amber-50 text-amber-700 border-amber-300'
+                        : 'bg-rose-50 text-rose-700 border-rose-300'
+                    }`}
+                  >
+                    {s.payment_status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <div>
+                    <span className="text-slate-400">Balance: </span>
+                    <span className="font-mono font-black text-rose-600 dark:text-rose-400">
+                      {formatPeso(s.outstanding_balance)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => openQuickPay(s)}
+                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase font-cinzel"
+                    >
+                      Record Pay
+                    </button>
+                    {s.outstanding_balance > 0 && (
+                      <button
+                        onClick={() => openNoticeLetter(s.id)}
+                        className="px-2.5 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-bold uppercase font-cinzel"
+                      >
+                        Notice
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-10 text-center text-xs text-slate-400">No students match the current filters.</div>
+          )}
+        </div>
       </div>
 
-      {/* Add New Student Modal */}
+      {/* Add New Student Modal (Grade Level auto-syncs Non-Editable Section per Inspection 2.3.1) */}
       {showAddStudentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
@@ -535,30 +594,30 @@ export default function Collections() {
                   Add New Student Profile
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Initializes standard fee schedules for Tuition, Registration, Books, Energy, and Other Fees
+                  Initializes 5 standard CCA fee schedules &amp; LRN-generated Parent password
                 </p>
               </div>
               <button
                 onClick={() => setShowAddStudentModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleCreateStudent} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Student ID / LRN
+                    Student ID / LRN <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={newStudent.student_id}
                     onChange={(e) => setNewStudent({ ...newStudent, student_id: e.target.value })}
-                    placeholder="e.g. LRN-2026-0042"
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-white outline-none"
+                    placeholder="Enter DepEd LRN (Required)"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
                 <div>
@@ -567,10 +626,17 @@ export default function Collections() {
                   </label>
                   <select
                     value={newStudent.grade_level}
-                    onChange={(e) => setNewStudent({ ...newStudent, grade_level: e.target.value })}
+                    onChange={(e) => {
+                      const grade = e.target.value;
+                      setNewStudent({
+                        ...newStudent,
+                        grade_level: grade,
+                        section: resolveSection(grade),
+                      });
+                    }}
                     className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                   >
-                    {GRADE_LEVELS.filter(g => g !== 'All').map(g => (
+                    {GRADE_LEVELS.map((g) => (
                       <option key={g} value={g}>{g}</option>
                     ))}
                   </select>
@@ -579,7 +645,7 @@ export default function Collections() {
 
               <div>
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                  Full Name of Student
+                  Full Name of Student <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -591,18 +657,21 @@ export default function Collections() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Section
+                    Section (Auto-Synced)
                   </label>
-                  <input
-                    type="text"
-                    value={newStudent.section}
-                    onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })}
-                    placeholder="e.g. Faith"
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      readOnly
+                      disabled
+                      value={resolveSection(newStudent.grade_level)}
+                      className="w-full px-3.5 py-2 pr-8 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 cursor-not-allowed outline-none"
+                    />
+                    <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                  </div>
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
@@ -619,7 +688,7 @@ export default function Collections() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
                     Parent / Guardian Name
@@ -650,7 +719,7 @@ export default function Collections() {
                 <button
                   type="button"
                   onClick={() => setShowAddStudentModal(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -667,7 +736,7 @@ export default function Collections() {
         </div>
       )}
 
-      {/* Quick Payment Modal */}
+      {/* Quick Payment Modal (Manual OR Number from Physical Receipt per Inspection 2.3.3) */}
       {showQuickPayModal && selectedStudentForPay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
@@ -682,23 +751,30 @@ export default function Collections() {
               </div>
               <button
                 onClick={() => setShowQuickPayModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleRecordQuickPayment} className="p-6 space-y-4">
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 font-cinzel">
-                    Official Receipt Number (Auto-Generated)
-                  </p>
-                  <p className="text-base font-mono font-black text-emerald-900 dark:text-emerald-200 tracking-wider">
-                    {nextOrNumber}
-                  </p>
-                </div>
-                <ShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              {/* Manual Physical OR Number Input */}
+              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
+                <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Physical Official Receipt (OR) Number <span className="text-rose-500">*</span></span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={payOrNumber}
+                  onChange={(e) => setPayOrNumber(e.target.value)}
+                  placeholder="Enter OR # from physical receipt (e.g. OR-2026-00412)"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-xl text-sm font-mono font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 mt-1">
+                  Must match the issued physical Official Receipt booklet number (duplicates prevented).
+                </p>
               </div>
 
               <div>
@@ -713,11 +789,13 @@ export default function Collections() {
                     if (!sched) return null;
                     const bal = Math.max(0, (sched.total_due || 0) - (sched.total_paid || 0));
                     return (
-                      <span className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded-md ${
-                        bal === 0
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                          : 'bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
-                      }`}>
+                      <span
+                        className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded-md ${
+                          bal === 0
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : 'bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
+                        }`}
+                      >
                         Remaining: {formatPeso(bal)}
                       </span>
                     );
@@ -740,7 +818,7 @@ export default function Collections() {
                 >
                   <option value="Tuition Fee">Tuition Fee (Monthly ₱1,906 / Annual ₱19,060)</option>
                   <option value="Registration Fee">Registration Fee (Annual ₱5,700)</option>
-                  <option value="Books">Books & Materials (₱6,900)</option>
+                  <option value="Books">Books &amp; Materials (₱6,900)</option>
                   <option value="Energy Fee">Energy Fee (Monthly ₱300 / Annual ₱3,000)</option>
                   <option value="Other Fees">Other Fees (Tours, Swimming, Activities)</option>
                 </select>
@@ -777,7 +855,8 @@ export default function Collections() {
                           <span>ML Alert: Account Already Fully Paid</span>
                         </div>
                         <p className="text-[11px] leading-relaxed">
-                          Student has <strong>₱0.00</strong> outstanding balance for <strong>{payFeeType}</strong>. Recording payment of <strong>{formatPeso(amt)}</strong> will be flagged as an invalid excess collection anomaly.
+                          Student has <strong>₱0.00</strong> outstanding balance for <strong>{payFeeType}</strong>. Recording payment of{' '}
+                          <strong>{formatPeso(amt)}</strong> will be flagged as an invalid excess collection anomaly.
                         </p>
                       </div>
                     );
@@ -793,15 +872,12 @@ export default function Collections() {
                           <span>ML Alert: Critical Overpayment Detected</span>
                         </div>
                         <p className="text-[11px] leading-relaxed">
-                          Entered amount of <strong>{formatPeso(amt)}</strong> exceeds student's remaining balance of <strong>{formatPeso(bal)}</strong> by <strong>{formatPeso(overpay)}</strong> (+{pct}%).
-                        </p>
-                        <p className="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
-                          • System will flag this as a <strong>CRITICAL ANOMALY (High Risk, Score: 95.0)</strong> in the AI Ledger for Cashier audit.
+                          Entered amount of <strong>{formatPeso(amt)}</strong> exceeds student&apos;s remaining balance of{' '}
+                          <strong>{formatPeso(bal)}</strong> by <strong>{formatPeso(overpay)}</strong> (+{pct}%).
                         </p>
                       </div>
                     );
                   }
-
                   return null;
                 })()}
               </div>
@@ -822,7 +898,7 @@ export default function Collections() {
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Ref # / Notes
+                    Ref # / Check #
                   </label>
                   <input
                     type="text"
@@ -838,7 +914,7 @@ export default function Collections() {
                 <button
                   type="button"
                   onClick={() => setShowQuickPayModal(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -847,7 +923,7 @@ export default function Collections() {
                   disabled={recordingPay}
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  {recordingPay ? 'Saving...' : 'Issue Receipt & Save'}
+                  {recordingPay ? 'Saving...' : 'Save & View Digital Receipt'}
                 </button>
               </div>
             </form>
@@ -855,7 +931,7 @@ export default function Collections() {
         </div>
       )}
 
-      {/* Official Receipt Modal */}
+      {/* Official Digital Receipt Modal */}
       {selectedReceipt && (
         <OfficialReceiptModal
           receipt={selectedReceipt}
@@ -874,7 +950,7 @@ export default function Collections() {
       {/* CSV Import Modal */}
       {showCsvModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-zoom-in">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-zoom-in max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-brand-50 dark:bg-brand-950/60 rounded-xl text-brand-600 dark:text-brand-400">
@@ -882,15 +958,17 @@ export default function Collections() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">
-                    Import Existing Students (CSV)
+                    Import Enrolled Students (CSV)
                   </h3>
-                  <p className="text-[11px] text-slate-400">Bulk upload old/enrolled student records into the ledger</p>
+                  <p className="text-[11px] text-slate-400">
+                    Sync registrar student roster, grade-level fees &amp; initial LRN passwords
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => { setShowCsvModal(false); setCsvFile(null); }}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                onClick={() => { setShowCsvModal(false); setCsvFile(null); setCsvResult(null); }}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -898,10 +976,14 @@ export default function Collections() {
 
             <form onSubmit={handleImportCsv} className="space-y-4 pt-4">
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
-                <p className="font-semibold text-slate-800 dark:text-white">Instructions & Format:</p>
-                <p>1. Basic info: <code>student_id</code>, <code>full_name</code>, <code>grade_level</code>, <code>section</code>, <code>gender</code>, <code>parent_name</code>, <code>parent_contact</code>, <code>parent_email</code>, <code>address</code>.</p>
-                <p>2. <strong className="text-emerald-600 dark:text-emerald-400">Prior/Paid Balances:</strong> Include optional columns <code>tuition_paid</code>, <code>registration_paid</code>, <code>books_paid</code>, <code>energy_paid</code>, <code>other_paid</code> (or lump-sum <code>total_paid</code>). The system automatically credits these to the student's ledger and generates historical receipt entries.</p>
-                <p>3. Fee schedules are automatically initialized for all 5 CCA official categories (Tuition, Registration, Books, Energy, Other Fees).</p>
+                <p className="font-semibold text-slate-800 dark:text-white">Registrar Sync Format:</p>
+                <p>
+                  1. Required: <code>student_id</code> (LRN), <code>full_name</code>, <code>grade_level</code>.
+                  Section auto-syncs by grade level.
+                </p>
+                <p>
+                  2. Each newly imported student automatically receives all 5 CCA fee schedules and a unique LRN initial password for Parent Portal login.
+                </p>
                 <button
                   type="button"
                   onClick={handleDownloadTemplate}
@@ -925,13 +1007,33 @@ export default function Collections() {
                 />
               </div>
 
+              {csvResult && csvResult.imported_students?.length > 0 && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs space-y-2">
+                  <p className="font-bold text-emerald-800 dark:text-emerald-300 font-cinzel uppercase">
+                    Generated Initial Parent LRN Credentials ({csvResult.imported_students.length})
+                  </p>
+                  <div className="max-h-36 overflow-y-auto divide-y divide-emerald-200/60 dark:divide-emerald-800/50">
+                    {csvResult.imported_students.map((st, i) => (
+                      <div key={i} className="py-1 flex justify-between font-mono text-[11px]">
+                        <span className="text-slate-700 dark:text-slate-200 truncate pr-2">
+                          {st.student_id} ({st.full_name})
+                        </span>
+                        <span className="font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+                          {st.initial_password}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="pt-2 flex gap-2 justify-end">
                 <button
                   type="button"
-                  onClick={() => { setShowCsvModal(false); setCsvFile(null); }}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold"
+                  onClick={() => { setShowCsvModal(false); setCsvFile(null); setCsvResult(null); }}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
                 >
-                  Cancel
+                  Close
                 </button>
                 <button
                   type="submit"
@@ -939,7 +1041,7 @@ export default function Collections() {
                   className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{importingCsv ? 'Importing Records...' : 'Upload & Import'}</span>
+                  <span>{importingCsv ? 'Importing Records...' : 'Upload & Sync'}</span>
                 </button>
               </div>
             </form>

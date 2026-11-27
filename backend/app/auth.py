@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from .database import get_db
 from .models.models import User, Student
 
@@ -40,26 +40,19 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    
-    # 1. Check if Parent role
+def _resolve_user_from_payload(payload: dict, db: Session) -> Optional[User]:
+    username: str = payload.get("sub")
+    role: str = payload.get("role")
+    if not username:
+        return None
+
+    clean_un = username.strip().lower()
+
+    # 1. Parent account resolution via Student LRN
     if role == "Parent":
         student = db.query(Student).filter(
-            (Student.student_id == username) |
-            (Student.parent_username == username)
+            (func.lower(func.trim(Student.student_id)) == clean_un) |
+            (func.lower(func.trim(Student.parent_username)) == clean_un)
         ).first()
         if student:
             user = User(
@@ -72,16 +65,30 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             user.student_id = student.id
             user.student_lrn = student.student_id
             user.student_grade = student.grade_level
+            user.password_changed = getattr(student, "password_changed", 0) or 0
             return user
+        return None
 
-    # 2. Staff / Cashier / Admin
+    # 2. Staff / Cashier / Admin / Principal resolution
     user = db.query(User).filter(
-        (User.username == username) |
-        (User.username == f"{username}@cca.edu.ph")
+        (func.lower(func.trim(User.username)) == clean_un) |
+        (func.lower(func.trim(User.username)) == f"{clean_un}@cca.edu.ph")
     ).first()
-    if user is None:
-        # If single-user cashier system, fallback to cashier
-        user = db.query(User).filter(User.role == "Cashier").first()
+    return user
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise credentials_exception
+
+    user = _resolve_user_from_payload(payload, db)
     if user is None:
         raise credentials_exception
     return user
@@ -96,42 +103,18 @@ def get_optional_current_user(
         return None
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
-        if not username:
-            return None
-
-        if role == "Parent":
-            student = db.query(Student).filter(
-                (Student.student_id == username) |
-                (Student.parent_username == username)
-            ).first()
-            if student:
-                user = User(
-                    id=student.id,
-                    username=student.student_id,
-                    full_name=student.parent_name or f"Parent of {student.full_name}",
-                    role="Parent",
-                    is_active=1
-                )
-                user.student_id = student.id
-                user.student_lrn = student.student_id
-                user.student_grade = student.grade_level
-                return user
-
-        user = db.query(User).filter(
-            (User.username == username) |
-            (User.username == f"{username}@cca.edu.ph")
-        ).first()
-        return user
+        return _resolve_user_from_payload(payload, db)
     except Exception:
         return None
 
 
 def require_role(*roles):
     """Dependency: restrict endpoint to specific roles."""
+    allowed = {r.lower() for r in roles}
+
     def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role not in roles:
+        if (current_user.role or "").lower() not in allowed:
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return current_user
+
     return role_checker

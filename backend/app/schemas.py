@@ -271,6 +271,11 @@ class StudentUpdate(BaseModel):
     address: Optional[str] = None
     enrollment_status: Optional[str] = None
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class StudentResponse(StudentBase):
     id: int
     created_at: Optional[str] = None
@@ -278,6 +283,8 @@ class StudentResponse(StudentBase):
     total_paid: Optional[float] = 0.0
     outstanding_balance: Optional[float] = 0.0
     payment_status: Optional[str] = "Pending"
+    initial_password: Optional[str] = None
+    password_changed: Optional[int] = 0
 
     class Config:
         from_attributes = True
@@ -289,6 +296,7 @@ class StudentDetailResponse(StudentResponse):
 class RecordStudentPaymentRequest(BaseModel):
     fee_type: str  # "Tuition Fee", "Registration Fee", "Books", "Energy Fee", "Other Fees"
     amount: float
+    or_number: Optional[str] = None  # Manual OR Number matching physical receipt
     description: Optional[str] = None
     payment_method: str = "Cash"
     reference_number: Optional[str] = None

@@ -1,6 +1,5 @@
 """
-ML-Based Anomaly Detection Engine for CCA FlowSys (CashFlow Management System).
-Implements Feature #6 of CCA-FlowSys-Proposed-Major-System-Features.pdf:
+ML-Based Anomaly Detection Engine for CCA FlowSys (CashFlow Management System):
 - Scikit-Learn IsolationForest outlier scoring
 - Multi-attribute heuristics (expected fee schedule deviation, student history, cross-category mismatch, void clustering)
 - 3-Level Anomaly Threshold (Low/Healthy: 0-39, Medium/Verification: 40-69, High/Critical: 70-100)

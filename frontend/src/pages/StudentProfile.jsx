@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, CreditCard, FileText, Printer, CheckCircle2,
-  AlertCircle, AlertTriangle, Clock, ShieldCheck, User, Phone, Mail,
-  GraduationCap, BookOpen, Zap, Sparkles, Plus, Calendar
+  AlertCircle, AlertTriangle, User, Phone, Mail,
+  GraduationCap, BookOpen, Zap, Sparkles, Plus, Eye, Receipt
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
 import YearlyRecordModal from '../components/YearlyRecordModal';
-
-const formatPeso = (val) =>
-  `₱${Number(val || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+import { formatPeso, formatPHDateTime, resolveSection } from '../utils/schoolData';
 
 const CATEGORY_ICONS = {
   'Tuition Fee': GraduationCap,
@@ -45,13 +43,13 @@ export default function StudentProfile() {
   const [yearlyRecordData, setYearlyRecordData] = useState(null);
 
   // Payment form state
+  const [orNumber, setOrNumber] = useState('');
   const [feeType, setFeeType] = useState('Tuition Fee');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [refNumber, setRefNumber] = useState('');
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [nextOrNumber, setNextOrNumber] = useState('');
 
   useEffect(() => {
     fetchStudentProfile();
@@ -69,9 +67,9 @@ export default function StudentProfile() {
     }
   };
 
-  const openPaymentModalForCategory = async (catName, remainingBal) => {
+  const openPaymentModalForCategory = (catName, remainingBal) => {
+    setOrNumber('');
     setFeeType(catName);
-    // Pre-fill with reasonable monthly payment or remaining balance
     if (catName === 'Tuition Fee') {
       setPaymentAmount('1906.00');
     } else if (catName === 'Energy Fee') {
@@ -81,19 +79,16 @@ export default function StudentProfile() {
     }
     setRemarks('');
     setRefNumber('');
-
-    try {
-      const res = await api.get('/students/next-receipt-number');
-      setNextOrNumber(res.data.next_or_number);
-    } catch {
-      setNextOrNumber('Auto-Generated');
-    }
-
     setShowPaymentModal(true);
   };
 
   const handleRecordPayment = async (e) => {
     e.preventDefault();
+    const cleanOr = orNumber.trim();
+    if (!cleanOr) {
+      addToast('Please enter the Official Receipt (OR) Number from the physical receipt', 'error');
+      return;
+    }
     const amountVal = parseFloat(paymentAmount);
     if (!amountVal || amountVal <= 0) {
       addToast('Please enter a valid payment amount', 'error');
@@ -103,6 +98,7 @@ export default function StudentProfile() {
     setSubmitting(true);
     try {
       const res = await api.post(`/students/${id}/payments`, {
+        or_number: cleanOr,
         fee_type: feeType,
         amount: amountVal,
         payment_method: paymentMethod,
@@ -119,12 +115,11 @@ export default function StudentProfile() {
       }
       setShowPaymentModal(false);
 
-      // Auto-show soft-copy receipt
+      // Auto-show official digital receipt
       if (res.data.receipt) {
         setSelectedReceipt(res.data.receipt);
       }
 
-      // Refresh student profile immediately
       fetchStudentProfile();
     } catch (err) {
       const msg = err.response?.data?.detail || 'Failed to record payment';
@@ -207,7 +202,7 @@ export default function StudentProfile() {
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono truncate">
-              LRN: {student.student_id} • Grade: {student.grade_level} - {student.section}
+              LRN: {student.student_id} • Grade: {student.grade_level} - {resolveSection(student.grade_level, student.section)}
             </p>
           </div>
         </div>
@@ -270,8 +265,8 @@ export default function StudentProfile() {
               <span>{student.parent_email || 'N/A'}</span>
             </div>
             <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-              <span className="text-slate-400 flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" /> Section / Adviser:</span>
-              <span className="font-medium">{student.section}</span>
+              <span className="text-slate-400 flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" /> Section:</span>
+              <span className="font-medium">{resolveSection(student.grade_level, student.section)}</span>
             </div>
           </div>
         </div>
@@ -400,15 +395,15 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      {/* Payment Transactions & Receipts Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+      {/* Payment Transactions & Digital Receipts Table */}
+      <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
           <div>
             <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel uppercase">
-              Student Payment Records & Soft-Copy Receipts
+              Student Payment Records &amp; Digital Receipts
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              All official receipts auto-generated and preserved in student's profile account
+              All official receipts recorded against physical OR numbers and preserved in the student&apos;s profile
             </p>
           </div>
           <button
@@ -424,25 +419,25 @@ export default function StudentProfile() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 text-[10px] uppercase font-cinzel font-bold">
-                <th className="text-left py-3 px-3 whitespace-nowrap">Date Recorded</th>
+                <th className="text-left py-3 px-3 whitespace-nowrap">Date Recorded (PH)</th>
                 <th className="text-left py-3 px-3 whitespace-nowrap">Official Receipt #</th>
                 <th className="text-left py-3 px-3 whitespace-nowrap">Fee Category</th>
                 <th className="text-left py-3 px-3 whitespace-nowrap">Description</th>
                 <th className="text-right py-3 px-3 whitespace-nowrap">Amount Paid</th>
                 <th className="text-left py-3 px-3 whitespace-nowrap">Method</th>
                 <th className="text-center py-3 px-3 whitespace-nowrap">Envelope Status</th>
-                <th className="text-center py-3 px-3 whitespace-nowrap">Soft-Copy Receipt</th>
+                <th className="text-center py-3 px-3 whitespace-nowrap">Digital Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {student.payments && student.payments.length > 0 ? (
                 student.payments.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition">
-                    <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {p.date_recorded ? p.date_recorded.split('T')[0] : 'N/A'}
+                    <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap font-mono text-[11px]">
+                      {formatPHDateTime(p.date_recorded)}
                     </td>
                     <td className="py-3 px-3 font-mono font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
-                      {p.or_number || 'OR-AUTO'}
+                      {p.or_number || 'N/A'}
                     </td>
                     <td className="py-3 px-3 font-semibold text-slate-800 dark:text-white whitespace-nowrap">
                       {p.category_name || p.fee_type || 'Tuition Fee'}
@@ -466,11 +461,11 @@ export default function StudentProfile() {
                       <button
                         onClick={() => setSelectedReceipt({
                           or_number: p.or_number,
-                          date: p.date_recorded ? new Date(p.date_recorded).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A',
+                          date: p.date_recorded,
                           student_name: student.full_name,
                           student_id: student.student_id,
                           grade_level: student.grade_level,
-                          section: student.section,
+                          section: resolveSection(student.grade_level, student.section),
                           parent_name: student.parent_name,
                           fee_type: p.category_name || p.fee_type || 'Tuition Fee',
                           description: p.description,
@@ -483,8 +478,8 @@ export default function StudentProfile() {
                         })}
                         className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-[10px] font-semibold transition inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Printer className="w-3 h-3 text-brand-600 dark:text-brand-400 shrink-0" />
-                        <span>View OR</span>
+                        <Eye className="w-3 h-3 text-brand-600 dark:text-brand-400 shrink-0" />
+                        <span>View Digital OR</span>
                       </button>
                     </td>
                   </tr>
@@ -516,24 +511,30 @@ export default function StudentProfile() {
               </div>
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
-              {/* Auto-Generated OR preview banner */}
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 font-cinzel">
-                    Official Receipt Number (Auto-Generated)
-                  </p>
-                  <p className="text-base font-mono font-black text-emerald-900 dark:text-emerald-200 tracking-wider">
-                    {nextOrNumber || 'OR-2026-XXXXX'}
-                  </p>
-                </div>
-                <ShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              {/* Manual Physical OR Number Input (Inspection 2.3.3) */}
+              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
+                <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Physical Official Receipt (OR) Number <span className="text-rose-500">*</span></span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={orNumber}
+                  onChange={(e) => setOrNumber(e.target.value)}
+                  placeholder="Enter OR # from physical receipt (e.g. OR-2026-00412)"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-xl text-sm font-mono font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 mt-1">
+                  Required: enter the exact OR number printed on the physical receipt.
+                </p>
               </div>
 
               {/* Fee Category Selector */}

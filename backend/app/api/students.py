@@ -16,7 +16,11 @@ from ..schemas import (
     RecordStudentPaymentRequest, IncomeResponse
 )
 from ..core.anomaly_engine import evaluate_single_transaction
-from ..auth import get_current_user, get_password_hash
+from ..core.timezone import (
+    ph_now, ph_now_iso, ph_now_display, format_ph_timestamp,
+    resolve_section, generate_lrn_password
+)
+from ..auth import get_current_user, get_optional_current_user, get_password_hash
 
 router = APIRouter(prefix="/api/students", tags=["Students & Collections"])
 
@@ -32,13 +36,12 @@ DEFAULT_FEES = [
 
 def generate_next_or_number(db: Session) -> str:
     """
-    Auto-generates guaranteed collision-free sequential Official Receipt number (e.g., OR-2026-00045).
-    Guarantees that no duplicate OR number can ever be produced.
+    Auto-generates sequential reference number for CSV historical credits (e.g., CSV-2026-00045).
+    Manual cashier collections must supply the physical Official Receipt (OR) Number.
     """
-    year = datetime.now().year
-    prefix = f"OR-{year}-"
+    year = ph_now().year
+    prefix = f"CSV-{year}-"
 
-    # Query all existing OR numbers with this prefix to find absolute highest numeric sequence
     incomes_with_or = db.query(Income.or_number).filter(Income.or_number.like(f"{prefix}%")).all()
     highest_num = 0
     for (or_str,) in incomes_with_or:
@@ -50,7 +53,7 @@ def generate_next_or_number(db: Session) -> str:
             except Exception:
                 pass
 
-    next_num = max(highest_num + 1, db.query(Income).count() + 1)
+    next_num = max(highest_num + 1, 1)
     while True:
         candidate_or = f"{prefix}{next_num:05d}"
         if not db.query(Income).filter(Income.or_number == candidate_or).first():
@@ -107,25 +110,25 @@ def download_student_csv_template():
     # Representative sample rows demonstrating different student payment states:
     # 1. Partially paid student (paid registration, books, and partial tuition)
     writer.writerow([
-        "LRN-2026-001", "Juan Dela Cruz", "Grade 7", "Faith", "Male",
+        "LRN-2026-001", "Juan Dela Cruz", "Grade 7", "Goodness", "Male",
         "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "5718.00", "5700.00", "6900.00", "0.00", "0.00", ""
     ])
     # 2. Fully paid student (all 5 fee categories settled in full)
     writer.writerow([
-        "LRN-2026-002", "Maria Clara Santos", "Grade 8", "Hope", "Female",
+        "LRN-2026-002", "Maria Clara Santos", "Grade 8", "Faithfulness", "Female",
         "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "19060.00", "5700.00", "6900.00", "3000.00", "1500.00", ""
     ])
     # 3. Lump-sum advance payer (auto-allocates across Registration, Books, Tuition, etc.)
     writer.writerow([
-        "LRN-2026-003", "Joshua Ramos", "Kindergarten", "Faith", "Male",
+        "LRN-2026-003", "Joshua Ramos", "Kindergarten", "Joy", "Male",
         "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "", "", "", "", "", "12600.00"
     ])
     # 4. Enrolled student with zero prior payments (full balance remaining)
     writer.writerow([
-        "LRN-2026-004", "Ana Marie Reyes", "Grade 1", "Love", "Female",
+        "LRN-2026-004", "Ana Marie Reyes", "Grade 1", "Faith", "Female",
         "Elena Reyes", "09192233445", "elena.reyes@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "0.00", "0.00", "0.00", "0.00", "0.00", "0.00"
     ])
@@ -166,13 +169,15 @@ async def import_students_csv(
         sid = (row.get("student_id") or row.get("lrn") or row.get("Student ID") or "").strip()
         name = (row.get("full_name") or row.get("name") or row.get("Student Name") or "").strip()
         grade = (row.get("grade_level") or row.get("grade") or "Grade 7").strip()
-        section = (row.get("section") or "Faith").strip()
+        raw_section = (row.get("section") or "Faith").strip()
+        section = resolve_section(grade, raw_section)
         gender = (row.get("gender") or "Male").strip()
         parent_name = (row.get("parent_name") or row.get("parent") or "").strip()
         parent_contact = (row.get("parent_contact") or row.get("contact") or "").strip()
         parent_email = (row.get("parent_email") or row.get("email") or "").strip()
         address = (row.get("address") or "").strip()
         school_year = (row.get("school_year") or "2026-2027").strip()
+        csv_or = (row.get("or_number") or row.get("OR Number") or "").strip()
 
         # Parse paid amounts from CSV columns
         tuition_paid = _parse_csv_amount(row.get("tuition_paid") or row.get("Tuition Paid") or row.get("tuition"))
@@ -239,7 +244,7 @@ async def import_students_csv(
                         cat_match = db.query(IncomeCategory).filter(
                             IncomeCategory.name.ilike(f"%{fs.category_name[:5]}%")
                         ).first()
-                        or_num = generate_next_or_number(db)
+                        or_num = csv_or or generate_next_or_number(db)
                         income = Income(
                             category_id=cat_match.id if cat_match else 1,
                             student_id_ref=existing.id,
@@ -257,15 +262,21 @@ async def import_students_csv(
                             payer_type="Student",
                             payment_method="Cash",
                             school_year=existing.school_year,
-                            date_recorded=datetime.now().isoformat(),
+                            date_recorded=ph_now_iso(),
                             remarks="Credited payment update from student CSV",
                             anomaly_score=0.0,
-                            anomaly_level="Normal",
+                            anomaly_level="Low",
                             anomaly_status="Normal",
-                            is_flagged=0,
                             is_voided=0
                         )
                         db.add(income)
+
+            if not getattr(existing, "initial_password", None) and not getattr(existing, "password_changed", 0):
+                gen_pw = generate_lrn_password(existing.student_id)
+                existing.initial_password = gen_pw
+                existing.parent_password_hash = get_password_hash(gen_pw)
+                existing.parent_username = existing.student_id
+                existing.password_changed = 0
 
             skipped.append(existing.student_id)
             continue
@@ -274,6 +285,7 @@ async def import_students_csv(
             errors.append(f"Row {row_idx}: Missing required LRN / Student ID for '{name}'. LRN cannot be auto-generated.")
             continue
 
+        gen_pw = generate_lrn_password(sid)
         student = Student(
             student_id=sid,
             full_name=name,
@@ -285,8 +297,12 @@ async def import_students_csv(
             parent_email=parent_email,
             address=address,
             school_year=school_year,
+            parent_username=sid,
+            parent_password_hash=get_password_hash(gen_pw),
+            initial_password=gen_pw,
+            password_changed=0,
             enrollment_status="Enrolled",
-            created_at=datetime.now().isoformat()
+            created_at=ph_now_iso()
         )
         db.add(student)
         db.flush()
@@ -313,7 +329,7 @@ async def import_students_csv(
                 cat_match = db.query(IncomeCategory).filter(
                     IncomeCategory.name.ilike(f"%{cat_name[:5]}%")
                 ).first()
-                or_num = generate_next_or_number(db)
+                or_num = csv_or or generate_next_or_number(db)
                 income = Income(
                     category_id=cat_match.id if cat_match else 1,
                     student_id_ref=student.id,
@@ -331,17 +347,22 @@ async def import_students_csv(
                     payer_type="Student",
                     payment_method="Cash",
                     school_year=student.school_year,
-                    date_recorded=datetime.now().isoformat(),
+                    date_recorded=ph_now_iso(),
                     remarks="Initial credited payment from legacy school records",
                     anomaly_score=0.0,
-                    anomaly_level="Normal",
+                    anomaly_level="Low",
                     anomaly_status="Normal",
-                    is_flagged=0,
                     is_voided=0
                 )
                 db.add(income)
 
-        imported.append({"student_id": sid, "full_name": name, "grade_level": grade})
+        imported.append({
+            "student_id": sid,
+            "full_name": name,
+            "grade_level": grade,
+            "section": section,
+            "initial_password": gen_pw
+        })
 
     db.commit()
 
@@ -351,7 +372,7 @@ async def import_students_csv(
         action="Bulk Student CSV Import",
         entity_type="Student",
         details=f"Imported {len(imported)} students, updated/skipped {len(skipped)} existing. Errors: {len(errors)}.",
-        timestamp=datetime.now().isoformat()
+        timestamp=ph_now_iso()
     )
     db.add(log)
     db.commit()
@@ -361,8 +382,8 @@ async def import_students_csv(
         "imported_count": len(imported),
         "updated_existing_count": len(skipped),
         "error_count": len(errors),
-        "imported_students": imported[:10],
-        "errors": errors[:5]
+        "imported_students": imported,
+        "errors": errors[:10]
     }
 
 
@@ -399,11 +420,13 @@ def get_students(
     grade_level: Optional[str] = None,
     q: Optional[str] = None,
     status: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
     List students organized by grade level with search and payment status filtering.
     """
+    is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier", "principal"})
     query = db.query(Student)
 
     if grade_level and grade_level != "All":
@@ -427,12 +450,15 @@ def get_students(
         if status and status != "All" and payment_status != status:
             continue
 
+        pw_changed = getattr(s, "password_changed", 0) or 0
+        init_pw = getattr(s, "initial_password", None) if (is_staff and not pw_changed) else None
+
         resp = StudentResponse(
             id=s.id,
             student_id=s.student_id,
             full_name=s.full_name,
             grade_level=s.grade_level,
-            section=s.section,
+            section=resolve_section(s.grade_level, s.section),
             gender=s.gender,
             birthdate=s.birthdate,
             parent_name=s.parent_name,
@@ -445,7 +471,9 @@ def get_students(
             total_due=total_due,
             total_paid=total_paid,
             outstanding_balance=outstanding,
-            payment_status=payment_status
+            payment_status=payment_status,
+            initial_password=init_pw,
+            password_changed=pw_changed,
         )
         result.append(resp)
 
@@ -453,12 +481,17 @@ def get_students(
 
 
 @router.get("/{student_id}", response_model=StudentDetailResponse)
-def get_student_detail(student_id: int, db: Session = Depends(get_db)):
+def get_student_detail(
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
     """
     Get detailed student profile with all fee schedules across:
     Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees,
     along with full payment transaction records.
     """
+    is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier", "principal"})
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
@@ -500,10 +533,135 @@ def get_student_detail(student_id: int, db: Session = Depends(get_db)):
                 )
             )
 
-    # Sort payments descending by date
     payments_resp.sort(key=lambda x: x.date_recorded or "", reverse=True)
+    pw_changed = getattr(student, "password_changed", 0) or 0
+    init_pw = getattr(student, "initial_password", None) if (is_staff and not pw_changed) else None
 
     return StudentDetailResponse(
+        id=student.id,
+        student_id=student.student_id,
+        full_name=student.full_name,
+        grade_level=student.grade_level,
+        section=resolve_section(student.grade_level, student.section),
+        gender=student.gender,
+        birthdate=student.birthdate,
+        parent_name=student.parent_name,
+        parent_contact=student.parent_contact,
+        parent_email=student.parent_email,
+        address=student.address,
+        school_year=student.school_year,
+        enrollment_status=student.enrollment_status,
+        created_at=student.created_at,
+        total_due=total_due,
+        total_paid=total_paid,
+        outstanding_balance=outstanding,
+        payment_status=payment_status,
+        initial_password=init_pw,
+        password_changed=pw_changed,
+        fee_schedules=student.fee_schedules,
+        payments=payments_resp
+    )
+
+
+@router.post("/", response_model=StudentResponse)
+def create_student(
+    data: StudentCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    """
+    Create a new student profile, auto-sync canonical Section from Grade Level,
+    auto-generate unique per-LRN parent password, and initialize standard 5 fee schedules.
+    """
+    clean_sid = (data.student_id or "").strip()
+    clean_name = (data.full_name or "").strip()
+    clean_grade = (data.grade_level or "").strip()
+
+    if not clean_sid:
+        raise HTTPException(
+            status_code=400,
+            detail="Learner Reference Number (LRN) / Student ID is required. LRN cannot be auto-generated."
+        )
+
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Student full name is required.")
+
+    existing_sid = db.query(Student).filter(
+        func.lower(func.trim(Student.student_id)) == clean_sid.lower()
+    ).first()
+    if existing_sid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Student ID / LRN '{clean_sid}' is already registered for {existing_sid.full_name}."
+        )
+
+    existing_name = db.query(Student).filter(
+        func.lower(func.trim(Student.full_name)) == clean_name.lower(),
+        func.lower(func.trim(Student.grade_level)) == clean_grade.lower()
+    ).first()
+    if existing_name:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A student record for '{clean_name}' in {clean_grade} already exists (LRN: {existing_name.student_id}). Duplicate student profiles are not permitted."
+        )
+
+    canonical_sec = resolve_section(clean_grade, (data.section or "Faith").strip())
+    gen_pw = generate_lrn_password(clean_sid)
+    now_iso = ph_now_iso()
+
+    student = Student(
+        student_id=clean_sid,
+        full_name=clean_name,
+        grade_level=clean_grade,
+        section=canonical_sec,
+        gender=data.gender or "Male",
+        birthdate=data.birthdate,
+        parent_name=(data.parent_name or "").strip(),
+        parent_contact=(data.parent_contact or "").strip(),
+        parent_email=(data.parent_email or "").strip(),
+        address=data.address,
+        school_year=data.school_year or "2026-2027",
+        parent_username=clean_sid,
+        parent_password_hash=get_password_hash(gen_pw),
+        initial_password=gen_pw,
+        password_changed=0,
+        enrollment_status=data.enrollment_status or "Enrolled",
+        created_at=now_iso
+    )
+    db.add(student)
+    db.flush()
+
+    for f in DEFAULT_FEES:
+        existing_fs = db.query(StudentFeeSchedule).filter(
+            StudentFeeSchedule.student_id == student.id,
+            StudentFeeSchedule.category_name == f["category_name"]
+        ).first()
+        if not existing_fs:
+            fs = StudentFeeSchedule(
+                student_id=student.id,
+                category_name=f["category_name"],
+                sub_description=f["sub_description"],
+                total_due=f["total_due"],
+                total_paid=0.0,
+                remaining_balance=f["total_due"],
+                school_year=student.school_year
+            )
+            db.add(fs)
+
+    db.add(AuditLog(
+        user_id=current_user.id if current_user else None,
+        action="Created Student Account",
+        entity_type="Student",
+        entity_id=student.id,
+        details=f"LRN: {clean_sid}, Name: {clean_name}, Grade: {clean_grade} - {canonical_sec}",
+        timestamp=now_iso
+    ))
+
+    db.commit()
+    db.refresh(student)
+
+    total_due, total_paid, outstanding, payment_status = calculate_student_balance(student)
+    return StudentResponse(
         id=student.id,
         student_id=student.student_id,
         full_name=student.full_name,
@@ -522,125 +680,18 @@ def get_student_detail(student_id: int, db: Session = Depends(get_db)):
         total_paid=total_paid,
         outstanding_balance=outstanding,
         payment_status=payment_status,
-        fee_schedules=student.fee_schedules,
-        payments=payments_resp
-    )
-
-
-@router.post("/", response_model=StudentResponse)
-def create_student(data: StudentCreate, db: Session = Depends(get_db)):
-    """
-    Create a new student profile and initialize standard fee schedules for Tuition,
-    Registration, Books, Energy Fee, and Other Fees.
-    Strictly prevents duplicate LRNs, duplicate names in the same grade, and duplicate fee schedules.
-    LRN is mandatory and cannot be autogenerated.
-    """
-    clean_sid = (data.student_id or "").strip()
-    clean_name = (data.full_name or "").strip()
-    clean_grade = (data.grade_level or "").strip()
-
-    if not clean_sid:
-        raise HTTPException(
-            status_code=400,
-            detail="Learner Reference Number (LRN) / Student ID is required. LRN cannot be auto-generated."
-        )
-
-    if not clean_name:
-        raise HTTPException(status_code=400, detail="Student full name is required.")
-
-    # 1. Duplicate check by Student ID / LRN (case-insensitive + trimmed)
-    existing_sid = db.query(Student).filter(
-        func.lower(func.trim(Student.student_id)) == clean_sid.lower()
-    ).first()
-    if existing_sid:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Student ID / LRN '{clean_sid}' is already registered for {existing_sid.full_name}."
-        )
-
-    # 2. Duplicate check by Student Name + Grade Level (case-insensitive + trimmed)
-    existing_name = db.query(Student).filter(
-        func.lower(func.trim(Student.full_name)) == clean_name.lower(),
-        func.lower(func.trim(Student.grade_level)) == clean_grade.lower()
-    ).first()
-    if existing_name:
-        raise HTTPException(
-            status_code=400,
-            detail=f"A student record for '{clean_name}' in {clean_grade} already exists (LRN: {existing_name.student_id}). Duplicate student profiles are not permitted."
-        )
-
-    student = Student(
-        student_id=clean_sid,
-        full_name=clean_name,
-        grade_level=clean_grade,
-        section=(data.section or "Faith").strip(),
-        gender=data.gender or "Male",
-        birthdate=data.birthdate,
-        parent_name=(data.parent_name or "").strip(),
-        parent_contact=(data.parent_contact or "").strip(),
-        parent_email=(data.parent_email or "").strip(),
-        address=data.address,
-        school_year=data.school_year or "2026-2027",
-        parent_username=clean_sid,
-        parent_password_hash=get_password_hash("password123"),
-        enrollment_status=data.enrollment_status or "Enrolled",
-        created_at=datetime.now().isoformat()
-    )
-    db.add(student)
-    db.flush()
-
-    # Initialize standard 5 fee schedules (guarantee zero duplicates)
-    for f in DEFAULT_FEES:
-        existing_fs = db.query(StudentFeeSchedule).filter(
-            StudentFeeSchedule.student_id == student.id,
-            StudentFeeSchedule.category_name == f["category_name"]
-        ).first()
-        if not existing_fs:
-            fs = StudentFeeSchedule(
-                student_id=student.id,
-                category_name=f["category_name"],
-                sub_description=f["sub_description"],
-                total_due=f["total_due"],
-                total_paid=0.0,
-                remaining_balance=f["total_due"],
-                school_year=student.school_year
-            )
-            db.add(fs)
-
-    db.commit()
-    db.refresh(student)
-
-    total_due, total_paid, outstanding, payment_status = calculate_student_balance(student)
-    return StudentResponse(
-        id=student.id,
-        student_id=student.student_id,
-        full_name=student.full_name,
-        grade_level=student.grade_level,
-        section=student.section,
-        gender=student.gender,
-        birthdate=student.birthdate,
-        parent_name=student.parent_name,
-        parent_contact=student.parent_contact,
-        parent_email=student.parent_email,
-        address=student.address,
-        school_year=student.school_year,
-        enrollment_status=student.enrollment_status,
-        created_at=student.created_at,
-        total_due=total_due,
-        total_paid=total_paid,
-        outstanding_balance=outstanding,
-        payment_status=payment_status
+        initial_password=gen_pw,
+        password_changed=0,
     )
 
 
 @router.put("/{student_id}", response_model=StudentResponse)
 def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(get_db)):
-    """Update student basic information with duplicate safeguards."""
+    """Update student basic information with duplicate safeguards & automatic Section sync."""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    # If updating student_id (LRN), verify uniqueness
     if data.student_id:
         clean_sid = data.student_id.strip()
         if not clean_sid:
@@ -656,8 +707,8 @@ def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(g
                     detail=f"Student ID / LRN '{clean_sid}' is already assigned to {dup_sid.full_name}."
                 )
             student.student_id = clean_sid
+            student.parent_username = clean_sid
 
-    # If updating name or grade, verify no duplicate student profile exists
     target_name = (data.full_name.strip() if data.full_name else student.full_name).strip()
     target_grade = (data.grade_level.strip() if data.grade_level else student.grade_level).strip()
     if target_name.lower() != student.full_name.lower() or target_grade.lower() != student.grade_level.lower():
@@ -673,13 +724,17 @@ def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(g
             )
 
     for field, val in data.dict(exclude_unset=True).items():
-        if field != "student_id":
+        if field not in ("student_id", "section"):
             setattr(student, field, val)
+
+    # Always synchronize canonical single section per grade level
+    student.section = resolve_section(student.grade_level, student.section)
 
     db.commit()
     db.refresh(student)
 
     total_due, total_paid, outstanding, payment_status = calculate_student_balance(student)
+    pw_changed = getattr(student, "password_changed", 0) or 0
     return StudentResponse(
         id=student.id,
         student_id=student.student_id,
@@ -698,22 +753,64 @@ def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(g
         total_due=total_due,
         total_paid=total_paid,
         outstanding_balance=outstanding,
-        payment_status=payment_status
+        payment_status=payment_status,
+        initial_password=getattr(student, "initial_password", None) if not pw_changed else None,
+        password_changed=pw_changed,
     )
+
+
+@router.post("/{student_id}/reset-password")
+def reset_student_password(
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Admin/Cashier resets and issues a fresh LRN initial password for parent login."""
+    if (current_user.role or "").lower() == "parent":
+        raise HTTPException(status_code=403, detail="Unauthorized: Admin or Cashier access required.")
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    new_pw = generate_lrn_password(student.student_id)
+    student.initial_password = new_pw
+    student.parent_password_hash = get_password_hash(new_pw)
+    student.parent_username = student.student_id
+    student.password_changed = 0
+
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="Reset Parent LRN Password",
+        entity_type="Student",
+        entity_id=student.id,
+        details=f"Issued fresh generated password for LRN {student.student_id} ({student.full_name})",
+        timestamp=ph_now_iso()
+    ))
+    db.commit()
+
+    return {
+        "status": "success",
+        "student_id": student.student_id,
+        "full_name": student.full_name,
+        "initial_password": new_pw,
+    }
 
 
 @router.post("/{student_id}/payments")
 def record_student_payment(
     student_id: int,
     data: RecordStudentPaymentRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
-    Record payment collection directly from student profile:
-    - Auto-generates Official Receipt (OR) Number
+    Record payment collection directly from student profile or Collections list:
+    - Requires manual Official Receipt (OR) Number from physical receipt booklet
+    - Prevents duplicate OR numbers
     - Auto-updates student fee schedule balance
-    - Saves payment record with ML anomaly validation
-    - Automatically returns printable soft-copy receipt details
+    - Evaluates payment with ML Anomaly Detection engine
+    - Stores timestamps strictly in Philippine Standard Time (Asia/Manila)
     """
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
@@ -722,8 +819,24 @@ def record_student_payment(
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Payment amount must be greater than zero")
 
-    # Auto-generate Official Receipt Number
-    or_number = generate_next_or_number(db)
+    clean_or = (data.or_number or "").strip()
+    if not clean_or:
+        raise HTTPException(
+            status_code=400,
+            detail="Official Receipt (OR) Number from the physical receipt is required."
+        )
+
+    existing_or = db.query(Income).filter(
+        func.lower(func.trim(Income.or_number)) == clean_or.lower(),
+        Income.is_voided == 0
+    ).first()
+    if existing_or:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Official Receipt Number '{clean_or}' is already recorded (Payer: {existing_or.payer_name}, Amount: ₱{existing_or.amount:,.2f}). Please verify the physical receipt number."
+        )
+
+    or_number = clean_or
 
     # Find matching fee schedule for this student
     fs = db.query(StudentFeeSchedule).filter(
@@ -750,7 +863,7 @@ def record_student_payment(
 
     # ── Duplicate / Rapid Submission Detection ──
     # Check for identical payments (same student, same category, same amount) within last 60 minutes
-    cutoff_time = (datetime.now() - timedelta(minutes=60)).isoformat()
+    cutoff_time = (ph_now() - timedelta(minutes=60)).isoformat()
     duplicate_count = db.query(Income).filter(
         Income.student_id_ref == student.id,
         Income.fee_type == data.fee_type,
@@ -769,10 +882,10 @@ def record_student_payment(
     ).first()
     category_id = cat.id if cat else 1
 
-    # Record Income transaction
-    now_iso = datetime.now().isoformat()
+    # Record Income transaction (Philippine Standard Time)
+    now_iso = ph_now_iso()
     desc = data.description or f"Payment for {data.fee_type} - {student.full_name}"
-    
+
     income = Income(
         category_id=category_id,
         student_id_ref=student.id,
@@ -792,6 +905,7 @@ def record_student_payment(
         reference_number=data.reference_number,
         school_year=data.school_year or "2026-2027",
         date_recorded=now_iso,
+        recorded_by=current_user.id if current_user else None,
         remarks=data.remarks,
         is_voided=0
     )
@@ -822,6 +936,7 @@ def record_student_payment(
     # Audit Trail
     anomaly_tag = f" [ML Anomaly: {income.anomaly_level} ({income.anomaly_score}) - {income.anomaly_status}]" if income.anomaly_status == "Flagged" else ""
     audit = AuditLog(
+        user_id=current_user.id if current_user else None,
         action=f"Recorded Payment {or_number} for {student.full_name}",
         entity_type="Income",
         entity_id=None,
@@ -833,14 +948,16 @@ def record_student_payment(
     db.commit()
     db.refresh(income)
 
-    # Prepare receipt object
+    cashier_name = current_user.full_name if current_user and current_user.full_name else "Maria Santos"
+    receipt_date_display = format_ph_timestamp(now_iso)
+
     receipt = {
         "or_number": or_number,
-        "date": datetime.now().strftime("%B %d, %Y - %I:%M %p"),
+        "date": receipt_date_display,
         "student_name": student.full_name,
         "student_id": student.student_id,
         "grade_level": student.grade_level,
-        "section": student.section,
+        "section": resolve_section(student.grade_level, student.section),
         "parent_name": student.parent_name or "Parent / Guardian",
         "fee_type": data.fee_type,
         "description": desc,
@@ -851,7 +968,7 @@ def record_student_payment(
         "total_due": fs.total_due,
         "total_paid": fs.total_paid,
         "school_year": student.school_year,
-        "cashier_name": "Maria Santos",
+        "cashier_name": cashier_name,
         "school_name": "Calvary Christian Academy"
     }
 
@@ -875,7 +992,6 @@ def record_student_payment(
 def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
     """
     Generate auto-filled Payment Notice Letter data for students with outstanding balances.
-    Auto-fills student name, parent name, itemized unpaid fee types and amounts.
     """
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
@@ -900,18 +1016,18 @@ def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
     return {
         "school": {
             "name": "Calvary Christian Academy",
-            "tagline": "Quality Christian Education for Excellence & Character",
-            "address": "9-10 Genesis Ave., Sarmiento Townville Subdivision, Poblacion, City of San Jose del Monte, Bulacan",
-            "contact": "Cellphone No. 09561504946 / Globe Landline: 044-3056166",
+            "office": "Office of the Cashier",
+            "address": "BLK 1 LOT 9-10, Sarmiento Townville, Poblacion I, CSJDM, Bulacan 3023",
+            "contact": "Mobile: 0956 150 4946  Tel: (044) 305 6166",
             "administrator": "Michelle Jean Gormley",
             "administrator_title": "Administrator"
         },
-        "letter_date": datetime.now().strftime("%B %d, %Y"),
+        "letter_date": ph_now().strftime("%B %d, %Y"),
         "student": {
             "full_name": student.full_name,
             "student_id": student.student_id,
             "grade_level": student.grade_level,
-            "section": student.section,
+            "section": resolve_section(student.grade_level, student.section),
             "school_year": student.school_year
         },
         "parent": {
@@ -936,7 +1052,7 @@ def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
 @router.get("/{student_id}/yearly-record")
 def get_end_of_year_record(student_id: int, db: Session = Depends(get_db)):
     """
-    Complete end-of-school-year payment transcript and receipt ledger for student profile & parent copy.
+    Complete end-of-school-year payment transcript and receipt ledger for student profile & parent portal.
     """
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
@@ -961,7 +1077,8 @@ def get_end_of_year_record(student_id: int, db: Session = Depends(get_db)):
             receipts_list.append({
                 "or_number": p.or_number,
                 "date": p.date_recorded,
-                "fee_type": p.fee_type or (p.category.name if p.category else "Tuition"),
+                "date_display": format_ph_timestamp(p.date_recorded),
+                "fee_type": p.fee_type or (p.category.name if p.category else "Tuition Fee"),
                 "description": p.description,
                 "amount": p.amount,
                 "payment_method": p.payment_method,
@@ -973,15 +1090,18 @@ def get_end_of_year_record(student_id: int, db: Session = Depends(get_db)):
     return {
         "school": {
             "name": "CALVARY CHRISTIAN ACADEMY",
-            "title": "OFFICIAL STATEMENT OF ACCOUNT & COMPLETE PAYMENT RECORD",
+            "office": "OFFICE OF THE CASHIER",
+            "address": "BLK 1 LOT 9-10, Sarmiento Townville, Poblacion I, CSJDM, Bulacan 3023",
+            "contact": "Mobile: 0956 150 4946  Tel: (044) 305 6166",
+            "title": "COMPLETE PAYMENT RECORDS",
             "school_year": student.school_year,
-            "generated_at": datetime.now().strftime("%B %d, %Y %I:%M %p")
+            "generated_at": ph_now_display()
         },
         "student": {
             "full_name": student.full_name,
             "student_id": student.student_id,
             "grade_level": student.grade_level,
-            "section": student.section,
+            "section": resolve_section(student.grade_level, student.section),
             "parent_name": student.parent_name or "Parent / Guardian",
             "contact": student.parent_contact or "N/A"
         },
@@ -994,8 +1114,8 @@ def get_end_of_year_record(student_id: int, db: Session = Depends(get_db)):
         "fee_breakdown": fee_summary,
         "receipts": receipts_list,
         "certified_by": {
-            "cashier": "Maria Santos (School Cashier)",
-            "accountant": "Accountant Office",
+            "cashier": "Maria Santos",
+            "administrator": "Michelle Jean Gormley",
             "principal": "Pastor David Reyes, M.Div."
         }
     }

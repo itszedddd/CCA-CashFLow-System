@@ -13,7 +13,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     full_name = Column(String, nullable=True)
     hashed_password = Column(String)
-    role = Column(String)  # Admin, Cashier, Accountant, Principal, Parent
+    role = Column(String)  # Admin, Cashier, Principal, Parent
     is_active = Column(Integer, default=1)
     profile_picture = Column(String, nullable=True)
     created_at = Column(String, nullable=True)
@@ -37,6 +37,8 @@ class Student(Base):
     parent_email = Column(String, nullable=True)
     parent_username = Column(String, nullable=True)
     parent_password_hash = Column(String, nullable=True)
+    initial_password = Column(String, nullable=True)  # Admin-visible initial LRN password until changed
+    password_changed = Column(Integer, default=0)  # 0: initial password active, 1: parent updated password
     address = Column(String, nullable=True)
     school_year = Column(String, default="2026-2027")
     enrollment_status = Column(String, default="Enrolled")  # Enrolled, Pending, Transferred

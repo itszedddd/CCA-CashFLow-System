@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime
 from ..database import get_db
-from ..models.models import User, Student, StudentFeeSchedule
+from ..models.models import User, Student, AuditLog
 from ..auth import verify_password, get_password_hash, create_access_token, get_current_user
-from ..schemas import LoginRequest, TokenResponse, UserResponse, LinkStudentRequest, RegisterStudentRequest
+from ..schemas import LoginRequest, TokenResponse, UserResponse, ChangePasswordRequest
+from ..core.timezone import ph_now_iso
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -16,21 +15,54 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
     raw_username = (form_data.username or "").strip().lower()
     raw_password = (form_data.password or "").strip()
 
-    # 1. Check if user is logging in as a Parent / Student (by LRN or "parent")
-    student = None
-    if "parent" in raw_username or raw_username.startswith("lrn") or raw_username.startswith("cca-"):
-        # Match student by LRN or parent username
-        student = db.query(Student).filter(
-            (func.lower(Student.student_id) == raw_username) |
-            (func.lower(Student.parent_username) == raw_username)
-        ).first()
+    if not raw_username or not raw_password:
+        raise HTTPException(status_code=400, detail="Username/LRN and password are required.")
 
-    if not student and "parent" in raw_username:
-        # Default to first student if generic "parent" demo used
-        student = db.query(Student).first()
+    # 1. Check Staff / Admin / Cashier / Principal user table first
+    user = db.query(User).filter(
+        (func.lower(func.trim(User.username)) == raw_username) |
+        (func.lower(func.trim(User.username)) == f"{raw_username}@cca.edu.ph")
+    ).first()
+
+    if user:
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is deactivated. Contact System Administrator.")
+        if not user.hashed_password or not verify_password(raw_password, user.hashed_password):
+            raise HTTPException(status_code=401, detail="Invalid username or password.")
+
+        token = create_access_token(data={"sub": user.username, "role": user.role})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "role": user.role,
+                "profile_picture": user.profile_picture,
+            }
+        }
+
+    # 2. Check Parent / Student account via Student LRN or parent_username
+    student = db.query(Student).filter(
+        (func.lower(func.trim(Student.student_id)) == raw_username) |
+        (func.lower(func.trim(Student.parent_username)) == raw_username)
+    ).first()
 
     if student:
-        # Parent login detected
+        is_pw_ok = bool(student.parent_password_hash and verify_password(raw_password, student.parent_password_hash))
+        # Also allow initial_password match if hash somehow wasn't synced
+        if not is_pw_ok and student.initial_password and raw_password == student.initial_password:
+            student.parent_password_hash = get_password_hash(raw_password)
+            db.commit()
+            is_pw_ok = True
+
+        if not is_pw_ok:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid Student LRN or password. Please verify the generated LRN password from the School Admin/Registrar."
+            )
+
         token = create_access_token(data={"sub": student.student_id, "role": "Parent"})
         return {
             "access_token": token,
@@ -44,58 +76,12 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
                 "student_name": student.full_name,
                 "student_lrn": student.student_id,
                 "grade_level": student.grade_level,
+                "password_changed": bool(student.password_changed),
                 "profile_picture": None,
             }
         }
 
-    # 2. Staff / Cashier login
-    user = db.query(User).filter(
-        (func.lower(User.username) == raw_username) |
-        (func.lower(User.username) == f"{raw_username}@cca.edu.ph")
-    ).first()
-
-    # Fallback to cashier or first user
-    if not user:
-        user = db.query(User).filter(User.role == "Cashier").first()
-    if not user:
-        user = db.query(User).first()
-
-    # Self-healing: if no user exists at all, auto-create the official Cashier
-    if not user:
-        user = User(
-            username="cashier@cca.edu.ph",
-            full_name="Maria Santos",
-            hashed_password=get_password_hash("password123"),
-            role="Cashier",
-            is_active=1
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-    if not user.is_active:
-        user.is_active = 1
-        db.commit()
-
-    # Password check with cashier fallback
-    is_valid = verify_password(raw_password, user.hashed_password) if user.hashed_password else False
-    if not is_valid:
-        new_pwd = raw_password if raw_password else "password123"
-        user.hashed_password = get_password_hash(new_pwd)
-        db.commit()
-
-    token = create_access_token(data={"sub": user.username, "role": user.role})
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "full_name": user.full_name,
-            "role": user.role,
-            "profile_picture": user.profile_picture,
-        }
-    }
+    raise HTTPException(status_code=401, detail="Invalid username / Student LRN or password.")
 
 
 @router.get("/me", response_model=UserResponse)
@@ -103,182 +89,63 @@ def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.post("/register-student")
-def register_student(data: RegisterStudentRequest, db: Session = Depends(get_db)):
+@router.post("/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
-    New Student Self-Registration:
-    Creates student profile, parent access, and sets up the 5 official CCA fee schedules.
-    Strictly verifies and prevents duplicate student records and accounts.
+    Allows authenticated Parents (using LRN-generated initial password) or Staff/Admin
+    to change their password after logging in.
     """
-    clean_sid = (data.student_id or "").strip()
-    clean_name = (data.full_name or "").strip()
-    clean_grade = (data.grade_level or "").strip()
+    current_pw = (data.current_password or "").strip()
+    new_pw = (data.new_password or "").strip()
 
-    if not clean_sid:
-        raise HTTPException(
-            status_code=400,
-            detail="Learner Reference Number (LRN) / Student ID is required. LRN cannot be auto-generated."
-        )
+    if len(new_pw) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters long.")
+    if current_pw == new_pw:
+        raise HTTPException(status_code=400, detail="New password must differ from current password.")
 
-    if not clean_name:
-        raise HTTPException(status_code=400, detail="Student full name is required.")
+    now_iso = ph_now_iso()
 
-    # 1. Duplicate check by Student ID / LRN (case-insensitive + trimmed)
-    existing_sid = db.query(Student).filter(
-        func.lower(func.trim(Student.student_id)) == clean_sid.lower()
-    ).first()
-    if existing_sid:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Student ID / LRN '{clean_sid}' is already registered for {existing_sid.full_name}. Please choose 'Link Student' instead of creating a duplicate profile."
-        )
+    if (current_user.role or "").lower() == "parent":
+        student = db.query(Student).filter(Student.id == getattr(current_user, "student_id", current_user.id)).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Student account not found.")
 
-    # 2. Duplicate check by Student Name + Grade Level (case-insensitive + trimmed)
-    existing_name = db.query(Student).filter(
-        func.lower(func.trim(Student.full_name)) == clean_name.lower(),
-        func.lower(func.trim(Student.grade_level)) == clean_grade.lower()
-    ).first()
-    if existing_name:
-        raise HTTPException(
-            status_code=400,
-            detail=f"A student record for '{clean_name}' in {clean_grade} already exists (LRN: {existing_name.student_id}). Please use 'Link Student' to access this account."
-        )
+        if not student.parent_password_hash or not verify_password(current_pw, student.parent_password_hash):
+            raise HTTPException(status_code=401, detail="Current password is incorrect.")
 
-    # 3. Create Student profile
-    student = Student(
-        student_id=clean_sid,
-        full_name=clean_name,
-        grade_level=clean_grade,
-        section=(data.section or "Faith").strip(),
-        gender=data.gender or "Male",
-        birthdate=data.birthdate,
-        parent_name=(data.parent_name or "").strip(),
-        parent_contact=(data.parent_contact or "").strip(),
-        parent_email=(data.parent_email or "").strip(),
-        address=data.address,
-        school_year=data.school_year or "2026-2027",
-        parent_username=clean_sid,
-        parent_password_hash=get_password_hash(data.parent_password or "password123"),
-        enrollment_status="Enrolled",
-        created_at=datetime.now().isoformat()
-    )
-    db.add(student)
-    db.flush()
+        student.parent_password_hash = get_password_hash(new_pw)
+        student.initial_password = None
+        student.password_changed = 1
 
-    # 4. Initialize standard 5 fee schedules (guarantee zero duplicates)
-    from .students import DEFAULT_FEES
-    for f in DEFAULT_FEES:
-        existing_fs = db.query(StudentFeeSchedule).filter(
-            StudentFeeSchedule.student_id == student.id,
-            StudentFeeSchedule.category_name == f["category_name"]
-        ).first()
-        if not existing_fs:
-            fs = StudentFeeSchedule(
-                student_id=student.id,
-                category_name=f["category_name"],
-                sub_description=f["sub_description"],
-                total_due=f["total_due"],
-                total_paid=0.0,
-                remaining_balance=f["total_due"],
-                school_year=student.school_year
-            )
-            db.add(fs)
-
-    db.commit()
-    db.refresh(student)
-
-    # Issue auth token
-    token = create_access_token(data={"sub": student.student_id, "role": "Parent"})
-    return {
-        "status": "success",
-        "message": f"Student profile registered successfully with Student ID / LRN: {clean_sid}",
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": student.id,
-            "username": student.student_id,
-            "full_name": student.parent_name or f"Parent of {student.full_name}",
-            "role": "Parent",
-            "student_id": student.id,
-            "student_name": student.full_name,
-            "student_lrn": student.student_id,
-            "grade_level": student.grade_level,
-            "profile_picture": None,
-        }
-    }
-
-
-@router.post("/link-student")
-def link_student_account(data: LinkStudentRequest, db: Session = Depends(get_db)):
-    """
-    Existing Student Account Linking:
-    Links an existing student's record (imported via CSV or existing) by verifying Student ID / LRN
-    against the registered parent contact number, email, or birthdate.
-    """
-    clean_sid = (data.student_id or "").strip()
-    verify_val = (data.verification_value or "").strip().lower()
-
-    if not clean_sid or not verify_val:
-        raise HTTPException(
-            status_code=400,
-            detail="Student ID / LRN and verification contact/email are required."
-        )
-
-    student = db.query(Student).filter(
-        func.lower(Student.student_id) == clean_sid.lower()
-    ).first()
-
-    if not student:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Student ID '{clean_sid}' not found in school records. Please confirm your LRN with the School Registrar."
-        )
-
-    # Check match against parent_contact, parent_email, or birthdate
-    p_contact = (student.parent_contact or "").strip().lower()
-    p_email = (student.parent_email or "").strip().lower()
-    p_bday = (student.birthdate or "").strip().lower()
-
-    num_verify = "".join(filter(str.isdigit, verify_val))
-    num_contact = "".join(filter(str.isdigit, p_contact))
-
-    is_matched = False
-    if num_verify and num_contact and (num_verify in num_contact or num_contact in num_verify):
-        is_matched = True
-    elif verify_val and p_email and verify_val == p_email:
-        is_matched = True
-    elif verify_val and p_bday and verify_val in p_bday:
-        is_matched = True
-    elif verify_val in ["cca2026", "verify", "123456"]:
-        is_matched = True
-
-    if not is_matched:
-        raise HTTPException(
-            status_code=401,
-            detail="Verification failed. The contact number or email does not match our recorded parent details for this Student ID."
-        )
-
-    # Update password if provided
-    if data.parent_password:
-        student.parent_password_hash = get_password_hash(data.parent_password)
-        student.parent_username = student.student_id
+        db.add(AuditLog(
+            user_id=None,
+            action="Parent Changed Account Password",
+            entity_type="Student",
+            entity_id=student.id,
+            details=f"Parent portal password updated for LRN {student.student_id} ({student.full_name})",
+            timestamp=now_iso
+        ))
         db.commit()
+        return {"status": "success", "message": "Password updated successfully!", "password_changed": True}
 
-    token = create_access_token(data={"sub": student.student_id, "role": "Parent"})
-    return {
-        "status": "success",
-        "message": f"Account successfully linked! Welcome, {student.parent_name or 'Parent/Guardian'}.",
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": student.id,
-            "username": student.student_id,
-            "full_name": student.parent_name or f"Parent of {student.full_name}",
-            "role": "Parent",
-            "student_id": student.id,
-            "student_name": student.full_name,
-            "student_lrn": student.student_id,
-            "grade_level": student.grade_level,
-            "profile_picture": None,
-        }
-    }
+    staff = db.query(User).filter(User.id == current_user.id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="User account not found.")
+    if not staff.hashed_password or not verify_password(current_pw, staff.hashed_password):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+
+    staff.hashed_password = get_password_hash(new_pw)
+    db.add(AuditLog(
+        user_id=staff.id,
+        action="Changed Account Password",
+        entity_type="User",
+        entity_id=staff.id,
+        details=f"Updated password for {staff.username}",
+        timestamp=now_iso
+    ))
+    db.commit()
+    return {"status": "success", "message": "Password updated successfully!"}

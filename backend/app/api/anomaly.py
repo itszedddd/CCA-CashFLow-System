@@ -8,6 +8,7 @@ from ..database import get_db
 from ..models.models import Income, IncomeCategory, User, AuditLog
 from ..auth import get_current_user
 from ..core.anomaly_engine import AnomalyEngine, evaluate_single_transaction
+from ..core.timezone import ph_now, ph_now_iso
 
 router = APIRouter(prefix="/api/ai/anomaly", tags=["AI Anomaly Detection"])
 
@@ -132,7 +133,7 @@ def evaluate_transaction_endpoint(
     category_name = data.fee_type or (cat.name if cat else "General")
 
     # Real-time duplicate check within last 60 minutes
-    cutoff_time = (datetime.now() - timedelta(minutes=60)).isoformat()
+    cutoff_time = (ph_now() - timedelta(minutes=60)).isoformat()
     duplicate_count = 0
     if data.payer_name and data.amount and data.amount > 0:
         duplicate_count = db.query(Income).filter(
@@ -173,7 +174,7 @@ def trigger_full_scan(
         action="Ran ML Anomaly Scan",
         entity_type="AI_Anomaly",
         details=f"Analyzed {result.get('total_analyzed')} records. Ledger health: {result.get('health_score')}%.",
-        timestamp=datetime.now().isoformat()
+        timestamp=ph_now_iso()
     )
     db.add(log)
     db.commit()
@@ -199,14 +200,14 @@ def resolve_anomaly(
 
     # Role-based authorization: High-Risk anomalies cannot be cleared by Cashiers
     if data.action == "verify_clear" and income.anomaly_level == "High":
-        allowed_roles = {"Admin", "admin", "Principal", "principal", "Accountant", "accountant"}
+        allowed_roles = {"Admin", "admin", "Principal", "principal"}
         user_role = (current_user.role or "").strip()
         if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=403,
                 detail=(
-                    "High-Risk anomalies require Administrator, Principal, or Accountant clearance. "
-                    "Please request approval from the Head Cashier or School Administration."
+                    "High-Risk anomalies require Administrator or Principal clearance. "
+                    "Please request approval from the School Administration."
                 )
             )
 
@@ -227,7 +228,7 @@ def resolve_anomaly(
         entity_type="Income",
         entity_id=income.id,
         details=f"User {current_user.full_name} (Role: {current_user.role}) resolved transaction {income.or_number}. Level: {income.anomaly_level}. Notes: {data.cashier_notes or 'None'}",
-        timestamp=datetime.now().isoformat()
+        timestamp=ph_now_iso()
     )
     db.add(log)
     db.commit()
@@ -248,7 +249,7 @@ def verify_physical_envelope(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Updates the physical brown envelope verification status for Feature #3 / Objective 3:
+    Updates the physical brown envelope verification status:
     1: Verified in Envelope, 0: Pending, 2: Discrepancy Found.
     """
     income = db.query(Income).filter(Income.id == income_id).first()
@@ -267,7 +268,7 @@ def verify_physical_envelope(
         entity_type="Income",
         entity_id=income.id,
         details=f"Status: {status_labels.get(data.status, 'Unknown')}. Notes: {data.cashier_notes or 'None'}",
-        timestamp=datetime.now().isoformat()
+        timestamp=ph_now_iso()
     )
     db.add(log)
     db.commit()

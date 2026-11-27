@@ -12,6 +12,7 @@ from ..models.models import Income, IncomeCategory, User, AuditLog
 from ..auth import get_current_user
 from ..schemas import IncomeCreate, IncomeUpdate, IncomeResponse
 from ..core.anomaly_engine import evaluate_single_transaction, _get_category_expected_fee
+from ..core.timezone import ph_now, ph_now_iso
 
 router = APIRouter(prefix="/api/income", tags=["Income"])
 
@@ -81,10 +82,10 @@ def create_income(
             rem_balance = 0.0
 
     # ────────────────────────────────────────────────────────
-    # FEATURE #6: ML Anomaly Scoring
+    # ML Anomaly Scoring
     # ────────────────────────────────────────────────────────
     # Check for duplicate payments within last 60 minutes
-    cutoff_time = (datetime.now() - timedelta(minutes=60)).isoformat()
+    cutoff_time = (ph_now() - timedelta(minutes=60)).isoformat()
     dup_query = db.query(Income).filter(
         Income.amount == data.amount,
         Income.category_id == data.category_id,
@@ -136,9 +137,10 @@ def create_income(
         from .students import generate_next_or_number
         income_dict["or_number"] = generate_next_or_number(db)
 
+    now_iso = ph_now_iso()
     income = Income(
         **income_dict,
-        date_recorded=datetime.now().isoformat(),
+        date_recorded=now_iso,
         recorded_by=current_user.id
     )
     db.add(income)
@@ -153,7 +155,7 @@ def create_income(
         entity_type="Income",
         entity_id=income.id,
         details=f"₱{data.amount:,.2f} - {cat.name} ({data.payer_name}){partial_note}{anomaly_note}",
-        timestamp=datetime.now().isoformat()
+        timestamp=now_iso
     )
     db.add(log)
     db.commit()
@@ -187,7 +189,7 @@ def update_income(
     log = AuditLog(
         user_id=current_user.id, action="Updated Income",
         entity_type="Income", entity_id=income_id,
-        details=str(update_data), timestamp=datetime.now().isoformat()
+        details=str(update_data), timestamp=ph_now_iso()
     )
     db.add(log)
     db.commit()
@@ -209,7 +211,7 @@ def void_income(
         user_id=current_user.id, action="Voided Income",
         entity_type="Income", entity_id=income_id,
         details=f"Voided ₱{income.amount:,.2f} - {income.description}",
-        timestamp=datetime.now().isoformat()
+        timestamp=ph_now_iso()
     )
     db.add(log)
     db.commit()
@@ -365,7 +367,7 @@ def import_csv(
                 grade_level=grade_level,
                 payment_method=method,
                 school_year="2026-2027",
-                date_recorded=date_val or datetime.now().isoformat(),
+                date_recorded=date_val or ph_now_iso(),
                 recorded_by=current_user.id,
                 remarks=f"[CSV Import] {remarks}" if remarks else "[CSV Import]",
                 anomaly_score=anomaly_eval["anomaly_score"],
@@ -401,7 +403,7 @@ def import_csv(
             entity_type="Income",
             entity_id=0,
             details=f"Imported {len(imported)} transactions totaling ₱{total_amount:,.2f} from CSV file '{file.filename}'. Errors: {len(errors)}.",
-            timestamp=datetime.now().isoformat()
+            timestamp=ph_now_iso()
         )
         db.add(log)
         db.commit()
