@@ -39,17 +39,34 @@ export default function ParentPortal({ user }) {
   const fetchParentData = async () => {
     setLoading(true);
     try {
-      const studentId = user?.student_id || 1;
-      const [stuRes, notifRes] = await Promise.all([
-        api.get(`/students/${studentId}`),
-        api.get(`/notifications/?student_id=${studentId}`),
-      ]);
-      setStudent(stuRes.data);
-      setPwChanged(Boolean(stuRes.data?.password_changed || user?.password_changed));
-      const cleanAnnouncements = (notifRes.data || []).filter(
-        (n) => !(n.title || '').startsWith('Official Overdue Balance Notice')
-      );
-      setNotifications(cleanAnnouncements);
+      // Robust multi-fallback to resolve child's student record
+      const targetId = user?.student_id || user?.student_lrn || user?.username || 'me';
+      let stuData = null;
+      try {
+        const stuRes = await api.get(`/students/${targetId}`);
+        stuData = stuRes.data;
+      } catch (err) {
+        try {
+          const fallbackRes = await api.get('/students/me');
+          stuData = fallbackRes.data;
+        } catch {
+          console.error('Failed to resolve child account:', err);
+        }
+      }
+
+      setStudent(stuData);
+      if (stuData) {
+        setPwChanged(Boolean(stuData.password_changed || user?.password_changed));
+        try {
+          const notifRes = await api.get(`/notifications/?student_id=${stuData.id}`);
+          const cleanAnnouncements = (notifRes.data || []).filter(
+            (n) => !(n.title || '').startsWith('Official Overdue Balance Notice')
+          );
+          setNotifications(cleanAnnouncements);
+        } catch {
+          // Notification failure should not block child's payment portal view
+        }
+      }
     } catch {
       addToast('Failed to load parent portal data', 'error');
     } finally {

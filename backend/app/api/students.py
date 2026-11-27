@@ -77,6 +77,56 @@ def calculate_student_balance(student: Student):
     return total_due, total_paid, outstanding, status
 
 
+def find_student_by_id_or_lrn(
+    identifier: str | int,
+    db: Session,
+    current_user: Optional[User] = None
+) -> Optional[Student]:
+    """
+    Finds a student by either their database primary key (id), their Learner Reference Number (student_id / LRN),
+    their parent username, or 'me' if caller is an authenticated Parent.
+    Ensures seamless lookup regardless of whether UI routes use primary keys or LRN strings.
+    """
+    raw = str(identifier or "").strip()
+    if not raw:
+        return None
+
+    # Handle 'me' for authenticated Parent
+    if raw.lower() == "me" and current_user and (current_user.role or "").lower() == "parent":
+        p_id = getattr(current_user, "student_id", current_user.id)
+        if p_id:
+            st = db.query(Student).filter(Student.id == p_id).first()
+            if st:
+                return st
+        if getattr(current_user, "username", None):
+            st = db.query(Student).filter(
+                (func.lower(func.trim(Student.student_id)) == current_user.username.lower()) |
+                (func.lower(func.trim(Student.parent_username)) == current_user.username.lower())
+            ).first()
+            if st:
+                return st
+
+    # 1. Match by Student LRN or parent username (exact case-insensitive match)
+    student = db.query(Student).filter(
+        (func.lower(func.trim(Student.student_id)) == raw.lower()) |
+        (func.lower(func.trim(Student.parent_username)) == raw.lower())
+    ).first()
+    if student:
+        return student
+
+    # 2. Match by integer primary key if identifier is numeric
+    if raw.isdigit():
+        try:
+            int_id = int(raw)
+            student = db.query(Student).filter(Student.id == int_id).first()
+            if student:
+                return student
+        except Exception:
+            pass
+
+    return None
+
+
 @router.get("/next-receipt-number")
 def get_next_or(db: Session = Depends(get_db)):
     """Preview the next auto-generated OR number."""
@@ -489,7 +539,7 @@ def get_students(
 
 @router.get("/{student_id}", response_model=StudentDetailResponse)
 def get_student_detail(
-    student_id: int,
+    student_id: str,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):
@@ -497,9 +547,10 @@ def get_student_detail(
     Get detailed student profile with all fee schedules across:
     Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees,
     along with full payment transaction records.
+    Supports lookup by integer primary key or DepEd LRN string.
     """
     is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier", "principal"})
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = find_student_by_id_or_lrn(student_id, db, current_user)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
@@ -701,9 +752,9 @@ def create_student(
 
 
 @router.put("/{student_id}", response_model=StudentResponse)
-def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(get_db)):
+def update_student(student_id: str, data: StudentUpdate, db: Session = Depends(get_db)):
     """Update student basic information with duplicate safeguards & automatic Section sync."""
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = find_student_by_id_or_lrn(student_id, db)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
@@ -778,7 +829,7 @@ def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(g
 
 @router.post("/{student_id}/reset-password")
 def reset_student_password(
-    student_id: int,
+    student_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -786,7 +837,7 @@ def reset_student_password(
     if (current_user.role or "").lower() == "parent":
         raise HTTPException(status_code=403, detail="Unauthorized: Admin or Cashier access required.")
 
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = find_student_by_id_or_lrn(student_id, db, current_user)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
@@ -816,7 +867,7 @@ def reset_student_password(
 
 @router.post("/{student_id}/payments")
 def record_student_payment(
-    student_id: int,
+    student_id: str,
     data: RecordStudentPaymentRequest,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user)
@@ -829,7 +880,7 @@ def record_student_payment(
     - Evaluates payment with ML Anomaly Detection engine
     - Stores timestamps strictly in Philippine Standard Time (Asia/Manila)
     """
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = find_student_by_id_or_lrn(student_id, db, current_user)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
@@ -1014,11 +1065,11 @@ def record_student_payment(
 
 
 @router.get("/{student_id}/notice-letter")
-def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
+def get_payment_notice_letter(student_id: str, db: Session = Depends(get_db)):
     """
     Generate auto-filled Payment Notice Letter data for students with outstanding balances.
     """
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = find_student_by_id_or_lrn(student_id, db)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
@@ -1075,11 +1126,11 @@ def get_payment_notice_letter(student_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{student_id}/yearly-record")
-def get_end_of_year_record(student_id: int, db: Session = Depends(get_db)):
+def get_end_of_year_record(student_id: str, db: Session = Depends(get_db)):
     """
     Complete end-of-school-year payment transcript and receipt ledger for student profile & parent portal.
     """
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = find_student_by_id_or_lrn(student_id, db)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 

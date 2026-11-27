@@ -110,7 +110,12 @@ def change_password(
     now_iso = ph_now_iso()
 
     if (current_user.role or "").lower() == "parent":
-        student = db.query(Student).filter(Student.id == getattr(current_user, "student_id", current_user.id)).first()
+        parent_id = getattr(current_user, "student_id", current_user.id)
+        student = db.query(Student).filter(
+            (Student.id == parent_id) |
+            (func.lower(func.trim(Student.student_id)) == str(current_user.username).lower()) |
+            (func.lower(func.trim(Student.parent_username)) == str(current_user.username).lower())
+        ).first()
         if not student:
             raise HTTPException(status_code=404, detail="Student account not found.")
 
