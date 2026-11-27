@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 
 # ── Auth ──
@@ -309,6 +309,8 @@ class StudentResponse(StudentBase):
 class StudentDetailResponse(StudentResponse):
     fee_schedules: List[StudentFeeScheduleResponse] = []
     payments: List[IncomeResponse] = []
+    ai_payment_plan: Optional[Dict[str, Any]] = None
+
 
 class RecordStudentPaymentRequest(BaseModel):
     fee_type: str  # "Tuition Fee", "Registration Fee", "Books", "Energy Fee", "Other Fees"

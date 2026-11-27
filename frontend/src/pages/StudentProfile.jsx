@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, CreditCard, FileText, Printer, CheckCircle2,
   AlertCircle, AlertTriangle, User, Phone, Mail,
-  GraduationCap, BookOpen, Zap, Sparkles, Plus, Eye, Receipt
+  GraduationCap, BookOpen, Zap, Sparkles, Plus, Eye, Receipt,
+  Bot, BrainCircuit, Target, ArrowRight, ShieldCheck, Clock
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';
@@ -89,6 +90,31 @@ export default function StudentProfile() {
     setRefNumber('');
     setShowPaymentModal(true);
   };
+
+  const handleApplyAiRecommendation = (nextAction) => {
+    if (!nextAction) return;
+    openPaymentModalForCategory(nextAction.fee_type, nextAction.amount);
+    setPaymentAmount(Number(nextAction.amount).toFixed(2));
+    setRemarks(`AI Decision: ${student?.ai_payment_plan?.autonomous_decision?.strategy_title || 'Optimized Settlement'}`);
+  };
+
+  const [enrollingRollover, setEnrollingRollover] = useState(false);
+  const handleRolloverEnroll = async () => {
+    if (!window.confirm(`Enroll ${student.full_name} for the next academic school year? This will automatically promote their grade level and section, advance the school year, and initialize new official fee assessments.`)) {
+      return;
+    }
+    setEnrollingRollover(true);
+    try {
+      const res = await api.post(`/students/${id}/rollover-enroll`, {});
+      addToast(res.data.message || 'Successfully enrolled student for next school year!', 'success');
+      fetchStudentProfile();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed to re-enroll student', 'error');
+    } finally {
+      setEnrollingRollover(false);
+    }
+  };
+
 
   const handleRecordPayment = async (e) => {
     e.preventDefault();
@@ -217,6 +243,17 @@ export default function StudentProfile() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {!isAdmin && student.outstanding_balance <= 0 && (
+            <button
+              onClick={handleRolloverEnroll}
+              disabled={enrollingRollover}
+              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+              title="Promote and re-enroll student for the next academic school year"
+            >
+              <GraduationCap className="w-4 h-4 shrink-0" />
+              <span>{enrollingRollover ? 'Enrolling...' : 'Enroll for Next SY'}</span>
+            </button>
+          )}
           {!isAdmin && (
             <button
               onClick={() => openPaymentModalForCategory('Tuition Fee', 0)}
@@ -404,6 +441,246 @@ export default function StudentProfile() {
           })}
         </div>
       </div>
+
+      {/* ── Academic Year Rollover Ready Banner ── */}
+      {student.outstanding_balance <= 0 && (
+        <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-emerald-500/10 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-emerald-950/30 border border-blue-200 dark:border-blue-800 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-900/60 border border-blue-200 dark:border-blue-700 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-white font-cinzel uppercase">
+                  Academic Year Rollover Ready (100% Fully Paid)
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase font-cinzel bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  Cleared
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                {student.full_name} has zero outstanding balance for SY {student.school_year}. Ready for promotion and re-enrollment for the next academic year.
+              </p>
+            </div>
+          </div>
+          {!isAdmin && (
+            <button
+              onClick={handleRolloverEnroll}
+              disabled={enrollingRollover}
+              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center justify-center gap-2 transition cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>{enrollingRollover ? 'Processing...' : 'Enroll for Next SY'}</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── System Payment Intelligence & Pattern Learning Engine ── */}
+      {student.ai_payment_plan && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel uppercase flex items-center gap-2">
+                <BrainCircuit className="w-5 h-5 text-indigo-500" />
+                AI Payment Intelligence &amp; Autonomous Decisions
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Autonomous behavioral pattern learning, predictive settlement forecasting &amp; optimized installment schedule
+              </p>
+            </div>
+            {student.ai_payment_plan.payment_behavior_score !== undefined && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase font-cinzel">Behavior Score</span>
+                <span className={`text-lg font-black font-mono px-2.5 py-0.5 rounded-xl border ${
+                  student.ai_payment_plan.payment_behavior_score >= 80
+                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-800'
+                    : student.ai_payment_plan.payment_behavior_score >= 50
+                    ? 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-800'
+                    : 'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-950/40 dark:border-rose-800'
+                }`}>
+                  {student.ai_payment_plan.payment_behavior_score}/100
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Strategy Banner */}
+          <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-blue-900/40 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck className="w-5 h-5 text-blue-300" />
+                <span className="text-xs font-bold uppercase tracking-widest text-blue-300 font-cinzel">
+                  {student.ai_payment_plan.autonomous_decision?.strategy_title || 'Autonomous Decision'}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-blue-50/95 font-medium">
+                {student.ai_payment_plan.autonomous_decision?.verdict_narrative}
+              </p>
+              <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center gap-5 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-blue-300" />
+                  <span className="text-blue-200">Risk Profile:</span>
+                  <span className="font-bold text-white">{student.ai_payment_plan.autonomous_decision?.risk_level}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-blue-300" />
+                  <span className="text-blue-200">Predicted Settlement:</span>
+                  <span className="font-bold text-white font-mono">{student.ai_payment_plan.predicted_clearance_date || 'In Progress'}</span>
+                </div>
+                {student.ai_payment_plan.autonomous_decision?.payment_health_index !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-blue-200">Health Index:</span>
+                    <span className="font-bold text-white font-mono">{student.ai_payment_plan.autonomous_decision.payment_health_index}%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* System Insight & Pattern Analysis Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* System Insight */}
+            {student.ai_payment_plan.ai_insight && (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel">
+                      Pattern Intelligence Narrative
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200">
+                    &ldquo;{student.ai_payment_plan.ai_insight}&rdquo;
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Learned Behavioral Cluster */}
+            {student.ai_payment_plan.learned_cluster && (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <BrainCircuit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel">
+                        Learned Behavioral Pattern
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                      {student.ai_payment_plan.learned_cluster.confidence_pct}% Match
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                    {student.ai_payment_plan.learned_cluster.name}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    {student.ai_payment_plan.learned_cluster.description}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 pt-2.5 mt-3 border-t border-slate-100 dark:border-slate-700">
+                  <span>Profile: <strong className="text-slate-700 dark:text-slate-200">{student.ai_payment_plan.learned_cluster.tag}</strong></span>
+                  <span>Channel: <strong className="text-slate-700 dark:text-slate-200">{student.ai_payment_plan.learned_cluster.preferred_channel}</strong></span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Pattern Details Grid */}
+          {student.ai_payment_plan.pattern_details && (
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {[
+                { label: 'Avg Payment', value: formatPeso(student.ai_payment_plan.pattern_details.avg_payment_amount), color: 'text-emerald-600 dark:text-emerald-400' },
+                { label: 'Avg Interval', value: `${student.ai_payment_plan.pattern_details.avg_interval_days} days`, color: 'text-blue-600 dark:text-blue-400' },
+                { label: 'Regularity', value: `${student.ai_payment_plan.pattern_details.payment_consistency_pct}%`, color: 'text-blue-700 dark:text-blue-300' },
+                { label: 'Main Channel', value: student.ai_payment_plan.pattern_details.most_common_method, color: 'text-amber-600 dark:text-amber-400' },
+                { label: 'Completed Payments', value: student.ai_payment_plan.pattern_details.total_payments_made, color: 'text-slate-700 dark:text-slate-300' },
+              ].map((item) => (
+                <div key={item.label} className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200/80 dark:border-slate-700/80 text-center">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-cinzel">{item.label}</p>
+                  <p className={`text-sm font-bold font-mono mt-1 ${item.color}`}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Settlement Steps Timeline */}
+          {student.ai_payment_plan.settlement_steps?.length > 0 && (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+              <h4 className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel mb-3.5 flex items-center gap-2">
+                <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                AI-Optimized Step-by-Step Settlement Timeline
+              </h4>
+              <div className="space-y-2.5">
+                {student.ai_payment_plan.settlement_steps.map((step) => (
+                  <div
+                    key={step.step}
+                    className={`flex items-start gap-3.5 p-3.5 rounded-xl border transition ${
+                      step.is_immediate
+                        ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20'
+                        : 'border-slate-200/80 bg-slate-50/50 dark:border-slate-700/80 dark:bg-slate-900/30'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                      step.is_immediate
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    }`}>
+                      {step.step}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                        <span className="text-xs font-bold text-slate-800 dark:text-white">{step.category}</span>
+                        <span className="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                          {formatPeso(step.amount)}
+                        </span>
+                        {step.is_immediate && (
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 animate-pulse font-cinzel">
+                            RECOMMENDED NOW
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{step.rationale}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Timeline: {step.timeline}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Dynamic Recommendation */}
+          {student.ai_payment_plan.dynamic_recommendation && (
+            <div className="bg-slate-50 dark:bg-slate-800/90 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-start gap-3">
+                <Bot className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-widest font-cinzel">
+                    Autonomous System Recommendation
+                  </span>
+                  <p className="text-xs leading-relaxed text-slate-800 dark:text-slate-200 mt-1 font-medium">
+                    {student.ai_payment_plan.dynamic_recommendation}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Next Best Action Button */}
+          {!isAdmin && student.ai_payment_plan.next_best_action && (
+            <button
+              onClick={() => handleApplyAiRecommendation(student.ai_payment_plan.next_best_action)}
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider font-cinzel shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <BrainCircuit className="w-5 h-5" />
+              <span>{student.ai_payment_plan.next_best_action.button_label}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Payment Transactions & Digital Receipts Table */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-md space-y-4">

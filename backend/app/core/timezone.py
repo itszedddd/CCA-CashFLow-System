@@ -91,7 +91,66 @@ def generate_lrn_password(student_id: str, full_name: str = "") -> str:
     return f"{prefix}#0000"
 
 
-# ── Official CCA SY 2026-2027 Fee Guidelines per Grade Level ──
+# ── Grade Progression & School Year Rollover Helpers ──
+GRADE_PROGRESSION = {
+    "Pre-Kinder": "Kindergarten",
+    "Kindergarten": "Grade 1",
+    "Grade 1": "Grade 2",
+    "Grade 2": "Grade 3",
+    "Grade 3": "Grade 4",
+    "Grade 4": "Grade 5",
+    "Grade 5": "Grade 6",
+    "Grade 6": "Grade 7",
+    "Grade 7": "Grade 8",
+    "Grade 8": "Grade 9",
+    "Grade 9": "Grade 10",
+    "Grade 10": "JHS Completer / Graduated",
+}
+
+
+def get_next_grade_and_section(current_grade: str) -> tuple[str, str, bool]:
+    """
+    Returns (next_grade_level, next_canonical_section, is_graduated).
+    Kindergarten -> Grade 1 (Faith)
+    Grade 1 -> Grade 2 (Grace)
+    ...
+    Grade 9 -> Grade 10 (Self-Control)
+    Grade 10 -> JHS Completer / Graduated (Alumni, is_graduated=True)
+    """
+    clean_g = (current_grade or "").strip()
+    next_grade = GRADE_PROGRESSION.get(clean_g)
+    if not next_grade:
+        for k, v in GRADE_PROGRESSION.items():
+            if k.lower() == clean_g.lower():
+                next_grade = v
+                break
+    if not next_grade:
+        # Fallback based on substring
+        if "kinder" in clean_g.lower():
+            next_grade = "Grade 1"
+        elif "10" in clean_g:
+            next_grade = "JHS Completer / Graduated"
+        else:
+            next_grade = "Grade 1"
+
+    is_graduated = (next_grade == "JHS Completer / Graduated")
+    next_section = "Alumni" if is_graduated else resolve_section(next_grade)
+    return next_grade, next_section, is_graduated
+
+
+def get_next_school_year(sy: str) -> str:
+    """Return next academic school year string (e.g. '2026-2027' -> '2027-2028')."""
+    clean = (sy or "2026-2027").strip()
+    try:
+        parts = clean.split("-")
+        if len(parts) == 2:
+            y1 = int(parts[0])
+            y2 = int(parts[1])
+            return f"{y1 + 1}-{y2 + 1}"
+    except Exception:
+        pass
+    return "2027-2028"
+
 # Source: Calvary Christian Academy Inc. Official Payment Guidelines
 # Registration & Misc: 5,700 (all levels)
 # Tuition:

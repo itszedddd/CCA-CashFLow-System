@@ -120,19 +120,17 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
               </p>
             </div>
             <div
-              className={`p-2.5 border rounded-xl print:bg-transparent print:border-slate-800 ${
-                Number(financial_summary?.remaining_balance) > 0
-                  ? 'bg-rose-50 border-rose-200'
-                  : 'bg-slate-50 border-slate-200'
-              }`}
+              className={`p-2.5 border rounded-xl print:bg-transparent print:border-slate-800 ${Number(financial_summary?.remaining_balance) > 0
+                ? 'bg-rose-50 border-rose-200'
+                : 'bg-slate-50 border-slate-200'
+                }`}
             >
               <p className="text-[10px] font-bold uppercase font-cinzel text-slate-600 print:text-black">Remaining Balance</p>
               <p
-                className={`text-sm sm:text-base font-black font-mono mt-0.5 ${
-                  Number(financial_summary?.remaining_balance) > 0
-                    ? 'text-rose-700 print:text-black'
-                    : 'text-emerald-700 print:text-black'
-                }`}
+                className={`text-sm sm:text-base font-black font-mono mt-0.5 ${Number(financial_summary?.remaining_balance) > 0
+                  ? 'text-rose-700 print:text-black'
+                  : 'text-emerald-700 print:text-black'
+                  }`}
               >
                 {formatPeso(financial_summary?.remaining_balance)}
               </p>
@@ -172,11 +170,10 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
                       </td>
                       <td className="py-1.5 px-2.5 text-center whitespace-nowrap">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] print:text-[8.5px] font-bold ${
-                            fb.status === 'Cleared'
-                              ? 'bg-emerald-100 text-emerald-700 print:text-black print:border print:border-black'
-                              : 'bg-amber-100 text-amber-700 print:text-black'
-                          }`}
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] print:text-[8.5px] font-bold ${fb.status === 'Cleared'
+                            ? 'bg-emerald-100 text-emerald-700 print:text-black print:border print:border-black'
+                            : 'bg-amber-100 text-amber-700 print:text-black'
+                            }`}
                         >
                           {fb.status}
                         </span>

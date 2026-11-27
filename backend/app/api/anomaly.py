@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.models import Income, IncomeCategory, User, AuditLog
 from ..auth import get_current_user
-from ..core.anomaly_engine import AnomalyEngine, evaluate_single_transaction
+from ..core.anomaly_engine import AnomalyEngine, evaluate_single_transaction, generate_student_ai_payment_plan
 from ..core.timezone import ph_now, ph_now_iso
 
 router = APIRouter(prefix="/api/ai/anomaly", tags=["AI Anomaly Detection"])
@@ -114,9 +114,32 @@ def list_flagged_transactions(
             "reasons": reasons_data.get("reasons", []),
             "recommendations": reasons_data.get("recommendations", []),
             "ml_outlier_factor": reasons_data.get("ml_outlier_factor", 0.0),
+            "ai_decision": reasons_data.get("ai_decision", "AUTONOMOUS_APPROVED_ROUTINE_SCHEDULE" if inc.anomaly_level == "Low" else "ANOMALY_REQUIRES_VERIFICATION"),
+            "ai_decision_label": reasons_data.get("ai_decision_label", "Auto-Approved" if inc.anomaly_level == "Low" else "Requires Verification"),
+            "learned_cluster": reasons_data.get("learned_cluster", "Structured Monthly Cadence" if inc.amount >= 1500 else "Staggered Micro-Payer"),
+            "pattern_confidence": reasons_data.get("pattern_confidence", 95.0),
+            "autonomous_rationale": reasons_data.get("autonomous_rationale", "Aligned with standard payment schedule."),
         })
 
     return {"total": total, "items": results}
+
+
+@router.get("/student-decision/{student_id}")
+def get_student_decision(
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns the autonomous AI payment recommendation and settlement plan for a student.
+    """
+    from .students import find_student_by_id_or_lrn
+    st = find_student_by_id_or_lrn(student_id, db, current_user)
+    if not st:
+        raise HTTPException(status_code=404, detail="Student not found")
+    plan = generate_student_ai_payment_plan(st, db)
+    return plan
+
 
 
 @router.post("/evaluate")

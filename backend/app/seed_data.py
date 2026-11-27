@@ -15,42 +15,27 @@ from .core.timezone import get_grade_fee_benchmarks
 
 STUDENT_DATA = [
     # Kindergarten
-    {"name": "Liam Noah Ramos", "grade": "Kindergarten", "section": "Joy", "gender": "Male", "parent": "Carlos Ramos", "contact": "0917-123-4501"},
-    {"name": "Mia Olivia Cruz", "grade": "Kindergarten", "section": "Joy", "gender": "Female", "parent": "Elena Cruz", "contact": "0918-234-5602"},
-    {"name": "Ethan Gabriel Santos", "grade": "Kindergarten", "section": "Joy", "gender": "Male", "parent": "Roberto Santos", "contact": "0919-345-6703"},
+    {"name": "Liam Noah Ramos", "grade": "Kindergarten", "section": "Joy", "gender": "Male", "parent": "Carlos Ramos", "contact": "09171234501"},
     # Grade 1
-    {"name": "Juan Miguel Santos", "grade": "Grade 1", "section": "Faith", "gender": "Male", "parent": "Antonio Santos", "contact": "0917-555-1122"},
-    {"name": "Maria Sophia Garcia", "grade": "Grade 1", "section": "Faith", "gender": "Female", "parent": "Lourdes Garcia", "contact": "0918-555-2233"},
-    {"name": "Pedro Luis Reyes", "grade": "Grade 1", "section": "Faith", "gender": "Male", "parent": "Fernando Reyes", "contact": "0919-555-3344"},
+    {"name": "Juan Miguel Santos", "grade": "Grade 1", "section": "Faith", "gender": "Male", "parent": "Antonio Santos", "contact": "09175551122"},
     # Grade 2
-    {"name": "Ana Patricia Lopez", "grade": "Grade 2", "section": "Grace", "gender": "Female", "parent": "Maricel Lopez", "contact": "0920-555-4455"},
-    {"name": "Carlos Joaquin Cruz", "grade": "Grade 2", "section": "Grace", "gender": "Male", "parent": "Eduardo Cruz", "contact": "0921-555-5566"},
-    {"name": "Sofia Isabel Rivera", "grade": "Grade 2", "section": "Grace", "gender": "Female", "parent": "Carmela Rivera", "contact": "0922-555-6677"},
+    {"name": "Ana Patricia Lopez", "grade": "Grade 2", "section": "Grace", "gender": "Female", "parent": "Maricel Lopez", "contact": "09205554455"},
     # Grade 3
-    {"name": "Miguel Angelo Torres", "grade": "Grade 3", "section": "Hope", "gender": "Male", "parent": "Ramon Torres", "contact": "0923-555-7788"},
-    {"name": "Isabella Marie Flores", "grade": "Grade 3", "section": "Hope", "gender": "Female", "parent": "Teresa Flores", "contact": "0924-555-8899"},
+    {"name": "Miguel Angelo Torres", "grade": "Grade 3", "section": "Hope", "gender": "Male", "parent": "Ramon Torres", "contact": "09235557788"},
     # Grade 4
-    {"name": "Andres Daniel Ramos", "grade": "Grade 4", "section": "Peace", "gender": "Male", "parent": "Manuel Ramos", "contact": "0925-555-9900"},
-    {"name": "Gabriela Beatriz Mendoza", "grade": "Grade 4", "section": "Peace", "gender": "Female", "parent": "Corazon Mendoza", "contact": "0926-555-0011"},
+    {"name": "Andres Daniel Ramos", "grade": "Grade 4", "section": "Peace", "gender": "Male", "parent": "Manuel Ramos", "contact": "09255559900"},
     # Grade 5
-    {"name": "Diego Alexander Hernandez", "grade": "Grade 5", "section": "Patience", "gender": "Male", "parent": "Vicente Hernandez", "contact": "0927-555-1122"},
-    {"name": "Valentina Rose Aquino", "grade": "Grade 5", "section": "Patience", "gender": "Female", "parent": "Rosario Aquino", "contact": "0928-555-2233"},
+    {"name": "Diego Alexander Hernandez", "grade": "Grade 5", "section": "Patience", "gender": "Male", "parent": "Vicente Hernandez", "contact": "09275551122"},
     # Grade 6
-    {"name": "Mateo Sebastian Gonzales", "grade": "Grade 6", "section": "Kindness", "gender": "Male", "parent": "Alfonso Gonzales", "contact": "0929-555-3344"},
-    {"name": "Camila Victoria Bautista", "grade": "Grade 6", "section": "Kindness", "gender": "Female", "parent": "Imelda Bautista", "contact": "0930-555-4455"},
+    {"name": "Mateo Sebastian Gonzales", "grade": "Grade 6", "section": "Kindness", "gender": "Male", "parent": "Alfonso Gonzales", "contact": "09295553344"},
     # Grade 7
-    {"name": "Sebastian Kyle Villanueva", "grade": "Grade 7", "section": "Goodness", "gender": "Male", "parent": "Danilo Villanueva", "contact": "0931-555-5566"},
-    {"name": "Lucia Clarisse Castillo", "grade": "Grade 7", "section": "Goodness", "gender": "Female", "parent": "Grace Castillo", "contact": "0932-555-6677"},
+    {"name": "Sebastian Kyle Villanueva", "grade": "Grade 7", "section": "Goodness", "gender": "Male", "parent": "Danilo Villanueva", "contact": "09315555566"},
     # Grade 8
-    {"name": "Nicolas Jose Dela Cruz", "grade": "Grade 8", "section": "Faithfulness", "gender": "Male", "parent": "Gregorio Dela Cruz", "contact": "0933-555-7788"},
-    {"name": "Emma Nicole Dizon", "grade": "Grade 8", "section": "Faithfulness", "gender": "Female", "parent": "Rowena Dizon", "contact": "0934-555-8899"},
+    {"name": "Nicolas Jose Dela Cruz", "grade": "Grade 8", "section": "Faithfulness", "gender": "Male", "parent": "Gregorio Dela Cruz", "contact": "09335557788"},
     # Grade 9
-    {"name": "Rafael Dominic Manalo", "grade": "Grade 9", "section": "Gentleness", "gender": "Male", "parent": "Bernardo Manalo", "contact": "0935-555-9900"},
-    {"name": "Victoria Celine Pascual", "grade": "Grade 9", "section": "Gentleness", "gender": "Female", "parent": "Amparo Pascual", "contact": "0936-555-0011"},
+    {"name": "Rafael Dominic Manalo", "grade": "Grade 9", "section": "Gentleness", "gender": "Male", "parent": "Bernardo Manalo", "contact": "09355559900"},
     # Grade 10
-    {"name": "Jose Lorenzo Fernandez", "grade": "Grade 10", "section": "Self-Control", "gender": "Male", "parent": "Felipe Fernandez", "contact": "0937-555-1122"},
-    {"name": "Patricia Mae Santos", "grade": "Grade 10", "section": "Self-Control", "gender": "Female", "parent": "Guillermo Santos", "contact": "0938-555-2233"},
-    {"name": "Marco Paolo Enriquez", "grade": "Grade 10", "section": "Self-Control", "gender": "Male", "parent": "Rolando Enriquez", "contact": "0939-555-3344"},
+    {"name": "Jose Lorenzo Fernandez", "grade": "Grade 10", "section": "Self-Control", "gender": "Male", "parent": "Felipe Fernandez", "contact": "09375551122"},
 ]
 
 DEFAULT_FEE_SCHEDULE = [

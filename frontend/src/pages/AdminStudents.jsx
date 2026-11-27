@@ -121,6 +121,11 @@ export default function AdminStudents() {
       addToast('Student ID / LRN must contain numbers only.', 'error');
       return;
     }
+    const cleanContact = formState.parent_contact.replace(/\D/g, '');
+    if (!cleanContact || cleanContact.length !== 11) {
+      addToast('Contact number is required and must be exactly 11 digits (e.g. 09171234567). Bawal kulang, bawal sobra.', 'error');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -130,7 +135,7 @@ export default function AdminStudents() {
         section: resolveSection(formState.grade_level),
         gender: formState.gender,
         parent_name: formState.parent_name,
-        parent_contact: formState.parent_contact,
+        parent_contact: cleanContact,
         parent_email: formState.parent_email,
         address: formState.address,
       };
@@ -529,13 +534,16 @@ export default function AdminStudents() {
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Contact Number
+                    Contact Number (11 Digits)
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
+                    placeholder="e.g. 09171234567"
                     value={formState.parent_contact}
-                    onChange={(e) => setFormState({ ...formState, parent_contact: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                    onChange={(e) => setFormState({ ...formState, parent_contact: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono outline-none"
                   />
                 </div>
               </div>

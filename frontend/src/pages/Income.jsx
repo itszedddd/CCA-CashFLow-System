@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Plus, CreditCard, ChevronRight,
   AlertCircle, AlertTriangle, FileText, ArrowUpRight,
-  Upload, Download, FileSpreadsheet, X, Receipt, Lock, Info
+  Upload, Download, FileSpreadsheet, X, Receipt, Lock, Info,
+  GraduationCap, CheckCircle2, Sparkles, RefreshCw, Layers, Check
 } from 'lucide-react';
 import PesoSign from '../components/PesoSign';
 import api from '../api';
@@ -50,6 +51,64 @@ export default function Collections() {
   const [csvFile, setCsvFile] = useState(null);
   const [importingCsv, setImportingCsv] = useState(false);
   const [csvResult, setCsvResult] = useState(null);
+
+  // Rollover & End-of-School-Year State
+  const [activeTab, setActiveTab] = useState('collections'); // 'collections' | 'rollover'
+  const [rolloverData, setRolloverData] = useState(null);
+  const [loadingRollover, setLoadingRollover] = useState(false);
+  const [enrollingStudentId, setEnrollingStudentId] = useState(null);
+  const [batchEnrolling, setBatchEnrolling] = useState(false);
+
+  const fetchRolloverStatus = async () => {
+    setLoadingRollover(true);
+    try {
+      const res = await api.get('/students/rollover/status');
+      setRolloverData(res.data);
+    } catch {
+      addToast('Failed to load academic year rollover status', 'error');
+    } finally {
+      setLoadingRollover(false);
+    }
+  };
+
+  const handleEnrollStudent = async (st) => {
+    if (!window.confirm(`Enroll ${st.full_name} into ${st.target_grade_level} (${st.target_section}) for SY ${rolloverData?.next_school_year}? This will promote the student and initialize new official fee assessments.`)) {
+      return;
+    }
+    setEnrollingStudentId(st.id);
+    try {
+      const res = await api.post(`/students/${st.id}/rollover-enroll`, {});
+      addToast(res.data.message || `Successfully enrolled ${st.full_name}!`, 'success');
+      fetchRolloverStatus();
+      fetchData();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed to enroll student', 'error');
+    } finally {
+      setEnrollingStudentId(null);
+    }
+  };
+
+  const handleBatchEnrollAll = async () => {
+    const readyCount = rolloverData?.summary?.ready_for_enrollment || 0;
+    if (readyCount === 0) {
+      addToast('No students currently marked Ready (Fully Paid) for rollover', 'warning');
+      return;
+    }
+    if (!window.confirm(`One-Click Batch Enrollment: Are you sure you want to re-enroll all ${readyCount} fully-paid students into SY ${rolloverData?.next_school_year}?`)) {
+      return;
+    }
+    setBatchEnrolling(true);
+    try {
+      const res = await api.post('/students/rollover/batch-enroll', {});
+      addToast(res.data.message || `Batch re-enrolled ${res.data.count} students!`, 'success');
+      fetchRolloverStatus();
+      fetchData();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed batch re-enrollment', 'error');
+    } finally {
+      setBatchEnrolling(false);
+    }
+  };
 
   const handleDownloadTemplate = async () => {
     try {
@@ -121,6 +180,7 @@ export default function Collections() {
 
   useEffect(() => {
     fetchData();
+    fetchRolloverStatus();
   }, [selectedGrade, searchQuery, statusFilter]);
 
   const fetchData = async () => {
@@ -151,6 +211,11 @@ export default function Collections() {
       addToast('Student ID / LRN must contain numbers only.', 'error');
       return;
     }
+    const cleanContact = newStudent.parent_contact.replace(/\D/g, '');
+    if (!cleanContact || cleanContact.length !== 11) {
+      addToast('Contact number is required and must be exactly 11 digits (e.g. 09171234567). Bawal kulang, bawal sobra.', 'error');
+      return;
+    }
     setCreatingStudent(true);
     try {
       const payload = {
@@ -160,7 +225,7 @@ export default function Collections() {
         section: resolveSection(newStudent.grade_level),
         gender: newStudent.gender,
         parent_name: newStudent.parent_name,
-        parent_contact: newStudent.parent_contact,
+        parent_contact: cleanContact,
         parent_email: newStudent.parent_email,
         address: newStudent.address,
       };
@@ -321,8 +386,45 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* View Switcher: Collections vs End-of-School-Year & Re-Enrollment Hub */}
+      <div className="flex border-b border-slate-200 dark:border-slate-700 gap-2">
+        <button
+          onClick={() => setActiveTab('collections')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold font-cinzel uppercase tracking-wider border-b-2 transition cursor-pointer ${
+            activeTab === 'collections'
+              ? 'border-brand-600 text-brand-700 dark:text-brand-400 bg-brand-50/50 dark:bg-slate-800'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Student Collections &amp; Profiles</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('rollover');
+            fetchRolloverStatus();
+          }}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold font-cinzel uppercase tracking-wider border-b-2 transition cursor-pointer ${
+            activeTab === 'rollover'
+              ? 'border-blue-600 text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <GraduationCap className="w-4 h-4 text-blue-600" />
+          <span>End-of-School-Year &amp; Re-Enrollment Hub</span>
+          {rolloverData?.summary?.ready_for_enrollment > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono">
+              {rolloverData.summary.ready_for_enrollment} Ready
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'collections' && (
+        <>
+          {/* Summary KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Total Students</p>
@@ -617,6 +719,197 @@ export default function Collections() {
           )}
         </div>
       </div>
+        </>
+      )}
+
+      {/* ── End-of-School-Year & Re-Enrollment Hub View ── */}
+      {activeTab === 'rollover' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                    Academic Year Rollover
+                  </span>
+                  <span className="text-xs text-blue-200/80 font-mono">
+                    SY {rolloverData?.current_school_year || '2026-2027'} &rarr; SY {rolloverData?.next_school_year || '2027-2028'}
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black font-cinzel tracking-tight uppercase">
+                  End-of-School-Year &amp; Re-Enrollment Staging Hub
+                </h3>
+                <p className="text-xs text-blue-100/70 mt-1 max-w-2xl leading-relaxed">
+                  Existing students are organized per Grade Level &amp; Section. When the registrar signals that a student has enrolled, click &ldquo;Enroll for Next SY&rdquo; to promote them to the next grade level and canonical section, automatically creating their fresh fee ledger.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  onClick={fetchRolloverStatus}
+                  disabled={loadingRollover}
+                  className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-bold uppercase font-cinzel transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingRollover ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+                {!isAdmin && (
+                  <button
+                    onClick={handleBatchEnrollAll}
+                    disabled={batchEnrolling || !rolloverData?.summary?.ready_for_enrollment}
+                    className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-lg transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{batchEnrolling ? 'Processing...' : `Batch Enroll All (${rolloverData?.summary?.ready_for_enrollment || 0} Ready)`}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Rollover KPI Summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-6 border-t border-white/10 text-xs">
+              <div>
+                <p className="text-[10px] text-blue-200 uppercase font-cinzel font-bold">Total Students</p>
+                <p className="text-xl font-bold font-mono text-white mt-0.5">{rolloverData?.summary?.total_students || 0}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-emerald-300 uppercase font-cinzel font-bold">Ready to Re-Enroll</p>
+                <p className="text-xl font-bold font-mono text-emerald-400 mt-0.5">{rolloverData?.summary?.ready_for_enrollment || 0}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-amber-300 uppercase font-cinzel font-bold">Pending Balance</p>
+                <p className="text-xl font-bold font-mono text-amber-400 mt-0.5">{rolloverData?.summary?.pending_balance || 0}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-blue-300 uppercase font-cinzel font-bold">Graduated (G10)</p>
+                <p className="text-xl font-bold font-mono text-blue-300 mt-0.5">{rolloverData?.summary?.graduated || 0}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-purple-300 uppercase font-cinzel font-bold">Already Enrolled</p>
+                <p className="text-xl font-bold font-mono text-purple-300 mt-0.5">{rolloverData?.summary?.already_enrolled || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Staging Sections List - Organized per Section & Grade Level */}
+          <div className="space-y-6">
+            {loadingRollover ? (
+              <div className="py-16 text-center text-xs text-slate-400 font-cinzel">Loading academic year rollover records...</div>
+            ) : rolloverData?.sections?.length > 0 ? (
+              rolloverData.sections.map((sec) => (
+                <div key={`${sec.grade_level}-${sec.section}`} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden">
+                  {/* Section Banner Header */}
+                  <div className="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 flex items-center justify-center font-cinzel font-bold text-brand-700 dark:text-brand-300">
+                        <Layers className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-sm font-bold text-slate-800 dark:text-white font-cinzel uppercase">
+                            {sec.grade_level} — Section {sec.section}
+                          </h4>
+                          <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 font-mono">
+                            &rarr; Promotes to {sec.target_grade_level} ({sec.target_section})
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {sec.students.length} student(s) in this class • Target: SY {rolloverData.next_school_year}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Students Table in this Section */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 text-[10px] uppercase font-cinzel font-bold">
+                          <th className="py-3 px-4 text-left">Student LRN &amp; Name</th>
+                          <th className="py-3 px-4 text-left">Parent Contact</th>
+                          <th className="py-3 px-4 text-right">Assessment</th>
+                          <th className="py-3 px-4 text-right">Total Paid</th>
+                          <th className="py-3 px-4 text-right">Balance</th>
+                          <th className="py-3 px-4 text-center">Rollover Eligibility</th>
+                          <th className="py-3 px-4 text-right">Cashier Re-Enrollment Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                        {sec.students.map((st) => (
+                          <tr key={st.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition">
+                            <td className="py-3 px-4 min-w-0">
+                              <p className="font-bold text-slate-800 dark:text-white uppercase truncate">{st.full_name}</p>
+                              <p className="text-[10px] font-mono text-slate-400">LRN: {st.student_id}</p>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">
+                              {st.parent_contact || 'N/A'}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono text-slate-700 dark:text-slate-300">
+                              {formatPeso(st.total_due)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                              {formatPeso(st.total_paid)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono font-bold">
+                              <span className={st.outstanding_balance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600'}>
+                                {formatPeso(st.outstanding_balance)}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center whitespace-nowrap">
+                              {st.already_enrolled ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300">
+                                  <Check className="w-3 h-3" /> Enrolled in SY {st.next_school_year}
+                                </span>
+                              ) : st.rollover_status === 'Ready' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400">
+                                  <CheckCircle2 className="w-3 h-3" /> Ready for Next SY
+                                </span>
+                              ) : st.rollover_status === 'Graduated' ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950/40 dark:text-blue-400">
+                                  JHS Completer / Graduated
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-amber-50 text-amber-700 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-400">
+                                  Pending Balance ({formatPeso(st.outstanding_balance)})
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => navigate(`/collections/${st.id}`)}
+                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-[10px] font-semibold transition cursor-pointer"
+                                >
+                                  View Profile
+                                </button>
+                                {!isAdmin && st.can_enroll && (
+                                  <button
+                                    onClick={() => handleEnrollStudent(st)}
+                                    disabled={enrollingStudentId === st.id}
+                                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                                  >
+                                    <GraduationCap className="w-3.5 h-3.5" />
+                                    <span>{enrollingStudentId === st.id ? 'Enrolling...' : 'Enroll for Next SY'}</span>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-12 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 text-center text-slate-400 text-xs">
+                No active student sections found for academic year rollover.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add New Student Modal (Grade Level auto-syncs Non-Editable Section per Inspection 2.3.1) */}
       {showAddStudentModal && (
@@ -766,14 +1059,16 @@ export default function Collections() {
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Contact Number
+                    Contact Number (11 Digits)
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
                     value={newStudent.parent_contact}
-                    onChange={(e) => setNewStudent({ ...newStudent, parent_contact: e.target.value })}
-                    placeholder="e.g. 0917-123-4567"
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
+                    onChange={(e) => setNewStudent({ ...newStudent, parent_contact: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                    placeholder="e.g. 09171234567"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-800 dark:text-white outline-none"
                   />
                 </div>
               </div>
