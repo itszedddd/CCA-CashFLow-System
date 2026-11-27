@@ -192,24 +192,10 @@ def resolve_anomaly(
     """
     Cashier resolves a flagged anomaly by either marking it as verified & cleared,
     or flagging it for manual correction.
-    High-Risk anomalies require Admin or Principal clearance.
     """
     income = db.query(Income).filter(Income.id == income_id).first()
     if not income:
         raise HTTPException(status_code=404, detail="Transaction record not found")
-
-    # Role-based authorization: High-Risk anomalies cannot be cleared by Cashiers
-    if data.action == "verify_clear" and income.anomaly_level == "High":
-        allowed_roles = {"Admin", "admin", "Principal", "principal"}
-        user_role = (current_user.role or "").strip()
-        if user_role not in allowed_roles:
-            raise HTTPException(
-                status_code=403,
-                detail=(
-                    "High-Risk anomalies require Administrator or Principal clearance. "
-                    "Please request approval from the School Administration."
-                )
-            )
 
     if data.action == "verify_clear":
         income.anomaly_status = "Verified_Cleared"
