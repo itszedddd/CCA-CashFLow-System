@@ -110,25 +110,25 @@ def download_student_csv_template():
     # Representative sample rows demonstrating different student payment states:
     # 1. Partially paid student (paid registration, books, and partial tuition)
     writer.writerow([
-        "LRN-2026-001", "Juan Dela Cruz", "Grade 7", "Goodness", "Male",
+        "109283746501", "Juan Dela Cruz", "Grade 7", "Goodness", "Male",
         "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "5718.00", "5700.00", "6900.00", "0.00", "0.00", ""
     ])
     # 2. Fully paid student (all 5 fee categories settled in full)
     writer.writerow([
-        "LRN-2026-002", "Maria Clara Santos", "Grade 8", "Faithfulness", "Female",
+        "109283746502", "Maria Clara Santos", "Grade 8", "Faithfulness", "Female",
         "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "19060.00", "5700.00", "6900.00", "3000.00", "1500.00", ""
     ])
     # 3. Lump-sum advance payer (auto-allocates across Registration, Books, Tuition, etc.)
     writer.writerow([
-        "LRN-2026-003", "Joshua Ramos", "Kindergarten", "Joy", "Male",
+        "109283746503", "Joshua Ramos", "Kindergarten", "Joy", "Male",
         "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "", "", "", "", "", "12600.00"
     ])
     # 4. Enrolled student with zero prior payments (full balance remaining)
     writer.writerow([
-        "LRN-2026-004", "Ana Marie Reyes", "Grade 1", "Faith", "Female",
+        "109283746504", "Ana Marie Reyes", "Grade 1", "Faith", "Female",
         "Elena Reyes", "09192233445", "elena.reyes@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "0.00", "0.00", "0.00", "0.00", "0.00", "0.00"
     ])
@@ -283,6 +283,9 @@ async def import_students_csv(
 
         if not sid:
             errors.append(f"Row {row_idx}: Missing required LRN / Student ID for '{name}'. LRN cannot be auto-generated.")
+            continue
+        if not sid.isdigit():
+            errors.append(f"Row {row_idx}: Student ID / LRN '{sid}' must contain numbers only.")
             continue
 
         gen_pw = generate_lrn_password(sid, name)
@@ -587,6 +590,12 @@ def create_student(
             detail="Learner Reference Number (LRN) / Student ID is required. LRN cannot be auto-generated."
         )
 
+    if not clean_sid.isdigit():
+        raise HTTPException(
+            status_code=400,
+            detail="Student ID / LRN must contain numbers only."
+        )
+
     if not clean_name:
         raise HTTPException(status_code=400, detail="Student full name is required.")
 
@@ -635,8 +644,7 @@ def create_student(
     db.add(student)
     db.flush()
 
-    # Initialize fee schedules with ₱0.00 assessment.
-    # Official fees are assessed and added by the Cashier when collecting/enrolling payments.
+    # Initialize standard fee schedules matching student's grade level
     grade_fees = get_grade_fee_benchmarks(clean_grade)
     for f in grade_fees:
         existing_fs = db.query(StudentFeeSchedule).filter(
@@ -648,9 +656,9 @@ def create_student(
                 student_id=student.id,
                 category_name=f["category_name"],
                 sub_description=f["sub_description"],
-                total_due=0.0,
+                total_due=f["total_due"],
                 total_paid=0.0,
-                remaining_balance=0.0,
+                remaining_balance=f["total_due"],
                 school_year=student.school_year
             )
             db.add(fs)
@@ -703,6 +711,8 @@ def update_student(student_id: int, data: StudentUpdate, db: Session = Depends(g
         clean_sid = data.student_id.strip()
         if not clean_sid:
             raise HTTPException(status_code=400, detail="LRN cannot be empty.")
+        if not clean_sid.isdigit():
+            raise HTTPException(status_code=400, detail="Student ID / LRN must contain numbers only.")
         if clean_sid.lower() != student.student_id.lower():
             dup_sid = db.query(Student).filter(
                 func.lower(func.trim(Student.student_id)) == clean_sid.lower(),

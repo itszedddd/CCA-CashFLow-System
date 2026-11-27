@@ -109,6 +109,10 @@ export default function AdminStudents() {
       addToast('LRN, Last Name, and First Name are required.', 'error');
       return;
     }
+    if (!/^\d+$/.test(formState.student_id.trim())) {
+      addToast('Student ID / LRN must contain numbers only.', 'error');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -390,10 +394,12 @@ export default function AdminStudents() {
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     required
                     value={formState.student_id}
-                    onChange={(e) => setFormState({ ...formState, student_id: e.target.value })}
-                    placeholder="Enter DepEd LRN"
+                    onChange={(e) => setFormState({ ...formState, student_id: e.target.value.replace(/\D/g, '') })}
+                    placeholder="Enter DepEd LRN (Numbers Only)"
                     className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold outline-none"
                   />
                 </div>
@@ -529,15 +535,15 @@ export default function AdminStudents() {
                 </p>
               </div>
 
-              {/* Fee Assessment Notice */}
+              {/* Fee Schedule Information */}
               <div className="p-3.5 bg-blue-50/90 dark:bg-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-[11px] leading-relaxed">
                   <p className="font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wide font-cinzel">
-                    Fee Assessment Notice
+                    Standard Fee Assessment
                   </p>
                   <p className="text-slate-600 dark:text-slate-300 mt-0.5">
-                    New accounts start with <span className="font-bold text-slate-900 dark:text-white">₱0.00</span> balance. Fees are assessed and activated by the Cashier upon collection/enrollment.
+                    Account will automatically initialize with the standard <span className="font-bold text-slate-900 dark:text-white">{formState.grade_level}</span> fee schedule (Tuition, Registration, Books, Energy &amp; Other Fees).
                   </p>
                 </div>
               </div>
