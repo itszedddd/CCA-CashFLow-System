@@ -53,39 +53,82 @@ CCA_FEE_BENCHMARKS = {
 }
 
 
+def _safe_mean(values: List[float]) -> float:
+    """Compute arithmetic mean without requiring numpy."""
+    return float(sum(values) / len(values)) if values else 0.0
+
+
+def _safe_std(values: List[float], mean_val: Optional[float] = None) -> float:
+    """Compute population standard deviation without requiring numpy."""
+    if len(values) <= 1:
+        return 0.0
+    m = _safe_mean(values) if mean_val is None else mean_val
+    variance = sum((x - m) ** 2 for x in values) / len(values)
+    return float(math.sqrt(variance))
+
+
+def _parse_grade_tier(grade_level: Optional[str]) -> str:
+    """Resolve grade level string safely to 'kinder', 'g1_6', or 'g7_10' without substring collisions."""
+    gl = (grade_level or "").strip().lower()
+    if any(k in gl for k in ["pre-kinder", "pre kinder", "kinder"]):
+        return "kinder"
+    # Check 7-10 BEFORE 1-6 so 'grade 10' never matches '1'
+    if any(k in gl for k in ["grade 10", "grade 9", "grade 8", "grade 7", "g10", "g9", "g8", "g7", "10", "7", "8", "9"]):
+        return "g7_10"
+    if any(k in gl for k in ["grade 1", "grade 2", "grade 3", "grade 4", "grade 5", "grade 6", "g1", "g2", "g3", "g4", "g5", "g6", "1", "2", "3", "4", "5", "6"]):
+        return "g1_6"
+    return "g7_10"
+
+
+def _get_valid_tuition_monthly_tiers(grade_level: Optional[str] = None) -> List[float]:
+    """Return valid monthly tuition options (Non-Member and CBC Member) for a grade tier."""
+    if not grade_level:
+        return [1606.0, 1701.0, 1706.0, 1801.0, 1906.0, 2006.0]
+    tier = _parse_grade_tier(grade_level)
+    if tier == "kinder":
+        return [1706.0, 1606.0]
+    if tier == "g1_6":
+        return [1801.0, 1701.0]
+    return [2006.0, 1906.0]
+
+
 def _get_category_expected_fee(category_name: str, grade_level: Optional[str] = None) -> float:
-    """Helper to determine benchmark expected fee based on category name."""
+    """Helper to determine benchmark expected fee based on category name and grade level."""
     cat_lower = (category_name or "").lower()
+    tier = _parse_grade_tier(grade_level) if grade_level else None
+
     if "registration" in cat_lower:
         return 5700.0
     elif "tuition" in cat_lower:
-        if grade_level and "kinder" in grade_level.lower():
-            return 1606.0
-        elif grade_level and any(g in grade_level.lower() for g in ["1", "2", "3", "4", "5", "6"]):
-            return 1701.0
+        if tier == "kinder":
+            return 1706.0
+        elif tier == "g1_6":
+            return 1801.0
+        elif tier == "g7_10":
+            return 2006.0
         return 1906.0
     elif "book" in cat_lower:
-        if grade_level and "kinder" in grade_level.lower():
+        if tier == "kinder":
             return 5500.0
         elif grade_level:
             gl = grade_level.lower()
-            if "grade 1" in gl:
-                return 6900.0
-            elif "grade 2" in gl:
+            if "grade 2" in gl or gl.strip() == "g2":
                 return 6300.0
-            elif "grade 3" in gl:
+            elif "grade 1" in gl or "grade 3" in gl or gl.strip() in ("g1", "g3"):
                 return 6900.0
-            elif any(g in gl for g in ["grade 4", "grade 5", "grade 6"]):
+            elif any(g in gl for g in ["grade 4", "grade 5", "grade 6", "g4", "g5", "g6"]):
                 return 8500.0
-            elif any(g in gl for g in ["grade 7", "grade 8", "grade 9", "grade 10"]):
+            elif tier == "g7_10":
                 return 9200.0
         return 6900.0
     elif "energy" in cat_lower:
-        if grade_level and "kinder" in grade_level.lower():
+        if tier == "kinder":
             return 150.0
         return 300.0
     elif "swim" in cat_lower:
         return 1200.0
+    elif "other fee" in cat_lower:
+        return 1500.0
     elif "event" in cat_lower:
         return 1000.0
     elif "canteen" in cat_lower:
@@ -98,26 +141,37 @@ def _get_category_expected_fee(category_name: str, grade_level: Optional[str] = 
 def _get_category_fee_ceiling(category_name: str, grade_level: Optional[str] = None) -> float:
     """Returns the maximum official assessment ceiling for a category."""
     cat_lower = (category_name or "").lower()
+    tier = _parse_grade_tier(grade_level) if grade_level else None
+
     if "tuition" in cat_lower:
-        if grade_level and "kinder" in grade_level.lower():
+        if tier == "kinder":
             return 17060.0
-        elif grade_level and any(g in grade_level.lower() for g in ["1", "2", "3", "4", "5", "6"]):
+        elif tier == "g1_6":
             return 18010.0
         return 20060.0
     elif "energy" in cat_lower:
-        if grade_level and "kinder" in grade_level.lower():
+        if tier == "kinder":
             return 1500.0
         return 3000.0
     elif "registration" in cat_lower:
         return 5700.0
     elif "book" in cat_lower:
-        if grade_level and any(g in grade_level.lower() for g in ["7", "8", "9", "10"]):
+        if tier == "g7_10":
             return 9200.0
-        elif grade_level and "kinder" in grade_level.lower():
+        elif tier == "kinder":
             return 5500.0
-        return 6900.0
+        elif grade_level:
+            gl = grade_level.lower()
+            if any(g in gl for g in ["grade 4", "grade 5", "grade 6", "g4", "g5", "g6"]):
+                return 8500.0
+            elif "grade 2" in gl or gl.strip() == "g2":
+                return 6300.0
+            return 6900.0
+        return 9200.0
     elif "swim" in cat_lower:
         return 1200.0
+    elif "other fee" in cat_lower:
+        return 1500.0
     return 5000.0
 
 
@@ -168,18 +222,30 @@ def evaluate_single_transaction(
     cat_lower = cat_name.lower()
 
     # ── Pre-compute: Multi-Month Advance Payment flag ──
-    # For tuition/energy, check if amount is an exact multiple of the monthly fee
+    # For tuition/energy, check if amount is an exact multiple of a valid monthly fee tier (Non-Member or CBC Member)
     is_valid_multi_month = False
     multi_month_count = 0
-    monthly_fee_for_cat = 0.0
-    if "tuition" in cat_lower or "energy" in cat_lower:
+    matched_monthly_fee = 0.0
+    if "tuition" in cat_lower:
+        candidate_monthlies = _get_valid_tuition_monthly_tiers(grade_level)
+        for m_fee in candidate_monthlies:
+            if amount > m_fee * 1.5:
+                months_ratio = amount / m_fee
+                nearest_months = round(months_ratio)
+                if 2 <= nearest_months <= 10 and abs(months_ratio - nearest_months) < 0.02:
+                    is_valid_multi_month = True
+                    multi_month_count = nearest_months
+                    matched_monthly_fee = m_fee
+                    break
+    elif "energy" in cat_lower and amount not in [1606.0, 1701.0, 1706.0, 1801.0, 1906.0, 2006.0]:
         monthly_fee_for_cat = _get_category_expected_fee(cat_name, grade_level)
-        if monthly_fee_for_cat and monthly_fee_for_cat > 0 and amount > monthly_fee_for_cat * 1.5:
+        if monthly_fee_for_cat > 0 and amount > monthly_fee_for_cat * 1.5:
             months_ratio = amount / monthly_fee_for_cat
             nearest_months = round(months_ratio)
             if 2 <= nearest_months <= 10 and abs(months_ratio - nearest_months) < 0.02:
                 is_valid_multi_month = True
                 multi_month_count = nearest_months
+                matched_monthly_fee = monthly_fee_for_cat
 
     # ──────────────────────────────────────────────────────────
     # CHECK 0: Outstanding Balance Overpayment (Direct Ledger Check)
@@ -336,7 +402,8 @@ def evaluate_single_transaction(
             "tuition": [1606.0, 1701.0, 1706.0, 1801.0, 1906.0, 2006.0],
             "registration": [5700.0],
             "book": [5500.0, 6300.0, 6900.0, 8500.0, 9200.0],
-            "energy": [150.0, 300.0, 1500.0, 3000.0],
+            # Exclude 1500.0 from Energy cross-cat because 1500.0 is also the official Other Fees benchmark
+            "energy": [150.0, 300.0, 3000.0],
         }
         for other_cat_key, benchmarks in _cross_cat_benchmarks.items():
             if other_cat_key in cat_lower:
@@ -360,29 +427,26 @@ def evaluate_single_transaction(
     # CHECK 8: Multi-Month Advance Payment Validation
     # ──────────────────────────────────────────────────────────
     if "tuition" in cat_lower or "energy" in cat_lower:
-        monthly_fee = _get_category_expected_fee(cat_name, grade_level)
-        if monthly_fee and monthly_fee > 0 and amount > monthly_fee * 1.5:
-            months_ratio = amount / monthly_fee
-            nearest_months = round(months_ratio)
-            if nearest_months >= 2 and nearest_months <= 10 and abs(months_ratio - nearest_months) < 0.02:
-                # Valid multi-month advance — reduce any partial-payment penalty already applied
+        base_monthly = matched_monthly_fee if is_valid_multi_month else _get_category_expected_fee(cat_name, grade_level)
+        min_monthly = min(_get_valid_tuition_monthly_tiers(grade_level)) if "tuition" in cat_lower else base_monthly
+        if min_monthly and min_monthly > 0 and amount > base_monthly * 1.5:
+            if is_valid_multi_month:
                 if current_balance is not None and amount <= current_balance:
                     reasons.append(
-                        f"Multi-month advance payment detected: ₱{amount:,.2f} covers {nearest_months} months "
-                        f"of {cat_name} at ₱{monthly_fee:,.2f}/mo. Within outstanding balance — legitimate."
+                        f"Multi-month advance payment detected: ₱{amount:,.2f} covers {multi_month_count} months "
+                        f"of {cat_name} at ₱{matched_monthly_fee:,.2f}/mo. Within outstanding balance — legitimate."
                     )
-                    # Don't add extra points; this is a legitimate multi-month payment
                 else:
                     reasons.append(
-                        f"Multi-month advance payment detected: ₱{amount:,.2f} covers {nearest_months} months "
-                        f"of {cat_name} at ₱{monthly_fee:,.2f}/mo."
+                        f"Multi-month advance payment detected: ₱{amount:,.2f} covers {multi_month_count} months "
+                        f"of {cat_name} at ₱{matched_monthly_fee:,.2f}/mo."
                     )
             else:
-                # Amount is big but doesn't align with monthly multiples
+                months_ratio = amount / base_monthly
                 anomaly_points += 40.0
                 reasons.append(
                     f"Irregular installment amount: ₱{amount:,.2f} does not align with standard monthly "
-                    f"fee multiples for {cat_name} (₱{monthly_fee:,.2f}/mo, ratio={months_ratio:.2f}x)."
+                    f"fee multiples for {cat_name} (₱{base_monthly:,.2f}/mo, ratio={months_ratio:.2f}x)."
                 )
                 recommendations.append(
                     "Confirm payment breakdown with student or parent. Amount may combine fees from multiple categories."
@@ -443,14 +507,15 @@ class AnomalyEngine:
 
         categories = {c.id: c for c in self.db.query(IncomeCategory).all()}
 
-        # 1. Compute category statistics
+        # 1. Compute category statistics (pure-Python safe when numpy is not installed)
         cat_stats = {}
         for cat_id, cat in categories.items():
-            cat_incomes = [inc.amount for inc in incomes if inc.category_id == cat_id]
+            cat_incomes = [float(inc.amount) for inc in incomes if inc.category_id == cat_id]
             if cat_incomes:
+                m_val = _safe_mean(cat_incomes)
                 cat_stats[cat_id] = {
-                    "mean": float(np.mean(cat_incomes)),
-                    "std": float(np.std(cat_incomes)) if len(cat_incomes) > 1 else 0.0,
+                    "mean": m_val,
+                    "std": _safe_std(cat_incomes, m_val),
                     "expected": cat.expected_amount or _get_category_expected_fee(cat.name),
                 }
             else:
@@ -466,14 +531,14 @@ class AnomalyEngine:
         for inc in incomes:
             sid = inc.student_id_ref
             if sid:
-                student_history_by_id.setdefault(sid, []).append(inc.amount)
+                student_history_by_id.setdefault(sid, []).append(float(inc.amount))
             else:
                 name = (inc.payer_name or "").strip()
                 if name:
-                    student_history_by_name.setdefault(name, []).append(inc.amount)
+                    student_history_by_name.setdefault(name, []).append(float(inc.amount))
 
-        student_avg_by_id = {sid: float(np.mean(amounts)) for sid, amounts in student_history_by_id.items()}
-        student_avg_by_name = {name: float(np.mean(amounts)) for name, amounts in student_history_by_name.items()}
+        student_avg_by_id = {sid: _safe_mean(amounts) for sid, amounts in student_history_by_id.items()}
+        student_avg_by_name = {name: _safe_mean(amounts) for name, amounts in student_history_by_name.items()}
 
         # 3. Compute recent voids per payer
         voided_counts = {}
@@ -507,24 +572,28 @@ class AnomalyEngine:
 
         # 5. Fit IsolationForest if enough samples and scikit-learn is available
         if SKLEARN_AVAILABLE and len(feature_matrix) >= 10:
+            engine_mode = "IsolationForest (scikit-learn)"
             X = np.array(feature_matrix)
             # Adaptive contamination: use 'auto' to prevent data-poisoning over time
             iso = IsolationForest(n_estimators=100, contamination="auto", random_state=42)
             iso.fit(X)
             # decision_function: lower means more anomalous (negative for outliers)
             raw_scores = iso.decision_function(X)
-            # Normalize to 0-100 range (invert so higher is more anomalous)
+            # Normalize to 0-70 range (invert so higher is more anomalous)
             min_s, max_s = float(np.min(raw_scores)), float(np.max(raw_scores))
             denom = (max_s - min_s) if max_s != min_s else 1.0
             iso_anomaly_scores = [float((max_s - s) / denom * 70.0) for s in raw_scores]
         else:
-            # Statistical fallback when scikit-learn is not installed in serverless env
+            engine_mode = "Statistical Outlier Model (Pure Python)"
+            # Normalized statistical outlier scoring when scikit-learn isn't installed:
+            # evaluates per-category Z-score deviation and expected-ratio distance, scaled 0-70
             iso_anomaly_scores = []
-            for feat in feature_matrix:
-                dev = abs(feat[0] - 1.0) * 20.0
-                iso_anomaly_scores.append(min(50.0, max(5.0, dev)))
-            if not iso_anomaly_scores:
-                iso_anomaly_scores = [15.0] * len(incomes)
+            for inc in incomes:
+                c_stat = cat_stats.get(inc.category_id, {})
+                c_mean = c_stat.get("mean", 0.0)
+                c_std = c_stat.get("std", 0.0)
+                z_dev = (abs(float(inc.amount) - c_mean) / c_std) if c_std > 0 else 0.0
+                iso_anomaly_scores.append(round(min(70.0, max(0.0, z_dev * 15.0)), 1))
 
         # 6. Evaluate each income and store results
         high_count = 0
@@ -630,6 +699,8 @@ class AnomalyEngine:
             "moderate_count": med_count,
             "high_count": high_count,
             "health_score": healthy_pct,
+            "engine_mode": engine_mode,
+            "sklearn_available": SKLEARN_AVAILABLE,
             "threshold_definition": {
                 "low": {"range": "0 - 39", "label": "Healthy / Normal", "color": "#10b981"},
                 "medium": {"range": "40 - 69", "label": "Moderate / For Verification", "color": "#f59e0b"},
