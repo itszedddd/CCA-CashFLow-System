@@ -40,6 +40,14 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const isAdmin = (() => {
+    try {
+      return (JSON.parse(localStorage.getItem('cca_cf_user') || '{}')?.role || '').toLowerCase() === 'admin';
+    } catch {
+      return false;
+    }
+  })();
+
   useEffect(() => {
     fetchStats();
   }, []);
@@ -101,15 +109,17 @@ export default function Dashboard() {
             className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition"
           >
             <Plus className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-            <span>Manage Collections</span>
+            <span>{isAdmin ? 'View Collections' : 'Manage Collections'}</span>
           </Link>
-          <Link
-            to="/notifications"
-            className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-md transition"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-            <span>Post Payment Announcement</span>
-          </Link>
+          {!isAdmin && (
+            <Link
+              to="/notifications"
+              className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-md transition"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+              <span>Post Payment Announcement</span>
+            </Link>
+          )}
         </div>
       </div>
 

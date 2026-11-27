@@ -32,6 +32,7 @@ export default function AnomalyDetection() {
       return {};
     }
   })();
+  const isAdmin = (currentUser?.role || '').toLowerCase() === 'admin';
 
   useEffect(() => {
     fetchSummary();
@@ -779,6 +780,21 @@ export default function AnomalyDetection() {
             </div>
 
             {/* Modal Actions */}
+            {isAdmin ? (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <Eye className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                  View-Only Access (Cashier resolves anomaly flags)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTx(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-semibold cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
               <button
                 type="button"
@@ -807,6 +823,7 @@ export default function AnomalyDetection() {
                 </button>
               </div>
             </div>
+            )}
           </div>
         </Modal>
       )}

@@ -24,6 +24,14 @@ export default function Collections() {
   const navigate = useNavigate();
   const addToast = useToast();
 
+  const isAdmin = (() => {
+    try {
+      return (JSON.parse(localStorage.getItem('cca_cf_user') || '{}')?.role || '').toLowerCase() === 'admin';
+    } catch {
+      return false;
+    }
+  })();
+
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -278,34 +286,38 @@ export default function Collections() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <button
-            onClick={() => { setCsvResult(null); setShowCsvModal(true); }}
-            className="px-3.5 py-2.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <Upload className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-            <span>Import CSV</span>
-          </button>
+          {!isAdmin && (
+            <>
+              <button
+                onClick={() => { setCsvResult(null); setShowCsvModal(true); }}
+                className="px-3.5 py-2.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Upload className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <span>Import CSV</span>
+              </button>
 
-          <button
-            onClick={() => {
-              setNewStudent({
-                student_id: '',
-                full_name: '',
-                grade_level: 'Grade 1',
-                section: resolveSection('Grade 1'),
-                gender: 'Male',
-                parent_name: '',
-                parent_contact: '',
-                parent_email: '',
-                address: 'City of San Jose del Monte, Bulacan'
-              });
-              setShowAddStudentModal(true);
-            }}
-            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Student Profile</span>
-          </button>
+              <button
+                onClick={() => {
+                  setNewStudent({
+                    student_id: '',
+                    full_name: '',
+                    grade_level: 'Grade 1',
+                    section: resolveSection('Grade 1'),
+                    gender: 'Male',
+                    parent_name: '',
+                    parent_contact: '',
+                    parent_email: '',
+                    address: 'City of San Jose del Monte, Bulacan'
+                  });
+                  setShowAddStudentModal(true);
+                }}
+                className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Student Profile</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -503,14 +515,16 @@ export default function Collections() {
                     </td>
                     <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openQuickPay(s)}
-                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
-                          title="Record payment for this student"
-                        >
-                          <CreditCard className="w-3 h-3" />
-                          <span>Pay</span>
-                        </button>
+                        {!isAdmin && (
+                          <button
+                            onClick={() => openQuickPay(s)}
+                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
+                            title="Record payment for this student"
+                          >
+                            <CreditCard className="w-3 h-3" />
+                            <span>Pay</span>
+                          </button>
+                        )}
                         {s.outstanding_balance > 0 && (
                           <button
                             onClick={() => openNoticeLetter(s.id)}

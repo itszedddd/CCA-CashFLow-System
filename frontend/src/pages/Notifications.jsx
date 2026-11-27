@@ -23,6 +23,7 @@ export default function Notifications() {
     }
   })();
   const isParent = (currentUser?.role || '').toLowerCase() === 'parent';
+  const isAdmin = (currentUser?.role || '').toLowerCase() === 'admin';
 
   // Form state
   const [form, setForm] = useState({
@@ -114,8 +115,8 @@ export default function Notifications() {
           targetType === 'student'
             ? selectedStudent?.grade_level || null
             : targetType === 'grade' && form.grade_level !== 'All Grades'
-            ? form.grade_level
-            : null,
+              ? form.grade_level
+              : null,
         student_id: targetType === 'student' ? Number(selectedStudentId) : null,
         description: form.description,
         amount: parseFloat(form.amount) || 0.0,
@@ -169,7 +170,7 @@ export default function Notifications() {
           </p>
         </div>
 
-        {!isParent && (
+        {!isParent && !isAdmin && (
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer self-start sm:self-auto shrink-0"
@@ -224,7 +225,7 @@ export default function Notifications() {
                       {n.grade_level ? n.grade_level : 'All Students'}
                     </span>
                   </div>
-                  {!isParent && (
+                  {!isParent && !isAdmin && (
                     <button
                       onClick={() => handleDelete(n.id)}
                       className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer shrink-0"
@@ -317,33 +318,30 @@ export default function Notifications() {
                   <button
                     type="button"
                     onClick={() => { setTargetType('all'); setSelectedStudentId(''); }}
-                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${
-                      targetType === 'all'
-                        ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                    }`}
+                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${targetType === 'all'
+                      ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                      }`}
                   >
                     Entire School
                   </button>
                   <button
                     type="button"
                     onClick={() => { setTargetType('grade'); setSelectedStudentId(''); }}
-                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${
-                      targetType === 'grade'
-                        ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                    }`}
+                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${targetType === 'grade'
+                      ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                      }`}
                   >
                     By Grade
                   </button>
                   <button
                     type="button"
                     onClick={() => setTargetType('student')}
-                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${
-                      targetType === 'student'
-                        ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                    }`}
+                    className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${targetType === 'student'
+                      ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                      }`}
                   >
                     Specific Student
                   </button>

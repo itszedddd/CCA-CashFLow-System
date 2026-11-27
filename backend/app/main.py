@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from jose import jwt
 from sqlalchemy import text
 from .database import engine, Base, SessionLocal
 from .models.models import User, Student, PaymentNotification
 from .api import auth, income, dashboard, anomaly, students, notifications, users
 from .seed_data import seed_database
-from .auth import get_password_hash
+from .auth import get_password_hash, SECRET_KEY, ALGORITHM
 from .core.timezone import ph_now_iso, resolve_section, generate_lrn_password
 import os
 
@@ -18,7 +20,29 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS
+# Enforce strictly view-only access for Admin role on mutating API routes
+@app.middleware("http")
+async def admin_readonly_middleware(request: Request, call_next):
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path.startswith("/api/"):
+        if request.url.path not in ("/api/auth/login", "/api/auth/change-password"):
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.lower().startswith("bearer "):
+                token = auth_header.split(" ", 1)[1].strip()
+                try:
+                    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                    if (payload.get("role") or "").strip().lower() == "admin":
+                        return JSONResponse(
+                            status_code=403,
+                            content={
+                                "detail": "Admin accounts have view-only access and cannot add, modify, or delete records."
+                            },
+                        )
+                except Exception:
+                    pass
+    return await call_next(request)
+
+
+# CORS (added after custom middleware so CORS wraps all responses including 403s)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
