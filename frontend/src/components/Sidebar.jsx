@@ -8,7 +8,6 @@ import {
 const ROLE_COLORS = {
   Admin: 'bg-brand-700',
   Cashier: 'bg-emerald-600',
-  Principal: 'bg-indigo-600',
   Parent: 'bg-blue-600',
   Staff: 'bg-slate-600',
 };

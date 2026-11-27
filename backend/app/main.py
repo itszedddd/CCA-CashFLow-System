@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from jose import jwt
-from sqlalchemy import text
+from sqlalchemy import text, func
 from .database import engine, Base, SessionLocal
 from .models.models import User, Student, PaymentNotification
 from .api import auth, income, dashboard, anomaly, students, notifications, users
@@ -73,12 +73,11 @@ def _ensure_sqlite_migrations(db):
     except Exception as e:
         print(f"Schema migration note: {e}")
 
-    # Seed/ensure Admin, Cashier, Principal accounts
+    # Seed/ensure Admin, Cashier accounts
     now_iso = ph_now_iso()
     required_staff = [
         ("cashier@cca.edu.ph", "Maria Santos", "Cashier"),
         ("admin@cca.edu.ph", "Michelle Jean Gormley", "Admin"),
-        ("principal@cca.edu.ph", "Pastor David Reyes, M.Div.", "Principal"),
     ]
     for uname, fname, role in required_staff:
         u = db.query(User).filter(User.username == uname).first()
@@ -91,6 +90,10 @@ def _ensure_sqlite_migrations(db):
                 is_active=1,
                 created_at=now_iso
             ))
+    # Purge existing principal user account if present
+    db.query(User).filter(
+        (User.username == "principal@cca.edu.ph") | (func.lower(User.role) == "principal")
+    ).delete(synchronize_session=False)
     db.commit()
 
     # Sync deterministic Grade->Section & ensure every student LRN has its own unique generated initial password

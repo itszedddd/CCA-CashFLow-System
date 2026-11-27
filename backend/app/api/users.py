@@ -11,7 +11,7 @@ from ..core.timezone import ph_now_iso
 
 router = APIRouter(prefix="/api/users", tags=["User Accounts"])
 
-ALLOWED_STAFF_ROLES = {"Admin", "Cashier", "Principal"}
+ALLOWED_STAFF_ROLES = {"Admin", "Cashier"}
 
 
 def _normalize_role(role: str) -> str:
@@ -21,7 +21,7 @@ def _normalize_role(role: str) -> str:
             return allowed
     raise HTTPException(
         status_code=400,
-        detail=f"Invalid role '{role}'. Must be one of: Admin, Cashier, Principal."
+        detail=f"Invalid role '{role}'. Must be one of: Admin, Cashier."
     )
 
 
@@ -58,7 +58,7 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("Admin"))
 ):
-    """Create a new Admin, Cashier, or Principal account (Admin only)."""
+    """Create a new Admin or Cashier account (Admin only)."""
     username = (data.username or "").strip().lower()
     full_name = (data.full_name or "").strip()
     password = (data.password or "").strip()

@@ -9,13 +9,11 @@ import { formatPHDateTime } from '../utils/schoolData';
 const ROLE_BADGE_STYLES = {
   Admin: 'bg-brand-50 text-brand-800 border-brand-200 dark:bg-brand-950/60 dark:text-brand-200 dark:border-brand-800',
   Cashier: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
-  Principal: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800',
 };
 
 const ROLE_AVATAR_BG = {
   Admin: 'bg-brand-700',
   Cashier: 'bg-emerald-600',
-  Principal: 'bg-indigo-600',
 };
 
 export default function AdminUsers({ currentUser }) {
@@ -63,7 +61,7 @@ export default function AdminUsers({ currentUser }) {
             </h2>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            View School Administrator, Cashier, and Principal accounts and role permissions.
+            View School Administrator and Cashier accounts and role permissions.
           </p>
         </div>
 
@@ -151,7 +149,6 @@ export default function AdminUsers({ currentUser }) {
           <option value="All">All Staff Roles</option>
           <option value="Admin">Admin</option>
           <option value="Cashier">Cashier</option>
-          <option value="Principal">Principal</option>
         </select>
       </div>
 

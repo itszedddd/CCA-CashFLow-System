@@ -18,7 +18,7 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
     if not raw_username or not raw_password:
         raise HTTPException(status_code=400, detail="Username/LRN and password are required.")
 
-    # 1. Check Staff / Admin / Cashier / Principal user table first
+    # 1. Check Staff / Admin / Cashier user table first
     user = db.query(User).filter(
         (func.lower(func.trim(User.username)) == raw_username) |
         (func.lower(func.trim(User.username)) == f"{raw_username}@cca.edu.ph")

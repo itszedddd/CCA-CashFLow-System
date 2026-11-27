@@ -69,7 +69,7 @@ def _resolve_user_from_payload(payload: dict, db: Session) -> Optional[User]:
             return user
         return None
 
-    # 2. Staff / Cashier / Admin / Principal resolution
+    # 2. Staff / Cashier / Admin resolution
     user = db.query(User).filter(
         (func.lower(func.trim(User.username)) == clean_un) |
         (func.lower(func.trim(User.username)) == f"{clean_un}@cca.edu.ph")

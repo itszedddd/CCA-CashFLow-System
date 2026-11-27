@@ -730,12 +730,12 @@ export default function Reports() {
           </section>
         </div>
 
-        {/* Bottom Accountability and Authorization Block (Inspection Page 12) */}
+        {/* Bottom Accountability and Authorization Block */}
         <section className="break-inside-avoid pt-8 mt-6 border-t-2 border-slate-300 dark:border-slate-600 print:border-slate-800 print:pt-4">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 print:text-black font-cinzel mb-6 print:mb-4">
             Accountability &amp; Authorization
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-xs print:grid-cols-3 print:text-[9px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-center text-xs print:grid-cols-2 print:text-[9px]">
             <div>
               <p className="text-[10px] text-slate-500 print:text-black mb-6 print:mb-4">Prepared by:</p>
               <div className="border-b border-slate-400 dark:border-slate-500 print:border-black w-44 mx-auto pb-1 font-bold font-cinzel uppercase">
@@ -751,28 +751,16 @@ export default function Reports() {
             </div>
 
             <div>
-              <p className="text-[10px] text-slate-500 print:text-black mb-6 print:mb-4">Checked by:</p>
+              <p className="text-[10px] text-slate-500 print:text-black mb-6 print:mb-4">Approved by:</p>
               <div className="border-b border-slate-400 dark:border-slate-500 print:border-black w-48 mx-auto pb-1 font-bold font-cinzel uppercase">
-                {acct.checked_by_name || 'Michelle Jean Gormley'}
+                {acct.approved_by_name || 'Michelle Jean Gormley'}
               </div>
               <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 print:text-black mt-1">
-                {acct.checked_by_role || 'Authorized School Administrator'}
+                {acct.approved_by_role || 'Authorized School Administrator'}
               </p>
               <p className="text-[10px] text-slate-400 print:text-black mt-1">
                 Date Reviewed: {acct.date_reviewed}
               </p>
-              <p className="text-[9px] text-slate-400 print:text-black italic mt-0.5">Signature over Printed Name</p>
-            </div>
-
-            <div>
-              <p className="text-[10px] text-slate-500 print:text-black mb-6 print:mb-4">Approved by:</p>
-              <div className="border-b border-slate-400 dark:border-slate-500 print:border-black w-48 mx-auto pb-1 font-bold font-cinzel uppercase">
-                {acct.approved_by_name || 'Pastor David Reyes, M.Div.'}
-              </div>
-              <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 print:text-black mt-1">
-                {acct.approved_by_role || 'School Principal'}
-              </p>
-              <p className="text-[10px] text-slate-400 print:text-black mt-1">Date: ___________________</p>
               <p className="text-[9px] text-slate-400 print:text-black italic mt-0.5">Signature over Printed Name</p>
             </div>
           </div>

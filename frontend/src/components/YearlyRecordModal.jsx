@@ -238,7 +238,7 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
           </div>
 
           {/* Institutional Certification Stamp */}
-          <div className="pt-4 border-t border-slate-200 print:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs print:grid-cols-3 print:pt-2 print:text-[9px]">
+          <div className="pt-4 border-t border-slate-200 print:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-center text-xs print:grid-cols-2 print:pt-2 print:text-[9px]">
             <div>
               <div className="border-b border-slate-400 mb-1 font-bold font-cinzel text-slate-900 print:text-black pt-3 print:pt-2">
                 {certified_by?.cashier || 'Maria Santos'}
@@ -251,14 +251,7 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
                 {certified_by?.administrator || 'Michelle Jean Gormley'}
               </div>
               <p className="font-semibold text-slate-700 print:text-black">Authorized School Administrator</p>
-              <p className="text-[10px] text-slate-400 print:text-black">Checked &amp; Verified By</p>
-            </div>
-            <div>
-              <div className="border-b border-slate-400 mb-1 font-bold font-cinzel text-slate-900 print:text-black pt-3 print:pt-2">
-                {certified_by?.principal || 'Pastor David Reyes, M.Div.'}
-              </div>
-              <p className="font-semibold text-slate-700 print:text-black">School Principal</p>
-              <p className="text-[10px] text-slate-400 print:text-black">Approved By</p>
+              <p className="text-[10px] text-slate-400 print:text-black">Checked &amp; Approved By</p>
             </div>
           </div>
         </div>

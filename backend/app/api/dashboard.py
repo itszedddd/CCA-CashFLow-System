@@ -366,10 +366,8 @@ def get_end_of_year_report(
         "accountability": {
             "prepared_by_name": "Maria Santos",
             "prepared_by_role": "Cashier",
-            "checked_by_name": "Michelle Jean Gormley",
-            "checked_by_role": "Authorized School Administrator",
-            "approved_by_name": "Pastor David Reyes, M.Div.",
-            "approved_by_role": "School Principal",
+            "approved_by_name": "Michelle Jean Gormley",
+            "approved_by_role": "Authorized School Administrator",
             "date_prepared": ph_now().strftime("%B %d, %Y"),
             "date_reviewed": ph_now().strftime("%B %d, %Y"),
         }

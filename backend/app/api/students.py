@@ -483,7 +483,7 @@ def get_students(
     """
     List students organized by grade level with search and payment status filtering.
     """
-    is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier", "principal"})
+    is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier"})
     query = db.query(Student)
 
     if grade_level and grade_level != "All":
@@ -549,7 +549,7 @@ def get_student_detail(
     along with full payment transaction records.
     Supports lookup by integer primary key or DepEd LRN string.
     """
-    is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier", "principal"})
+    is_staff = bool(current_user and (current_user.role or "").lower() in {"admin", "cashier"})
     student = find_student_by_id_or_lrn(student_id, db, current_user)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
@@ -1116,11 +1116,9 @@ def get_payment_notice_letter(student_id: str, db: Session = Depends(get_db)):
         "total_outstanding": total_unpaid,
         "signatories": {
             "administrator": "Michelle Jean Gormley",
-            "administrator_title": "Administrator",
+            "administrator_title": "Authorized School Administrator",
             "cashier": "Maria Santos",
-            "cashier_title": "School Cashier",
-            "principal": "Pastor David Reyes, M.Div.",
-            "principal_title": "School Principal"
+            "cashier_title": "School Cashier"
         }
     }
 
@@ -1191,7 +1189,6 @@ def get_end_of_year_record(student_id: str, db: Session = Depends(get_db)):
         "receipts": receipts_list,
         "certified_by": {
             "cashier": "Maria Santos",
-            "administrator": "Michelle Jean Gormley",
-            "principal": "Pastor David Reyes, M.Div."
+            "administrator": "Michelle Jean Gormley"
         }
     }

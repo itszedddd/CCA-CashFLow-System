@@ -13,7 +13,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     full_name = Column(String, nullable=True)
     hashed_password = Column(String)
-    role = Column(String)  # Admin, Cashier, Principal, Parent
+    role = Column(String)  # Admin, Cashier, Parent
     is_active = Column(Integer, default=1)
     profile_picture = Column(String, nullable=True)
     created_at = Column(String, nullable=True)
