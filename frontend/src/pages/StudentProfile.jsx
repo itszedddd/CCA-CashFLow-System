@@ -10,7 +10,7 @@ import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
 import YearlyRecordModal from '../components/YearlyRecordModal';
-import { formatPeso, formatPHDateTime, resolveSection } from '../utils/schoolData';
+import { formatPeso, formatPHDateTime, resolveSection, getGradeFeeBenchmarks } from '../utils/schoolData';
 
 const CATEGORY_ICONS = {
   'Tuition Fee': GraduationCap,
@@ -569,17 +569,43 @@ export default function StudentProfile() {
                       (fs) => (fs.category_name || '').toLowerCase() === (newType || '').toLowerCase()
                     );
                     const bal = sched ? Math.max(0, (sched.total_due || 0) - (sched.total_paid || 0)) : 0;
-                    if (newType === 'Tuition Fee') setPaymentAmount(bal > 0 ? (bal < 1906 ? bal.toFixed(2) : '1906.00') : '0.00');
-                    else if (newType === 'Energy Fee') setPaymentAmount(bal > 0 ? (bal < 300 ? bal.toFixed(2) : '300.00') : '0.00');
-                    else setPaymentAmount(bal > 0 ? bal.toFixed(2) : '0.00');
+                    const gradeBenchmarks = getGradeFeeBenchmarks(student?.grade_level);
+                    const matchedBenchmark = gradeBenchmarks.find(
+                      (b) => b.category_name.toLowerCase() === newType.toLowerCase()
+                    );
+                    if (bal > 0) {
+                      if (newType === 'Tuition Fee') {
+                        const monthly = matchedBenchmark?.monthly || 1801;
+                        setPaymentAmount(bal < monthly ? bal.toFixed(2) : monthly.toFixed(2));
+                      } else if (newType === 'Energy Fee') {
+                        const monthly = matchedBenchmark?.monthly || 300;
+                        setPaymentAmount(bal < monthly ? bal.toFixed(2) : monthly.toFixed(2));
+                      } else {
+                        setPaymentAmount(bal.toFixed(2));
+                      }
+                    } else if (matchedBenchmark) {
+                      // First time payment / activating fee
+                      if (newType === 'Tuition Fee') {
+                        setPaymentAmount((matchedBenchmark.monthly || 1801).toFixed(2));
+                      } else if (newType === 'Energy Fee') {
+                        setPaymentAmount((matchedBenchmark.monthly || 300).toFixed(2));
+                      } else {
+                        setPaymentAmount(matchedBenchmark.total_due.toFixed(2));
+                      }
+                    } else {
+                      setPaymentAmount('0.00');
+                    }
                   }}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
                 >
-                  <option value="Tuition Fee">Tuition Fee (Monthly ₱1,906 / Annual ₱19,060)</option>
-                  <option value="Registration Fee">Registration Fee (Annual ₱5,700)</option>
-                  <option value="Books">Books & Materials (₱6,900)</option>
-                  <option value="Energy Fee">Energy Fee (Monthly ₱300 / Annual ₱3,000)</option>
-                  <option value="Other Fees">Other Fees (Educational Tours, Swimming, Activities)</option>
+                  {(() => {
+                    const benchmarks = getGradeFeeBenchmarks(student?.grade_level);
+                    return benchmarks.map((bm) => (
+                      <option key={bm.category_name} value={bm.category_name}>
+                        {bm.category_name} — {bm.sub_description}
+                      </option>
+                    ));
+                  })()}
                 </select>
               </div>
 

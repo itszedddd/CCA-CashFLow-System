@@ -10,6 +10,7 @@ from .models.models import (
     Student, StudentFeeSchedule, PaymentNotification
 )
 from .auth import get_password_hash
+from .core.timezone import get_grade_fee_benchmarks
 
 
 STUDENT_DATA = [
@@ -138,29 +139,33 @@ def seed_database(db: Session):
             db.flush()
             created_students.append(student)
 
-            # Create standard 5 fee schedules
-            for f in DEFAULT_FEE_SCHEDULE:
+            # Create standard 5 fee schedules tailored to student's grade level per CCA Guidelines
+            grade_fees = get_grade_fee_benchmarks(sdata["grade"])
+            for f in grade_fees:
+                f_due = f["total_due"]
+                f_name = f["category_name"]
+                f_sub = f["sub_description"]
                 # Randomize paid amount for realistic variety
                 if idx % 4 == 0:
                     # Fully paid student
-                    paid = f["due"]
+                    paid = f_due
                 elif idx % 4 == 1:
                     # Partial payment (50% or 30%)
-                    paid = round(f["due"] * random.choice([0.3, 0.5, 0.7]), 2)
+                    paid = round(f_due * random.choice([0.3, 0.5, 0.7]), 2)
                 elif idx % 4 == 2:
                     # Registration & Books paid, Tuition & Energy partial
-                    paid = f["due"] if f["name"] in ["Registration Fee", "Books"] else round(f["due"] * 0.2, 2)
+                    paid = f_due if f_name in ["Registration Fee", "Books"] else round(f_due * 0.2, 2)
                 else:
                     # Only Registration paid, rest unpaid
-                    paid = f["due"] if f["name"] == "Registration Fee" else 0.0
+                    paid = f_due if f_name == "Registration Fee" else 0.0
 
                 fs = StudentFeeSchedule(
                     student_id=student.id,
-                    category_name=f["name"],
-                    sub_description=f["sub"],
-                    total_due=f["due"],
+                    category_name=f_name,
+                    sub_description=f_sub,
+                    total_due=f_due,
                     total_paid=paid,
-                    remaining_balance=max(0.0, f["due"] - paid),
+                    remaining_balance=max(0.0, f_due - paid),
                     school_year="2026-2027"
                 )
                 db.add(fs)

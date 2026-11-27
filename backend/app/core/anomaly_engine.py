@@ -67,8 +67,18 @@ def _get_category_expected_fee(category_name: str, grade_level: Optional[str] = 
     elif "book" in cat_lower:
         if grade_level and "kinder" in grade_level.lower():
             return 5500.0
-        elif grade_level and any(g in grade_level.lower() for g in ["7", "8", "9", "10"]):
-            return 9200.0
+        elif grade_level:
+            gl = grade_level.lower()
+            if "grade 1" in gl:
+                return 6900.0
+            elif "grade 2" in gl:
+                return 6300.0
+            elif "grade 3" in gl:
+                return 6900.0
+            elif any(g in gl for g in ["grade 4", "grade 5", "grade 6"]):
+                return 8500.0
+            elif any(g in gl for g in ["grade 7", "grade 8", "grade 9", "grade 10"]):
+                return 9200.0
         return 6900.0
     elif "energy" in cat_lower:
         if grade_level and "kinder" in grade_level.lower():
@@ -90,10 +100,10 @@ def _get_category_fee_ceiling(category_name: str, grade_level: Optional[str] = N
     cat_lower = (category_name or "").lower()
     if "tuition" in cat_lower:
         if grade_level and "kinder" in grade_level.lower():
-            return 16060.0
+            return 17060.0
         elif grade_level and any(g in grade_level.lower() for g in ["1", "2", "3", "4", "5", "6"]):
-            return 17010.0
-        return 19060.0
+            return 18010.0
+        return 20060.0
     elif "energy" in cat_lower:
         if grade_level and "kinder" in grade_level.lower():
             return 1500.0

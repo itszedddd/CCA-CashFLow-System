@@ -467,6 +467,36 @@ export default function AdminStudents() {
                 </div>
               </div>
 
+              {/* Default Password Section */}
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest font-cinzel flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                    Default Parent Password
+                  </span>
+                  <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 rounded-md">
+                    {(() => {
+                      const name = (formState.full_name || '').trim();
+                      const parts = name.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+                      const lastWord = parts.length > 0 ? parts[parts.length - 1] : '';
+                      const letters = lastWord.replace(/[^a-zA-Z]/g, '').toUpperCase();
+                      const prefix = (letters.length >= 3 ? letters.slice(0, 3) : (letters + 'CCA').slice(0, 3)).toUpperCase();
+                      return `${prefix}#0000`;
+                    })()}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  Default format: First 3 letters of student's last name + <strong>#0000</strong>. Parents can change this upon initial login.
+                </p>
+              </div>
+
+              <div className="p-3 bg-brand-50/60 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-800 rounded-xl text-[11px] text-brand-800 dark:text-brand-300">
+                <p className="font-semibold">Fee Assessment Notice:</p>
+                <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                  New accounts start with <strong>₱0.00</strong> balance. Fees are assessed and activated by the Cashier upon collection/enrollment.
+                </p>
+              </div>
+
               <div className="pt-3 flex gap-2 justify-end">
                 <button
                   type="button"

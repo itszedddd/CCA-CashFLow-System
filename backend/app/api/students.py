@@ -18,7 +18,7 @@ from ..schemas import (
 from ..core.anomaly_engine import evaluate_single_transaction
 from ..core.timezone import (
     ph_now, ph_now_iso, ph_now_display, format_ph_timestamp,
-    resolve_section, generate_lrn_password
+    resolve_section, generate_lrn_password, get_grade_fee_benchmarks
 )
 from ..auth import get_current_user, get_optional_current_user, get_password_hash
 
@@ -272,7 +272,7 @@ async def import_students_csv(
                         db.add(income)
 
             if not getattr(existing, "initial_password", None) and not getattr(existing, "password_changed", 0):
-                gen_pw = generate_lrn_password(existing.student_id)
+                gen_pw = generate_lrn_password(existing.student_id, existing.full_name)
                 existing.initial_password = gen_pw
                 existing.parent_password_hash = get_password_hash(gen_pw)
                 existing.parent_username = existing.student_id
@@ -285,7 +285,7 @@ async def import_students_csv(
             errors.append(f"Row {row_idx}: Missing required LRN / Student ID for '{name}'. LRN cannot be auto-generated.")
             continue
 
-        gen_pw = generate_lrn_password(sid)
+        gen_pw = generate_lrn_password(sid, name)
         student = Student(
             student_id=sid,
             full_name=name,
@@ -307,17 +307,21 @@ async def import_students_csv(
         db.add(student)
         db.flush()
 
-        # Initialize standard fee schedules with imported paid balances
-        for f in DEFAULT_FEES:
+        # Initialize standard fee schedules matching student's grade level
+        grade_benchmarks = get_grade_fee_benchmarks(grade)
+        for f in grade_benchmarks:
             cat_name = f["category_name"]
-            paid_for_cat = min(f["total_due"], cat_paid_map.get(cat_name, 0.0))
-            rem_bal = max(0.0, f["total_due"] - paid_for_cat)
+            paid_for_cat = cat_paid_map.get(cat_name, 0.0)
+            # If CSV has explicit payment or assessment, use benchmark total_due; otherwise initialize with paid amount
+            total_due_val = f["total_due"] if paid_for_cat > 0 else 0.0
+            paid_for_cat = min(total_due_val, paid_for_cat) if total_due_val > 0 else paid_for_cat
+            rem_bal = max(0.0, total_due_val - paid_for_cat)
 
             fs = StudentFeeSchedule(
                 student_id=student.id,
                 category_name=cat_name,
                 sub_description=f["sub_description"],
-                total_due=f["total_due"],
+                total_due=total_due_val,
                 total_paid=paid_for_cat,
                 remaining_balance=rem_bal,
                 school_year=school_year
@@ -606,7 +610,7 @@ def create_student(
         )
 
     canonical_sec = resolve_section(clean_grade, (data.section or "Faith").strip())
-    gen_pw = generate_lrn_password(clean_sid)
+    gen_pw = generate_lrn_password(clean_sid, clean_name)
     now_iso = ph_now_iso()
 
     student = Student(
@@ -631,7 +635,10 @@ def create_student(
     db.add(student)
     db.flush()
 
-    for f in DEFAULT_FEES:
+    # Initialize fee schedules with ₱0.00 assessment.
+    # Official fees are assessed and added by the Cashier when collecting/enrolling payments.
+    grade_fees = get_grade_fee_benchmarks(clean_grade)
+    for f in grade_fees:
         existing_fs = db.query(StudentFeeSchedule).filter(
             StudentFeeSchedule.student_id == student.id,
             StudentFeeSchedule.category_name == f["category_name"]
@@ -641,9 +648,9 @@ def create_student(
                 student_id=student.id,
                 category_name=f["category_name"],
                 sub_description=f["sub_description"],
-                total_due=f["total_due"],
+                total_due=0.0,
                 total_paid=0.0,
-                remaining_balance=f["total_due"],
+                remaining_balance=0.0,
                 school_year=student.school_year
             )
             db.add(fs)
@@ -773,7 +780,7 @@ def reset_student_password(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    new_pw = generate_lrn_password(student.student_id)
+    new_pw = generate_lrn_password(student.student_id, student.full_name)
     student.initial_password = new_pw
     student.parent_password_hash = get_password_hash(new_pw)
     student.parent_username = student.student_id
@@ -844,19 +851,27 @@ def record_student_payment(
         StudentFeeSchedule.category_name == data.fee_type
     ).first()
 
+    grade_benchmarks = {b["category_name"]: b for b in get_grade_fee_benchmarks(student.grade_level)}
+    benchmark_due = grade_benchmarks.get(data.fee_type, {}).get("total_due", data.amount)
+
     if not fs:
-        # Create fee schedule if not yet present
+        # Create fee schedule if not yet present, using official grade benchmark total_due
         fs = StudentFeeSchedule(
             student_id=student.id,
             category_name=data.fee_type,
-            sub_description=data.description or data.fee_type,
-            total_due=data.amount,
+            sub_description=grade_benchmarks.get(data.fee_type, {}).get("sub_description") or data.description or data.fee_type,
+            total_due=benchmark_due,
             total_paid=0.0,
-            remaining_balance=data.amount,
+            remaining_balance=benchmark_due,
             school_year=data.school_year or "2026-2027"
         )
         db.add(fs)
         db.flush()
+    elif (fs.total_due or 0.0) == 0.0 and (fs.total_paid or 0.0) == 0.0:
+        # Student account was created with 0.00 assessment; Cashier is now adding/activating the fee
+        # Set total_due to official grade benchmark (or at least the payment amount if higher)
+        fs.total_due = max(benchmark_due, data.amount)
+        fs.remaining_balance = fs.total_due
 
     # Capture outstanding balance BEFORE payment is applied
     outstanding_before_pay = float(fs.remaining_balance)

@@ -77,7 +77,7 @@ def _ensure_sqlite_migrations(db):
         if not st.parent_username:
             st.parent_username = st.student_id
         if not getattr(st, "password_changed", 0) and not getattr(st, "initial_password", None):
-            gen_pw = generate_lrn_password(st.student_id)
+            gen_pw = generate_lrn_password(st.student_id, st.full_name)
             st.initial_password = gen_pw
             st.parent_password_hash = get_password_hash(gen_pw)
             st.password_changed = 0

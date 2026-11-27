@@ -93,3 +93,72 @@ export const CCA_OFFICE_INFO = {
   contact: 'Mobile: 0956 150 4946  Tel: (044) 305 6166',
   crestLogoUrl: '/assets/[CCA L2.2] CCA Logo Icon Blue Transparent.png',
 };
+
+// Official SY 2026-2027 CCA Payment Guidelines & Fee Schedules
+export function getGradeFeeBenchmarks(gradeLevel, isCbcMember = false) {
+  const g = String(gradeLevel || '').trim().toLowerCase();
+
+  const regFee = {
+    category_name: 'Registration Fee',
+    sub_description: 'Registration & Miscellaneous (Due upon enrollment)',
+    total_due: 5700,
+  };
+
+  let tuitionDue = 18010;
+  let monthlyTuition = 1801;
+  let energyDue = 3000;
+  let monthlyEnergy = 300;
+  let booksDue = 6900;
+
+  if (g.includes('pre-kinder') || g.includes('kinder')) {
+    tuitionDue = isCbcMember ? 16060 : 17060;
+    monthlyTuition = isCbcMember ? 1606 : 1706;
+    energyDue = 1500;
+    monthlyEnergy = 150;
+    booksDue = 5500;
+  } else if (['7', '8', '9', '10'].some((yr) => g.includes(yr))) {
+    tuitionDue = isCbcMember ? 19060 : 20060;
+    monthlyTuition = isCbcMember ? 1906 : 2006;
+    energyDue = 3000;
+    monthlyEnergy = 300;
+    booksDue = 9200;
+  } else {
+    // Grade 1-6
+    tuitionDue = isCbcMember ? 17010 : 18010;
+    monthlyTuition = isCbcMember ? 1701 : 1801;
+    energyDue = 3000;
+    monthlyEnergy = 300;
+    if (g.includes('grade 1') || g === 'g1') booksDue = 6900;
+    else if (g.includes('grade 2') || g === 'g2') booksDue = 6300;
+    else if (g.includes('grade 3') || g === 'g3') booksDue = 6900;
+    else booksDue = 8500; // Grade 4-6
+  }
+
+  const tuitFee = {
+    category_name: 'Tuition Fee',
+    sub_description: `Annual Tuition (10 Months @ ₱${monthlyTuition.toLocaleString()}/mo)`,
+    total_due: tuitionDue,
+    monthly: monthlyTuition,
+  };
+
+  const energyFee = {
+    category_name: 'Energy Fee',
+    sub_description: `Air-Conditioning & Utility Subsidy (10 Months @ ₱${monthlyEnergy.toLocaleString()}/mo)`,
+    total_due: energyDue,
+    monthly: monthlyEnergy,
+  };
+
+  const booksFee = {
+    category_name: 'Books',
+    sub_description: `Textbooks & Instructional Modules (SY 2026-2027: ₱${booksDue.toLocaleString()})`,
+    total_due: booksDue,
+  };
+
+  const otherFee = {
+    category_name: 'Other Fees',
+    sub_description: 'Educational Tour, Swimming & Activities',
+    total_due: 1500,
+  };
+
+  return [tuitFee, regFee, booksFee, energyFee, otherFee];
+}
