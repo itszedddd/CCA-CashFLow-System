@@ -162,3 +162,48 @@ export function getGradeFeeBenchmarks(gradeLevel, isCbcMember = false) {
 
   return [tuitFee, regFee, booksFee, energyFee, otherFee];
 }
+
+export function getDefaultStudentPassword(lastNameOrFullName = '') {
+  const raw = String(lastNameOrFullName || '').trim();
+  const lastPart = raw.includes(',')
+    ? raw.split(',')[0].trim()
+    : (raw.split(/\s+/).filter(Boolean).pop() || '');
+  const letters = lastPart.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  const prefix = (letters.length >= 3 ? letters.slice(0, 3) : `${letters}CCA`.slice(0, 3)).toUpperCase();
+  return `${prefix}#0000`;
+}
+
+export function formatStudentFullName(lastName = '', firstName = '', middleName = '') {
+  const ln = String(lastName || '').trim();
+  const fn = String(firstName || '').trim();
+  const mn = String(middleName || '').trim();
+  if (!ln && !fn) return '';
+  if (!ln) return [fn, mn].filter(Boolean).join(' ');
+  const given = [fn, mn].filter(Boolean).join(' ');
+  return given ? `${ln}, ${given}` : ln;
+}
+
+export function splitStudentFullName(fullName = '') {
+  const raw = String(fullName || '').trim();
+  if (!raw) return { last_name: '', first_name: '', middle_name: '' };
+  if (raw.includes(',')) {
+    const [lnPart, restPart = ''] = raw.split(',', 2);
+    const words = restPart.trim().split(/\s+/).filter(Boolean);
+    if (words.length <= 1) {
+      return { last_name: lnPart.trim(), first_name: words[0] || '', middle_name: '' };
+    }
+    return {
+      last_name: lnPart.trim(),
+      first_name: words.slice(0, -1).join(' '),
+      middle_name: words[words.length - 1],
+    };
+  }
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length === 1) return { last_name: words[0], first_name: '', middle_name: '' };
+  if (words.length === 2) return { last_name: words[1], first_name: words[0], middle_name: '' };
+  return {
+    last_name: words[words.length - 1],
+    first_name: words.slice(0, -2).join(' '),
+    middle_name: words[words.length - 2],
+  };
+}

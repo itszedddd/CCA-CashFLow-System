@@ -10,7 +10,13 @@ import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
-import { GRADE_LEVELS, resolveSection, formatPeso } from '../utils/schoolData';
+import {
+  GRADE_LEVELS,
+  resolveSection,
+  formatPeso,
+  getDefaultStudentPassword,
+  formatStudentFullName,
+} from '../utils/schoolData';
 
 const GRADE_FILTERS = ['All', ...GRADE_LEVELS];
 
@@ -83,7 +89,9 @@ export default function Collections() {
   // New Student Form State (LRN strictly manual, Section auto-synced to Grade Level)
   const [newStudent, setNewStudent] = useState({
     student_id: '',
-    full_name: '',
+    last_name: '',
+    first_name: '',
+    middle_name: '',
     grade_level: 'Grade 1',
     section: resolveSection('Grade 1'),
     gender: 'Male',
@@ -126,17 +134,23 @@ export default function Collections() {
 
   const handleCreateStudent = async (e) => {
     e.preventDefault();
-    if (!newStudent.student_id.trim() || !newStudent.full_name.trim()) {
-      addToast('Please enter mandatory Student ID / LRN and full name', 'error');
+    const formattedName = formatStudentFullName(newStudent.last_name, newStudent.first_name, newStudent.middle_name);
+    if (!newStudent.student_id.trim() || !newStudent.last_name.trim() || !newStudent.first_name.trim()) {
+      addToast('Please enter mandatory Student ID / LRN, Last Name, and First Name', 'error');
       return;
     }
     setCreatingStudent(true);
     try {
       const payload = {
-        ...newStudent,
         student_id: newStudent.student_id.trim(),
-        full_name: newStudent.full_name.trim(),
+        full_name: formattedName,
+        grade_level: newStudent.grade_level,
         section: resolveSection(newStudent.grade_level),
+        gender: newStudent.gender,
+        parent_name: newStudent.parent_name,
+        parent_contact: newStudent.parent_contact,
+        parent_email: newStudent.parent_email,
+        address: newStudent.address,
       };
       const res = await api.post('/students/', payload);
       addToast(
@@ -146,7 +160,9 @@ export default function Collections() {
       setShowAddStudentModal(false);
       setNewStudent({
         student_id: '',
-        full_name: '',
+        last_name: '',
+        first_name: '',
+        middle_name: '',
         grade_level: 'Grade 1',
         section: resolveSection('Grade 1'),
         gender: 'Male',
@@ -643,18 +659,45 @@ export default function Collections() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                  Full Name of Student <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newStudent.full_name}
-                  onChange={(e) => setNewStudent({ ...newStudent, full_name: e.target.value })}
-                  placeholder="e.g. Juan Carlos Santos"
-                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                    Last Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newStudent.last_name}
+                    onChange={(e) => setNewStudent({ ...newStudent, last_name: e.target.value })}
+                    placeholder="e.g. Santos"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                    First Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newStudent.first_name}
+                    onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
+                    placeholder="e.g. Juan"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                    Middle Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudent.middle_name}
+                    onChange={(e) => setNewStudent({ ...newStudent, middle_name: e.target.value })}
+                    placeholder="e.g. Reyes"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -713,6 +756,29 @@ export default function Collections() {
                     className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
                   />
                 </div>
+              </div>
+
+              {/* Default Password Preview */}
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest font-cinzel flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                    Default Parent Password
+                  </span>
+                  <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 rounded-md">
+                    {getDefaultStudentPassword(newStudent.last_name)}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  Default format: First 3 letters of student's last name + <strong>#0000</strong>. Parents can change this upon initial login.
+                </p>
+              </div>
+
+              <div className="p-3 bg-brand-50/60 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-800 rounded-xl text-[11px] text-brand-800 dark:text-brand-300">
+                <p className="font-semibold">Fee Assessment Notice:</p>
+                <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                  New accounts start with <strong>₱0.00</strong> balance. Fees are assessed and activated by the Cashier upon collection/enrollment.
+                </p>
               </div>
 
               <div className="pt-3 flex gap-2 justify-end">

@@ -6,7 +6,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../components/Toast';
-import { GRADE_LEVELS, resolveSection, formatPeso } from '../utils/schoolData';
+import {
+  GRADE_LEVELS,
+  resolveSection,
+  formatPeso,
+  getDefaultStudentPassword,
+  formatStudentFullName,
+  splitStudentFullName,
+} from '../utils/schoolData';
 
 export default function AdminStudents() {
   const navigate = useNavigate();
@@ -23,7 +30,9 @@ export default function AdminStudents() {
   const [saving, setSaving] = useState(false);
   const [formState, setFormState] = useState({
     student_id: '',
-    full_name: '',
+    last_name: '',
+    first_name: '',
+    middle_name: '',
     grade_level: 'Grade 1',
     section: resolveSection('Grade 1'),
     gender: 'Male',
@@ -62,7 +71,9 @@ export default function AdminStudents() {
     setEditingStudent(null);
     setFormState({
       student_id: '',
-      full_name: '',
+      last_name: '',
+      first_name: '',
+      middle_name: '',
       grade_level: 'Grade 1',
       section: resolveSection('Grade 1'),
       gender: 'Male',
@@ -76,9 +87,10 @@ export default function AdminStudents() {
 
   const openEditModal = (st) => {
     setEditingStudent(st);
+    const parsedName = splitStudentFullName(st.full_name);
     setFormState({
       student_id: st.student_id,
-      full_name: st.full_name,
+      ...parsedName,
       grade_level: st.grade_level,
       section: resolveSection(st.grade_level, st.section),
       gender: st.gender || 'Male',
@@ -92,17 +104,23 @@ export default function AdminStudents() {
 
   const handleSaveStudent = async (e) => {
     e.preventDefault();
-    if (!formState.student_id.trim() || !formState.full_name.trim()) {
-      addToast('LRN and Student Full Name are required.', 'error');
+    const formattedName = formatStudentFullName(formState.last_name, formState.first_name, formState.middle_name);
+    if (!formState.student_id.trim() || !formState.last_name.trim() || !formState.first_name.trim()) {
+      addToast('LRN, Last Name, and First Name are required.', 'error');
       return;
     }
     setSaving(true);
     try {
       const payload = {
-        ...formState,
         student_id: formState.student_id.trim(),
-        full_name: formState.full_name.trim(),
+        full_name: formattedName,
+        grade_level: formState.grade_level,
         section: resolveSection(formState.grade_level),
+        gender: formState.gender,
+        parent_name: formState.parent_name,
+        parent_contact: formState.parent_contact,
+        parent_email: formState.parent_email,
+        address: formState.address,
       };
       if (editingStudent) {
         await api.put(`/students/${editingStudent.id}`, payload);
@@ -398,17 +416,45 @@ export default function AdminStudents() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                  Full Name of Student <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formState.full_name}
-                  onChange={(e) => setFormState({ ...formState, full_name: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                    Last Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formState.last_name}
+                    onChange={(e) => setFormState({ ...formState, last_name: e.target.value })}
+                    placeholder="e.g. Santos"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                    First Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formState.first_name}
+                    onChange={(e) => setFormState({ ...formState, first_name: e.target.value })}
+                    placeholder="e.g. Juan"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                    Middle Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formState.middle_name}
+                    onChange={(e) => setFormState({ ...formState, middle_name: e.target.value })}
+                    placeholder="e.g. Reyes"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -475,14 +521,7 @@ export default function AdminStudents() {
                     Default Parent Password
                   </span>
                   <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 rounded-md">
-                    {(() => {
-                      const name = (formState.full_name || '').trim();
-                      const parts = name.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
-                      const lastWord = parts.length > 0 ? parts[parts.length - 1] : '';
-                      const letters = lastWord.replace(/[^a-zA-Z]/g, '').toUpperCase();
-                      const prefix = (letters.length >= 3 ? letters.slice(0, 3) : (letters + 'CCA').slice(0, 3)).toUpperCase();
-                      return `${prefix}#0000`;
-                    })()}
+                    {getDefaultStudentPassword(formState.last_name)}
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 leading-relaxed">

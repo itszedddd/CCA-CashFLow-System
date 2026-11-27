@@ -1,8 +1,6 @@
 """
 Philippine Standard Time (Asia/Manila, UTC+8) & Canonical CCA Grade-Section Helpers.
 """
-import secrets
-import string
 from datetime import datetime, timezone, timedelta
 
 PH_TZ = timezone(timedelta(hours=8))
@@ -71,14 +69,19 @@ def generate_lrn_password(student_id: str, full_name: str = "") -> str:
     """
     Generate default initial password for a student account.
     Format: First 3 letters of last name (uppercase) + '#0000'.
-    Example: 'Santos, Maria' or 'Maria Santos' -> 'SAN#0000'
+    Handles both 'LastName, FirstName MiddleName' and 'FirstName LastName'.
+    Example: 'Santos, Juan Miguel' or 'Juan Miguel Santos' -> 'SAN#0000'
     Fallback: 'CCA#0000' if name is unavailable or has < 3 letters.
     """
     last_word = ""
     if full_name:
-        parts = [p.strip() for p in full_name.replace(",", " ").split() if p.strip()]
-        if parts:
-            last_word = parts[-1]
+        cleaned = full_name.strip()
+        if "," in cleaned:
+            last_word = cleaned.split(",", 1)[0].strip()
+        else:
+            parts = [p.strip() for p in cleaned.split() if p.strip()]
+            if parts:
+                last_word = parts[-1]
 
     clean_letters = "".join(ch for ch in last_word if ch.isalpha()).upper()
     if len(clean_letters) < 3 and full_name:

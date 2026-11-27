@@ -56,28 +56,28 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
   return (
     <div
-      className={`flex flex-col lg:flex-row min-h-screen w-full transition-colors duration-500 font-sans ${
+      className={`flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden w-full transition-colors duration-500 font-sans ${
         isDarkMode ? 'bg-slate-950' : 'bg-slate-100'
       }`}
     >
       {/* Left Panel - CCA FlowSys Primary Branding [CCA L1] */}
-      <div className="lg:w-[46%] w-full bg-[#022868] flex flex-col items-center justify-center px-8 py-10 lg:p-14 min-h-[34vh] lg:min-h-screen relative overflow-hidden text-center order-1 shadow-xl">
-        <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-28 -right-28 w-96 h-96 rounded-full bg-brand-red/15 blur-3xl pointer-events-none" />
+      <div className="lg:w-[46%] w-full bg-[#022868] flex flex-col items-center justify-center px-6 py-6 lg:px-10 lg:py-6 lg:h-full relative overflow-hidden text-center order-1 shadow-xl">
+        <div className="absolute -top-28 -left-28 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-28 -right-28 w-80 h-80 rounded-full bg-brand-red/15 blur-3xl pointer-events-none" />
 
         <div className="max-w-md w-full z-10 flex flex-col items-center">
           <img
             src="/assets/[CCA L1] CCA FlowSys Login.png"
             alt="CCA FlowSys — Calvary Christian Academy"
-            className="w-60 sm:w-72 lg:w-80 h-auto object-contain drop-shadow-2xl mb-5"
+            className="w-44 sm:w-56 lg:w-64 xl:w-72 h-auto max-h-[38vh] object-contain drop-shadow-2xl mb-3.5"
             onError={(e) => {
               e.target.src = '/assets/[CCA L1] CCA EduSys Logo V1.png';
             }}
           />
 
-          <div className="w-16 h-0.5 bg-brand-red rounded-full mb-4" />
+          <div className="w-16 h-0.5 bg-brand-red rounded-full mb-3" />
 
-          <p className="text-xs sm:text-sm text-blue-100/85 max-w-sm leading-relaxed">
+          <p className="text-xs text-blue-100/85 max-w-sm leading-relaxed">
             Authorized Cashiering &amp; Parent Ledger Portal adhering to CCA institutional guidelines:
             automated collection tracking, ML-based anomaly detection, physical brown envelope reconciliation,
             and official digital receipt verification.
@@ -86,11 +86,11 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
       </div>
 
       {/* Right Panel - Elevated High-Contrast Sign In Box */}
-      <div className="lg:w-[54%] w-full flex flex-col items-center justify-center p-6 sm:p-12 relative order-2 bg-slate-100 dark:bg-slate-950">
+      <div className="lg:w-[54%] w-full lg:h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative order-2 bg-slate-100 dark:bg-slate-950 overflow-y-auto">
         {/* Dark Mode Toggle */}
         <button
           onClick={() => setIsDarkMode((p) => !p)}
-          className={`absolute top-5 right-5 p-2.5 rounded-2xl transition-all z-10 border cursor-pointer ${
+          className={`absolute top-4 right-4 p-2.5 rounded-2xl transition-all z-10 border cursor-pointer ${
             isDarkMode
               ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700 shadow-lg'
               : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-md'
@@ -102,13 +102,13 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
         </button>
 
         <div className="w-full max-w-md">
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-7 sm:p-9 shadow-[0_24px_70px_-15px_rgba(2,40,104,0.20)] dark:shadow-[0_24px_70px_-15px_rgba(0,0,0,0.70)] transition-colors animate-zoom-in">
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-3 font-cinzel">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_-15px_rgba(2,40,104,0.20)] dark:shadow-[0_24px_70px_-15px_rgba(0,0,0,0.70)] transition-colors animate-zoom-in">
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2 font-cinzel">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Authorized System Access
               </div>
-              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight mb-1">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight mb-0.5">
                 System Sign In
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
@@ -117,13 +117,13 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
             </div>
 
             {error && (
-              <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-700/60 text-red-700 dark:text-red-300 text-xs py-2.5 px-3.5 rounded-2xl mb-5 font-medium">
+              <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-700/60 text-red-700 dark:text-red-300 text-xs py-2 px-3 rounded-2xl mb-3 font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-1.5">
+            <form onSubmit={handleLogin} className="space-y-3">
+              <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest px-0.5 font-cinzel block">
                   Staff Email / Student LRN
                 </label>
@@ -138,12 +138,12 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter username or Student LRN"
-                    className="block w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
+                    className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest px-0.5 font-cinzel block">
                   Password
                 </label>
@@ -158,7 +158,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="block w-full pl-10 pr-11 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
+                    className="block w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
                   />
                   <button
                     type="button"
@@ -174,7 +174,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-widest rounded-xl shadow-md hover:shadow-lg transition font-cinzel text-xs uppercase cursor-pointer disabled:opacity-60 flex justify-center items-center mt-2"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-widest rounded-xl shadow-md hover:shadow-lg transition font-cinzel text-xs uppercase cursor-pointer disabled:opacity-60 flex justify-center items-center mt-1"
               >
                 {loading ? (
                   <span className="inline-block animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
@@ -187,7 +187,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/80 text-center">
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700/80 text-center">
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                 Parents &amp; Guardians: Please log in using your child&apos;s official{' '}
                 <strong className="text-slate-700 dark:text-slate-200">LRN</strong> and the{' '}
