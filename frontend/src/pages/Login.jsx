@@ -37,7 +37,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
       if (role === 'parent') {
         navigate('/parent');
       } else if (role === 'admin') {
-        navigate('/admin/students');
+        navigate('/admin/users');
       } else {
         navigate('/');
       }
@@ -56,9 +56,8 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
   return (
     <div
-      className={`flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden w-full transition-colors duration-500 font-sans ${
-        isDarkMode ? 'bg-slate-950' : 'bg-slate-100'
-      }`}
+      className={`flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden w-full transition-colors duration-500 font-sans ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'
+        }`}
     >
       {/* Left Panel - CCA FlowSys Primary Branding [CCA L1] */}
       <div className="lg:w-[46%] w-full bg-[#022868] flex flex-col items-center justify-center px-6 py-6 lg:px-10 lg:py-6 lg:h-full relative overflow-hidden text-center order-1 shadow-xl">
@@ -90,11 +89,10 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
         {/* Dark Mode Toggle */}
         <button
           onClick={() => setIsDarkMode((p) => !p)}
-          className={`absolute top-4 right-4 p-2.5 rounded-2xl transition-all z-10 border cursor-pointer ${
-            isDarkMode
-              ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700 shadow-lg'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-md'
-          }`}
+          className={`absolute top-4 right-4 p-2.5 rounded-2xl transition-all z-10 border cursor-pointer ${isDarkMode
+            ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700 shadow-lg'
+            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-md'
+            }`}
           title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label="Toggle theme"
         >

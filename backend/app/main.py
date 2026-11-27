@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from .database import engine, Base, SessionLocal
 from .models.models import User, Student, PaymentNotification
-from .api import auth, income, dashboard, anomaly, students, notifications
+from .api import auth, income, dashboard, anomaly, students, notifications, users
 from .seed_data import seed_database
 from .auth import get_password_hash
 from .core.timezone import ph_now_iso, resolve_section, generate_lrn_password
@@ -34,6 +34,7 @@ app.include_router(dashboard.router)
 app.include_router(anomaly.router)
 app.include_router(students.router)
 app.include_router(notifications.router)
+app.include_router(users.router)
 
 
 def _ensure_sqlite_migrations(db):

@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import AuditLog from './pages/AuditLog';
 import AnomalyDetection from './pages/AnomalyDetection';
 import AdminStudents from './pages/AdminStudents';
+import AdminUsers from './pages/AdminUsers';
 import api from './api';
 
 function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode, setIsAccessibleMode }) {
@@ -38,6 +39,8 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
         return 'Child Payment Account & Receipts';
       case '/anomaly':
         return 'ML Anomaly Detection';
+      case '/admin/users':
+        return 'Admin User Account Management';
       case '/admin/students':
         return 'Student Accounts & CSV Registry';
       case '/reports':
@@ -108,13 +111,23 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                   <Route path="/income" element={<Income />} />
                   <Route path="/collections" element={<Income />} />
                   <Route path="/collections/:id" element={<StudentProfile />} />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      user?.role?.toLowerCase() === 'admin' ? (
+                        <AdminUsers currentUser={user} />
+                      ) : (
+                        <Navigate to="/" replace />
+                      )
+                    }
+                  />
                   <Route path="/admin/students" element={<AdminStudents />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/parent" element={<ParentPortal user={user} />} />
                   <Route path="/anomaly" element={<AnomalyDetection />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/audit-log" element={<AuditLog />} />
-                  <Route path="*" element={<Navigate to={user?.role?.toLowerCase() === 'admin' ? '/admin/students' : '/'} replace />} />
+                  <Route path="*" element={<Navigate to={user?.role?.toLowerCase() === 'admin' ? '/admin/users' : '/'} replace />} />
                 </>
               )}
             </Routes>

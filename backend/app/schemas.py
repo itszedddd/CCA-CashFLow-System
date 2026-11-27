@@ -18,10 +18,27 @@ class UserResponse(BaseModel):
     full_name: Optional[str]
     role: str
     is_active: int
-    profile_picture: Optional[str]
+    profile_picture: Optional[str] = None
+    created_at: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class UserCreate(BaseModel):
+    username: str
+    full_name: str
+    role: str = "Admin"
+    password: str
+    is_active: Optional[int] = 1
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[int] = None
+
+class AdminResetPasswordRequest(BaseModel):
+    new_password: str
 
 
 # ── Income ──

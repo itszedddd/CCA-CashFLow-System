@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Cpu, FileBarChart,
-  ClipboardList, Bell, LogOut, X, GraduationCap, UserCog
+  ClipboardList, Bell, LogOut, X, GraduationCap, UserCog, ShieldCheck
 } from 'lucide-react';
 
 const ROLE_COLORS = {
@@ -51,7 +51,8 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
   ];
 
   const adminNavItems = [
-    { to: '/admin/students', label: 'Student Accounts', icon: UserCog, badge: 'Admin' },
+    { to: '/admin/users', label: 'User Accounts', icon: ShieldCheck, badge: 'Admin' },
+    { to: '/admin/students', label: 'Student Records', icon: UserCog },
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/income', label: 'Collections', icon: Users },
     { to: '/anomaly', label: 'AI Ledger Intelligence', icon: Cpu, isAI: true },
@@ -112,7 +113,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
               <li key={item.to}>
                 <NavLink
                   to={item.to}
-                  end={item.to === '/' || item.to === '/parent' || item.to === '/admin/students'}
+                  end={item.to === '/' || item.to === '/parent' || item.to === '/admin/students' || item.to === '/admin/users'}
                   onClick={handleLinkClick}
                   className={({ isActive }) =>
                     `w-full flex justify-between items-center px-3 py-2.5 transition-colors group text-[11px] uppercase tracking-wider font-bold rounded-lg ${
