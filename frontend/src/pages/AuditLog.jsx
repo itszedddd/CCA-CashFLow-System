@@ -58,9 +58,6 @@ export default function AuditLog() {
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
             Collection Audit Trail &amp; System Logs
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Immutable activity log tracking student fee collections, OR issuances, ML anomaly resolutions, and account updates (PHT).
-          </p>
         </div>
 
         <div className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200 dark:border-brand-800 self-start sm:self-auto">

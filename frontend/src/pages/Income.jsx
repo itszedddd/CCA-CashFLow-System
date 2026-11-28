@@ -334,9 +334,6 @@ export default function Collections() {
               ML Ledger Shield Active
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Organized list of enrolled students by Grade Level with physical OR tracking and Digital Receipts.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">

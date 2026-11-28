@@ -173,10 +173,6 @@ export default function AdminStudents() {
               Admin Student Accounts &amp; LRN Registry
             </h2>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Manage enrolled student records, auto-assign 5 fee schedules by grade level,
-            and manage per-LRN generated parent login passwords.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">

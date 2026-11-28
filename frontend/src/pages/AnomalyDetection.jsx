@@ -194,10 +194,6 @@ export default function AnomalyDetection() {
               </h2>
             </div>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-            Autonomous background intelligence actively monitoring payments, cross-category classifications, and student envelope records.
-            Protects ledger integrity and eliminates monthly recording errors without requiring manual scan clicks.
-          </p>
         </div>
 
         <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 self-start md:self-auto shadow-sm">

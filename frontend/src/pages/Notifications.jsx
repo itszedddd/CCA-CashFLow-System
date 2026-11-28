@@ -158,11 +158,6 @@ export default function Notifications() {
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
             Payment Announcements &amp; Event Fees
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {isParent
-              ? 'Official school announcements for upcoming activities, educational tours, and special fee schedules.'
-              : 'Post school-wide or grade-level payment announcements (e.g. Educational Tour, school activities, event contributions). Overdue balance notices are managed directly under Collections.'}
-          </p>
         </div>
 
         {!isParent && !isAdmin && (

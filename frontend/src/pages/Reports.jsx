@@ -158,9 +158,6 @@ export default function Reports() {
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight">
             Cashflow Statements &amp; End-of-Year Reports
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Official 8-section revenue &amp; collection summary formatted for US Letter (8.5&quot; × 11&quot;) printing.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

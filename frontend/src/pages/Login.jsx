@@ -75,11 +75,6 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
           <div className="w-16 h-0.5 bg-brand-red rounded-full mb-3" />
 
-          <p className="text-xs text-blue-100/85 max-w-sm leading-relaxed">
-            Authorized Cashiering &amp; Parent Ledger Portal adhering to CCA institutional guidelines:
-            automated collection tracking, ML-based anomaly detection, physical brown envelope reconciliation,
-            and official digital receipt verification.
-          </p>
         </div>
       </div>
 
@@ -106,9 +101,6 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight mb-0.5">
                 System Sign In
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
-                Sign in with your School Staff credentials or Student LRN &amp; issued Parent password.
-              </p>
             </div>
 
             {error && (

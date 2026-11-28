@@ -97,9 +97,6 @@ export default function Dashboard() {
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight truncate">
             Financial Dashboard
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Real-time school revenue, tuition collections, and student ledger performance for SY 2026-2027.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">

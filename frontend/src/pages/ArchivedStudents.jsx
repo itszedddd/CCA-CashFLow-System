@@ -71,9 +71,6 @@ export default function ArchivedStudents() {
               <h2 className="text-lg font-bold text-slate-800 dark:text-white font-cinzel uppercase tracking-tight">
                 Archived Students
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Hidden from active collections. Balances, receipts, and fee schedules remain intact.
-              </p>
             </div>
           </div>
 

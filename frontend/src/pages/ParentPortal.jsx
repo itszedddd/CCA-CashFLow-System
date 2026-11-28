@@ -164,10 +164,6 @@ export default function ParentPortal({ user }) {
           <h2 className="text-lg sm:text-2xl font-black font-cinzel uppercase tracking-wide break-words leading-snug">
             Welcome, {student.parent_name || 'Parent / Guardian'}
           </h2>
-          <p className="text-xs text-blue-100/85 mt-1 leading-relaxed">
-            Viewing payment ledger, digital receipts, and fee balances for{' '}
-            <strong className="text-white underline">{student.full_name}</strong>
-          </p>
 
           <div className="flex flex-wrap items-center gap-2 mt-3.5">
             <span className="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-black font-mono text-xs shadow-sm tracking-wider inline-flex items-center gap-1.5">
