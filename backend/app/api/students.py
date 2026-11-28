@@ -35,6 +35,11 @@ DEFAULT_FEES = [
 ]
 
 
+def _reject_admin_csv_upload(current_user: User):
+    if (current_user.role or "").strip().lower() == "admin":
+        raise HTTPException(status_code=403, detail="Admin accounts cannot upload CSV rosters.")
+
+
 def generate_next_or_number(db: Session) -> str:
     year = ph_now().year
     prefix = f"CSV-{year}-"
@@ -300,6 +305,7 @@ async def check_csv_duplicates(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    _reject_admin_csv_upload(current_user)
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files (.csv) are supported")
 
@@ -322,6 +328,7 @@ async def import_students_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    _reject_admin_csv_upload(current_user)
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files (.csv) are supported")
 

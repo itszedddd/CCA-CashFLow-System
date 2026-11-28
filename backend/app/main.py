@@ -26,7 +26,11 @@ async def admin_readonly_middleware(request: Request, call_next):
             request.url.path.startswith("/api/students")
             and "/payments" not in request.url.path
         )
-        if request.url.path not in ("/api/auth/login", "/api/auth/change-password") and not student_management_path:
+        csv_upload_path = request.url.path in (
+            "/api/students/check-csv-duplicates",
+            "/api/students/import-csv",
+        )
+        if request.url.path not in ("/api/auth/login", "/api/auth/change-password") and (not student_management_path or csv_upload_path):
             auth_header = request.headers.get("Authorization", "")
             if auth_header.lower().startswith("bearer "):
                 token = auth_header.split(" ", 1)[1].strip()

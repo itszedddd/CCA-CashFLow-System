@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-  UserCog, Search, Plus, Upload, Download, KeyRound, Copy,
-  CheckCircle2, Lock, FileSpreadsheet, X, Edit2, Eye, Info
+  UserCog, Search, Plus, KeyRound, Copy,
+  CheckCircle2, Lock, Edit2, Eye, Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -40,11 +40,6 @@ export default function AdminStudents() {
     parent_email: '',
     address: 'City of San Jose del Monte, Bulacan',
   });
-
-  const [showCsvModal, setShowCsvModal] = useState(false);
-  const [csvFile, setCsvFile] = useState(null);
-  const [importingCsv, setImportingCsv] = useState(false);
-  const [csvResult, setCsvResult] = useState(null);
 
   useEffect(() => {
     fetchStudents();
@@ -166,42 +161,6 @@ export default function AdminStudents() {
     addToast(`Copied credentials for ${lrn}`, 'info');
   };
 
-  const handleDownloadTemplate = async () => {
-    try {
-      const res = await api.get('/students/csv-template', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'CCA_Students_Import_Template.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch {
-      addToast('Failed to download CSV template', 'error');
-    }
-  };
-
-  const handleImportCsv = async (e) => {
-    e.preventDefault();
-    if (!csvFile) return;
-    setImportingCsv(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', csvFile);
-      const res = await api.post('/students/import-csv', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setCsvResult(res.data);
-      setCsvFile(null);
-      addToast(`Synced ${res.data.imported_count} new & ${res.data.updated_existing_count} existing student accounts`, 'success');
-      fetchStudents();
-    } catch (err) {
-      addToast(err.response?.data?.detail || 'Failed to upload CSV roster', 'error');
-    } finally {
-      setImportingCsv(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -215,20 +174,12 @@ export default function AdminStudents() {
             </h2>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Manage enrolled student records, sync registrar CSV rosters, auto-assign 5 fee schedules by grade level,
+            Manage enrolled student records, auto-assign 5 fee schedules by grade level,
             and manage per-LRN generated parent login passwords.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <button
-            onClick={() => { setCsvResult(null); setShowCsvModal(true); }}
-            className="px-3.5 py-2.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold uppercase font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer"
-          >
-            <Upload className="w-4 h-4 text-brand-600" />
-            <span>Registrar CSV Sync</span>
-          </button>
-
           <button
             onClick={openCreateModal}
             className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase font-cinzel shadow-md flex items-center gap-1.5 cursor-pointer"
@@ -569,81 +520,6 @@ export default function AdminStudents() {
         </div>
       )}
 
-      {showCsvModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-brand-600" />
-                <h3 className="text-base font-bold font-cinzel">Registrar CSV Roster Upload</h3>
-              </div>
-              <button
-                onClick={() => { setShowCsvModal(false); setCsvFile(null); setCsvResult(null); }}
-                className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleImportCsv} className="space-y-4 pt-4">
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs space-y-2">
-                <p>
-                  Upload enrolled students per year level and section. Sections automatically sync to CCA rules, 5 standard fees assign automatically, and each new LRN gets an auto-generated initial password.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDownloadTemplate}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-brand-600 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download CSV Template</span>
-                </button>
-              </div>
-
-              <input
-                type="file"
-                accept=".csv"
-                required
-                onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 cursor-pointer"
-              />
-
-              {csvResult && csvResult.imported_students?.length > 0 && (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs space-y-1.5">
-                  <p className="font-bold text-emerald-800 dark:text-emerald-300 font-cinzel uppercase">
-                    Generated LRN Passwords ({csvResult.imported_students.length})
-                  </p>
-                  <div className="max-h-36 overflow-y-auto divide-y divide-emerald-200/60">
-                    {csvResult.imported_students.map((st, idx) => (
-                      <div key={idx} className="py-1 flex justify-between font-mono text-[11px]">
-                        <span>{st.student_id} — {st.full_name}</span>
-                        <span className="font-bold text-emerald-700">{st.initial_password}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowCsvModal(false); setCsvFile(null); setCsvResult(null); }}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  disabled={importingCsv}
-                  className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase font-cinzel cursor-pointer disabled:opacity-50"
-                >
-                  {importingCsv ? 'Syncing...' : 'Upload & Sync'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
