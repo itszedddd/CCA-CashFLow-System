@@ -121,7 +121,16 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                       )
                     }
                   />
-                  <Route path="/admin/students" element={<AdminStudents />} />
+                  <Route
+                    path="/admin/students"
+                    element={
+                      user?.role?.toLowerCase() === 'admin' ? (
+                        <AdminStudents />
+                      ) : (
+                        <Navigate to="/" replace />
+                      )
+                    }
+                  />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/parent" element={<ParentPortal user={user} />} />
                   <Route path="/anomaly" element={<AnomalyDetection />} />

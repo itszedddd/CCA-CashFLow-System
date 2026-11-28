@@ -42,7 +42,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
   const cashierNavItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/income', label: 'Collections', icon: Users, badge: 'Profiles' },
-    { to: '/admin/students', label: 'Student Accounts', icon: UserCog },
     { to: '/anomaly', label: 'AI Ledger Intelligence', icon: Cpu, isAI: true },
     { to: '/notifications', label: 'Payment Notices', icon: Bell },
     { to: '/reports', label: 'Financial Reports', icon: FileBarChart },
@@ -51,7 +50,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
 
   const adminNavItems = [
     { to: '/admin/users', label: 'User Accounts', icon: ShieldCheck, badge: 'Admin' },
-    { to: '/admin/students', label: 'Student Records', icon: UserCog },
+    { to: '/admin/students', label: 'Student Accounts', icon: UserCog },
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/income', label: 'Collections', icon: Users },
     { to: '/anomaly', label: 'AI Ledger Intelligence', icon: Cpu, isAI: true },

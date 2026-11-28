@@ -24,7 +24,14 @@ app = FastAPI(
 @app.middleware("http")
 async def admin_readonly_middleware(request: Request, call_next):
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path.startswith("/api/"):
-        if request.url.path not in ("/api/auth/login", "/api/auth/change-password"):
+        # Student account management is an Admin capability. Allow Admin to
+        # create/edit/import students and reset LRN passwords, but keep all
+        # financial mutations (including student payments) view-only.
+        student_management_path = (
+            request.url.path.startswith("/api/students")
+            and "/payments" not in request.url.path
+        )
+        if request.url.path not in ("/api/auth/login", "/api/auth/change-password") and not student_management_path:
             auth_header = request.headers.get("Authorization", "")
             if auth_header.lower().startswith("bearer "):
                 token = auth_header.split(" ", 1)[1].strip()
