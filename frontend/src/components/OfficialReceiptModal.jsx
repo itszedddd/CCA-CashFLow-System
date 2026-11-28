@@ -151,9 +151,8 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
                 Remaining Balance ({receipt.fee_type})
               </p>
               <p
-                className={`font-mono font-bold ${
-                  Number(receipt.remaining_balance) > 0 ? 'text-amber-600' : 'text-emerald-600'
-                }`}
+                className={`font-mono font-bold ${Number(receipt.remaining_balance) > 0 ? 'text-amber-600' : 'text-emerald-600'
+                  }`}
               >
                 {formatPeso(receipt.remaining_balance)}
               </p>

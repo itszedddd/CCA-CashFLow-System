@@ -267,11 +267,10 @@ export default function Header({
         {/* Accessibility Mode Toggle */}
         <button
           onClick={() => setIsAccessibleMode((p) => !p)}
-          className={`p-2 transition-colors focus:outline-none rounded-xl font-bold text-xs cursor-pointer ${
-            isAccessibleMode
-              ? 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/40 border border-brand-200 dark:border-brand-800'
-              : 'text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60'
-          }`}
+          className={`p-2 transition-colors focus:outline-none rounded-xl font-bold text-xs cursor-pointer ${isAccessibleMode
+            ? 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/40 border border-brand-200 dark:border-brand-800'
+            : 'text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60'
+            }`}
           title="Toggle High Contrast & Larger Text"
           aria-label="Toggle accessibility"
         >
