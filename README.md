@@ -3,6 +3,8 @@
 
 A full-stack web application for tracking all school income (tuition, fees, donations) and expenses (salaries, utilities, supplies), with dashboards, budget management, approval workflows, and audit logging.
 
+**Presenting the system?** See the [Codebase Walkthrough](docs/CODEBASE_WALKTHROUGH.md) for a panelist-friendly explanation of the architecture, roles, API routes, and a step-by-step demo script.
+
 ---
 
 ## 🛠️ Technology Stack

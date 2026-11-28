@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from jose import jwt
-from sqlalchemy import text, func
+from sqlalchemy import text, func, inspect
 from .database import engine, Base, SessionLocal
 from .models.models import User, Student, PaymentNotification
 from .api import auth, income, dashboard, anomaly, students, notifications, users
@@ -71,11 +71,19 @@ app.include_router(users.router)
 def _ensure_sqlite_migrations(db):
     """Non-destructive column & institutional role/LRN password synchronization."""
     try:
-        cols = [r[1] for r in db.execute(text("PRAGMA table_info(students)")).fetchall()]
-        if "initial_password" not in cols:
-            db.execute(text("ALTER TABLE students ADD COLUMN initial_password TEXT"))
-        if "password_changed" not in cols:
-            db.execute(text("ALTER TABLE students ADD COLUMN password_changed INTEGER DEFAULT 0"))
+        # Works for both SQLite and Postgres. create_all() creates columns on a
+        # fresh database; existing databases need these additive ALTERs.
+        existing_cols = {c["name"] for c in inspect(db.bind).get_columns("students")}
+        column_ddl = {
+            "initial_password": "TEXT",
+            "password_changed": "INTEGER DEFAULT 0",
+            "is_archived": "INTEGER DEFAULT 0",
+            "archived_at": "TEXT",
+            "archived_by": "TEXT",
+        }
+        for column_name, definition in column_ddl.items():
+            if column_name not in existing_cols:
+                db.execute(text(f"ALTER TABLE students ADD COLUMN {column_name} {definition}"))
         db.commit()
     except Exception as e:
         print(f"Schema migration note: {e}")

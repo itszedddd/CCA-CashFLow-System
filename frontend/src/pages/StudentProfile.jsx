@@ -4,7 +4,7 @@ import {
   ArrowLeft, CreditCard, FileText, Printer, CheckCircle2,
   AlertCircle, AlertTriangle, User, Phone, Mail,
   GraduationCap, BookOpen, Zap, Sparkles, Plus, Eye, Receipt,
-  Bot, BrainCircuit, Target, ArrowRight, ShieldCheck, Clock
+  Bot, BrainCircuit, Target, ArrowRight, ShieldCheck, Clock, Archive, RotateCcw
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';
@@ -59,6 +59,7 @@ export default function StudentProfile() {
   const [refNumber, setRefNumber] = useState('');
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   useEffect(() => {
     fetchStudentProfile();
@@ -73,6 +74,32 @@ export default function StudentProfile() {
       addToast('Failed to load student profile', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleArchiveToggle = async () => {
+    const restoring = Boolean(student?.is_archived);
+    const message = restoring
+      ? `Restore ${student.full_name} to the active Collections list?`
+      : `Archive ${student.full_name}? They will be hidden from active collections, but balances and receipts will be kept.`;
+    if (!window.confirm(message)) return;
+
+    setArchiving(true);
+    try {
+      await api.post(`/students/${id}/${restoring ? 'unarchive' : 'archive'}`);
+      addToast(
+        restoring ? `${student.full_name} restored successfully` : `${student.full_name} archived successfully`,
+        'success'
+      );
+      if (restoring) {
+        await fetchStudentProfile();
+      } else {
+        navigate('/income');
+      }
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed to update archive status', 'error');
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -199,7 +226,7 @@ export default function StudentProfile() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/income')}
+            onClick={() => navigate(student.is_archived ? '/archive' : '/income')}
             className="p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm shrink-0"
             title="Back to Collections"
           >
@@ -219,6 +246,11 @@ export default function StudentProfile() {
               }`}>
                 {student.payment_status}
               </span>
+              {Boolean(student.is_archived) && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel border bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-600 shrink-0">
+                  Archived
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono truncate">
               LRN: {student.student_id} • Grade: {student.grade_level} - {resolveSection(student.grade_level, student.section)}
@@ -228,13 +260,30 @@ export default function StudentProfile() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {!isAdmin && (
+          {!isAdmin && !student.is_archived && (
             <button
               onClick={() => openPaymentModalForCategory('Tuition Fee', 0)}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer"
             >
               <CreditCard className="w-4 h-4 shrink-0" />
               <span>Record Payment</span>
+            </button>
+          )}
+          {!isAdmin && (
+            <button
+              onClick={handleArchiveToggle}
+              disabled={archiving}
+              className={`px-3.5 py-2.5 border rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer disabled:opacity-50 ${
+                student.is_archived
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60'
+              }`}
+              title={student.is_archived ? 'Restore student to active collections' : 'Archive student (records are preserved)'}
+            >
+              {student.is_archived
+                ? <RotateCcw className="w-4 h-4 text-emerald-600 shrink-0" />
+                : <Archive className="w-4 h-4 text-slate-500 shrink-0" />}
+              <span>{student.is_archived ? 'Restore Student' : 'Archive Student'}</span>
             </button>
           )}
           <button

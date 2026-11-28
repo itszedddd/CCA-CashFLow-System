@@ -302,6 +302,9 @@ class StudentResponse(StudentBase):
     payment_status: Optional[str] = "Pending"
     initial_password: Optional[str] = None
     password_changed: Optional[int] = 0
+    is_archived: Optional[int] = 0
+    archived_at: Optional[str] = None
+    archived_by: Optional[str] = None
 
     class Config:
         from_attributes = True

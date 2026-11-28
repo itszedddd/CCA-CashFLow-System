@@ -43,6 +43,9 @@ class Student(Base):
     school_year = Column(String, default="2026-2027")
     enrollment_status = Column(String, default="Enrolled")  # Enrolled, Pending, Transferred
     created_at = Column(String, nullable=True)
+    is_archived = Column(Integer, default=0, index=True)  # 1: hidden from active student lists
+    archived_at = Column(String, nullable=True)
+    archived_by = Column(String, nullable=True)
 
     # Relationships
     payments = relationship("Income", back_populates="student", cascade="all, delete-orphan")

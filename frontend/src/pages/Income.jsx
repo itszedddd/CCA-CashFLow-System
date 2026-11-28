@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Plus, CreditCard, ChevronRight,
   AlertCircle, AlertTriangle, FileText, ArrowUpRight,
-  Upload, Download, FileSpreadsheet, X, Receipt, Lock, Info
+  Upload, Download, FileSpreadsheet, X, Receipt, Lock, Info, Archive
 } from 'lucide-react';
 import PesoSign from '../components/PesoSign';
 import api from '../api';
@@ -50,6 +50,10 @@ export default function Collections() {
   const [csvFile, setCsvFile] = useState(null);
   const [importingCsv, setImportingCsv] = useState(false);
   const [csvResult, setCsvResult] = useState(null);
+  const [archivingId, setArchivingId] = useState(null);
+  const [checkingCsv, setCheckingCsv] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
 
   const handleDownloadTemplate = async () => {
     try {
@@ -67,30 +71,58 @@ export default function Collections() {
     }
   };
 
+  const buildCsvFormData = () => {
+    const formData = new FormData();
+    formData.append('file', csvFile);
+    return formData;
+  };
+
+  const runCsvImport = async (skipDuplicates = false) => {
+    setImportingCsv(true);
+    try {
+      const res = await api.post('/students/import-csv', buildCsvFormData(), {
+        params: skipDuplicates ? { skip_duplicates: true } : {},
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const ignored = res.data.duplicate_count || 0;
+      addToast(
+        `Imported ${res.data.imported_count} students! ` +
+        `(${res.data.updated_existing_count} updated/existing${ignored ? `, ${ignored} duplicate rows ignored` : ''})`,
+        'success'
+      );
+      setCsvResult(res.data);
+      setCsvFile(null);
+      setShowDuplicateModal(false);
+      setDuplicateCheck(null);
+      fetchData();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed to import CSV file', 'error');
+    } finally {
+      setImportingCsv(false);
+    }
+  };
+
   const handleImportCsv = async (e) => {
     e.preventDefault();
     if (!csvFile) {
       addToast('Please select a CSV file to upload', 'error');
       return;
     }
-    setImportingCsv(true);
+    setCheckingCsv(true);
     try {
-      const formData = new FormData();
-      formData.append('file', csvFile);
-      const res = await api.post('/students/import-csv', formData, {
+      const res = await api.post('/students/check-csv-duplicates', buildCsvFormData(), {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      addToast(
-        `Imported ${res.data.imported_count} students! (${res.data.updated_existing_count} updated/existing)`,
-        'success'
-      );
-      setCsvResult(res.data);
-      setCsvFile(null);
-      fetchData();
+      if (res.data.has_duplicates) {
+        setDuplicateCheck(res.data);
+        setShowDuplicateModal(true);
+        return;
+      }
+      await runCsvImport(false);
     } catch (err) {
-      addToast(err.response?.data?.detail || 'Failed to import CSV file', 'error');
+      addToast(err.response?.data?.detail || 'Failed to check CSV for duplicates', 'error');
     } finally {
-      setImportingCsv(false);
+      setCheckingCsv(false);
     }
   };
 
@@ -137,6 +169,22 @@ export default function Collections() {
       addToast('Failed to load collections data', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleArchiveStudent = async (student) => {
+    if (!window.confirm(
+      `Archive ${student.full_name}? They will be hidden from active collections, but balances and receipts will be kept.`
+    )) return;
+    setArchivingId(student.id);
+    try {
+      await api.post(`/students/${student.id}/archive`);
+      addToast(`${student.full_name} archived successfully`, 'success');
+      await fetchData();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Failed to archive student', 'error');
+    } finally {
+      setArchivingId(null);
     }
   };
 
@@ -530,6 +578,16 @@ export default function Collections() {
                             <span>Pay</span>
                           </button>
                         )}
+                        {!isAdmin && (
+                          <button
+                            onClick={() => handleArchiveStudent(s)}
+                            disabled={archivingId === s.id}
+                            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition cursor-pointer shrink-0 disabled:opacity-50"
+                            title="Archive student (records are preserved)"
+                          >
+                            <Archive className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         {s.outstanding_balance > 0 && (
                           <button
                             onClick={() => openNoticeLetter(s.id)}
@@ -604,6 +662,13 @@ export default function Collections() {
                       className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase font-cinzel"
                     >
                       Record Pay
+                    </button>
+                    <button
+                      onClick={() => handleArchiveStudent(s)}
+                      disabled={archivingId === s.id}
+                      className="px-2.5 py-1.5 bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 rounded-lg text-[10px] font-bold uppercase font-cinzel disabled:opacity-50"
+                    >
+                      Archive
                     </button>
                     {s.outstanding_balance > 0 && (
                       <button
@@ -1078,10 +1143,13 @@ export default function Collections() {
                 <p className="font-semibold text-slate-800 dark:text-white">Registrar Sync Format:</p>
                 <p>
                   1. Required: <code>student_id</code> (LRN), <code>full_name</code>, <code>grade_level</code>.
-                  Section auto-syncs by grade level.
+                  Use <code>Last, First, Middle</code> for names (e.g. <code>Lopez, Ana, Patricia</code>). Section auto-syncs by grade level.
                 </p>
                 <p>
-                  2. Each newly imported student automatically receives all 5 CCA fee schedules and a unique LRN initial password for Parent Portal login.
+                  2. Each newly imported student automatically receives all 5 CCA fee schedules and a unique LRN-generated initial password for Parent Portal login.
+                </p>
+                <p>
+                  3. Duplicates in the CSV or already in the system are detected before upload. You can cancel or continue while skipping duplicate rows. Keep LRNs as Text in Excel.
                 </p>
                 <button
                   type="button"
@@ -1136,14 +1204,105 @@ export default function Collections() {
                 </button>
                 <button
                   type="submit"
-                  disabled={importingCsv}
+                  disabled={importingCsv || checkingCsv}
                   className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{importingCsv ? 'Importing Records...' : 'Upload & Sync'}</span>
+                  <span>{checkingCsv ? 'Checking Duplicates...' : importingCsv ? 'Importing Records...' : 'Upload & Sync'}</span>
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate confirmation popup shown before import */}
+      {showDuplicateModal && duplicateCheck && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-300" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">
+                    Duplicate data detected
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {duplicateCheck.duplicate_count} duplicate row(s) found out of {duplicateCheck.total_rows}.
+                    You can cancel, or continue and skip the duplicate rows.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowDuplicateModal(false); setDuplicateCheck(null); setCsvFile(null); }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
+                aria-label="Close duplicate notice"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300 font-cinzel">
+                    Rows to import
+                  </p>
+                  <p className="text-xl font-black font-mono text-emerald-800 dark:text-emerald-200">
+                    {duplicateCheck.unique_count}
+                  </p>
+                </div>
+                <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 font-cinzel">
+                    Rows to skip
+                  </p>
+                  <p className="text-xl font-black font-mono text-amber-800 dark:text-amber-200">
+                    {duplicateCheck.duplicate_count}
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-h-56 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
+                {duplicateCheck.duplicates.map((dup, idx) => (
+                  <div key={`${dup.row}-${idx}`} className="p-3 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-bold text-slate-800 dark:text-white truncate">
+                        Row {dup.row}: {dup.full_name || 'Unnamed student'}
+                      </p>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase font-cinzel border shrink-0 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
+                        {dup.type === 'existing_system' ? 'Already in system' : 'Repeated in CSV'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                      {dup.student_id || 'No LRN'} • {dup.grade_level}
+                    </p>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">{dup.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowDuplicateModal(false); setDuplicateCheck(null); setCsvFile(null); }}
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Cancel Upload
+              </button>
+              <button
+                type="button"
+                disabled={importingCsv}
+                onClick={() => runCsvImport(true)}
+                className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>{importingCsv ? 'Importing Records...' : 'Skip Duplicates & Import'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

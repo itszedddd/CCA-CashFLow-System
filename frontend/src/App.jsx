@@ -15,6 +15,7 @@ import AuditLog from './pages/AuditLog';
 import AnomalyDetection from './pages/AnomalyDetection';
 import AdminStudents from './pages/AdminStudents';
 import AdminUsers from './pages/AdminUsers';
+import ArchivedStudents from './pages/ArchivedStudents';
 import api from './api';
 
 function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode, setIsAccessibleMode }) {
@@ -33,6 +34,8 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
       case '/income':
       case '/collections':
         return 'Student Collections & Profiles';
+      case '/archive':
+        return 'Archived Students';
       case '/notifications':
         return 'Payment Notices & Fee Announcements';
       case '/parent':
@@ -111,6 +114,7 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                   <Route path="/income" element={<Income />} />
                   <Route path="/collections" element={<Income />} />
                   <Route path="/collections/:id" element={<StudentProfile />} />
+                  <Route path="/archive" element={<ArchivedStudents />} />
                   <Route
                     path="/admin/users"
                     element={
