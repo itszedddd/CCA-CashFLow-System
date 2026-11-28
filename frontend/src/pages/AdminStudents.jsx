@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  UserCog, Search, Plus, KeyRound, Copy,
+  UserCog, Search, KeyRound, Copy,
   CheckCircle2, Lock, Edit2, Info
 } from 'lucide-react';
 import api from '../api';
@@ -57,24 +57,6 @@ export default function AdminStudents() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const openCreateModal = () => {
-    setEditingStudent(null);
-    setFormState({
-      student_id: '',
-      last_name: '',
-      first_name: '',
-      middle_name: '',
-      grade_level: 'Grade 1',
-      section: resolveSection('Grade 1'),
-      gender: 'Male',
-      parent_name: '',
-      parent_contact: '',
-      parent_email: '',
-      address: 'City of San Jose del Monte, Bulacan',
-    });
-    setShowCreateModal(true);
   };
 
   const openEditModal = (st) => {
@@ -174,15 +156,6 @@ export default function AdminStudents() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <button
-            onClick={openCreateModal}
-            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase font-cinzel shadow-md flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Student Account</span>
-          </button>
-        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">

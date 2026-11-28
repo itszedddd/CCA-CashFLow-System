@@ -135,6 +135,7 @@ export default function AdminUsers({ currentUser }) {
         </div>
 
         <select
+          aria-label="Filter by staff role"
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           className="w-full sm:w-48 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
