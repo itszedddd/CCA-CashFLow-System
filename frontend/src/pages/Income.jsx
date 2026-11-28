@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Plus, CreditCard, ChevronRight,
   AlertCircle, AlertTriangle, FileText, ArrowUpRight,
-  Upload, Download, FileSpreadsheet, X, Receipt, Lock, Info, Archive
+  Upload, Download, FileSpreadsheet, Receipt, Lock, Info, Archive
 } from 'lucide-react';
 import PesoSign from '../components/PesoSign';
 import api from '../api';
@@ -11,15 +11,44 @@ import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
 import ConfirmModal from '../components/ConfirmModal';
+import Modal from '../components/Modal';
 import {
   GRADE_LEVELS,
   resolveSection,
   formatPeso,
   getDefaultStudentPassword,
   formatStudentFullName,
+  getGradeFeeBenchmarks,
 } from '../utils/schoolData';
 
 const GRADE_FILTERS = ['All', ...GRADE_LEVELS];
+
+const EMPTY_STUDENT = {
+  student_id: '',
+  last_name: '',
+  first_name: '',
+  middle_name: '',
+  grade_level: 'Grade 1',
+  section: resolveSection('Grade 1'),
+  gender: 'Male',
+  parent_name: '',
+  parent_contact: '',
+  parent_email: '',
+  address: 'City of San Jose del Monte, Bulacan'
+};
+
+function suggestedFeeAmount(student, feeType) {
+  const schedule = (student?.fee_schedules || []).find(
+    (fs) => (fs.category_name || '').toLowerCase() === feeType.toLowerCase()
+  );
+  const balance = schedule ? Math.max(0, (schedule.total_due || 0) - (schedule.total_paid || 0)) : 0;
+  if (!balance) return '0.00';
+  const benchmark = getGradeFeeBenchmarks(student.grade_level).find(
+    (fee) => fee.category_name.toLowerCase() === feeType.toLowerCase()
+  );
+  const monthly = benchmark?.monthly || 0;
+  return (monthly && balance >= monthly ? monthly : balance).toFixed(2);
+}
 
 export default function Collections() {
   const navigate = useNavigate();
@@ -126,24 +155,12 @@ export default function Collections() {
     }
   };
 
-  const [newStudent, setNewStudent] = useState({
-    student_id: '',
-    last_name: '',
-    first_name: '',
-    middle_name: '',
-    grade_level: 'Grade 1',
-    section: resolveSection('Grade 1'),
-    gender: 'Male',
-    parent_name: '',
-    parent_contact: '',
-    parent_email: '',
-    address: 'City of San Jose del Monte, Bulacan'
-  });
+  const [newStudent, setNewStudent] = useState(EMPTY_STUDENT);
   const [creatingStudent, setCreatingStudent] = useState(false);
 
   const [payOrNumber, setPayOrNumber] = useState('');
   const [payFeeType, setPayFeeType] = useState('Tuition Fee');
-  const [payAmount, setPayAmount] = useState('1906.00');
+  const [payAmount, setPayAmount] = useState('0.00');
   const [payMethod, setPayMethod] = useState('Cash');
   const [payRef, setPayRef] = useState('');
   const [payRemarks, setPayRemarks] = useState('');
@@ -225,19 +242,7 @@ export default function Collections() {
         'success'
       );
       setShowAddStudentModal(false);
-      setNewStudent({
-        student_id: '',
-        last_name: '',
-        first_name: '',
-        middle_name: '',
-        grade_level: 'Grade 1',
-        section: resolveSection('Grade 1'),
-        gender: 'Male',
-        parent_name: '',
-        parent_contact: '',
-        parent_email: '',
-        address: 'City of San Jose del Monte, Bulacan'
-      });
+      setNewStudent(EMPTY_STUDENT);
       fetchData();
       navigate(`/collections/${res.data.id}`);
     } catch (err) {
@@ -252,7 +257,7 @@ export default function Collections() {
     setSelectedStudentForPay(student);
     setPayOrNumber('');
     setPayFeeType('Tuition Fee');
-    setPayAmount('1906.00');
+    setPayAmount(suggestedFeeAmount(student, 'Tuition Fee'));
     setPayMethod('Cash');
     setPayRemarks('');
     setPayRef('');
@@ -320,6 +325,8 @@ export default function Collections() {
   const totalDueAll = students.reduce((sum, s) => sum + (s.total_due || 0), 0);
   const totalPaidAll = students.reduce((sum, s) => sum + (s.total_paid || 0), 0);
   const totalOutstandingAll = students.reduce((sum, s) => sum + (s.outstanding_balance || 0), 0);
+  const payBenchmarks = getGradeFeeBenchmarks(selectedStudentForPay?.grade_level);
+  const benchmarkFor = (name) => payBenchmarks.find((fee) => fee.category_name === name) || {};
 
   return (
     <div className="space-y-6">
@@ -343,23 +350,13 @@ export default function Collections() {
                 onClick={() => { setCsvResult(null); setShowCsvModal(true); }}
                 className="px-3.5 py-2.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 transition cursor-pointer"
               >
-                <Upload className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <Upload className="w-4 h-4 text-brand-600 dark:text-brand-300" />
                 <span>Import CSV</span>
               </button>
 
               <button
                 onClick={() => {
-                  setNewStudent({
-                    student_id: '',
-                    full_name: '',
-                    grade_level: 'Grade 1',
-                    section: resolveSection('Grade 1'),
-                    gender: 'Male',
-                    parent_name: '',
-                    parent_contact: '',
-                    parent_email: '',
-                    address: 'City of San Jose del Monte, Bulacan'
-                  });
+                  setNewStudent(EMPTY_STUDENT);
                   setShowAddStudentModal(true);
                 }}
                 className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer"
@@ -383,7 +380,7 @@ export default function Collections() {
               {selectedGrade === 'All' ? 'Across all grade levels' : `Enrolled in ${selectedGrade}`}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950/40 text-brand-600 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" />
           </div>
         </div>
@@ -418,7 +415,7 @@ export default function Collections() {
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase font-bold text-rose-500 font-cinzel">Outstanding Due</p>
+            <p className="text-[10px] uppercase font-bold text-rose-500 dark:text-rose-400 font-cinzel">Outstanding Due</p>
             <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono truncate">
               {formatPeso(totalOutstandingAll)}
             </h3>
@@ -456,13 +453,13 @@ export default function Collections() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search student name, LRN, or parent..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
 
@@ -488,16 +485,16 @@ export default function Collections() {
 
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
         <div className="hidden md:block">
-          <table className="w-full text-xs table-fixed">
+          <table className="w-full text-xs table-fixed"><caption className="sr-only">income records table 1</caption>
             <thead>
               <tr className="bg-slate-50/90 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 text-[10px] uppercase font-cinzel font-bold">
-                <th className="text-left py-3.5 px-3 w-[23%]">Student &amp; Grade</th>
-                <th className="text-left py-3.5 px-2.5 w-[13%]">Student LRN</th>
-                <th className="text-left py-3.5 px-2.5 w-[16%]">Parent / Guardian</th>
-                <th className="text-right py-3.5 px-2.5 w-[13%]">Paid / Assessed</th>
-                <th className="text-right py-3.5 px-2.5 w-[11%]">Balance</th>
-                <th className="text-center py-3.5 px-2 w-[10%]">Status</th>
-                <th className="text-right py-3.5 px-3 w-[14%]">Actions</th>
+                <th scope="col" className="text-left py-3.5 px-3 w-[18%]">Student &amp; Grade</th>
+                <th scope="col" className="text-left py-3.5 px-2.5 w-[13%]">Student LRN</th>
+                <th scope="col" className="text-left py-3.5 px-2.5 w-[13%]">Parent / Guardian</th>
+                <th scope="col" className="text-right py-3.5 px-2.5 w-[13%]">Paid / Assessed</th>
+                <th scope="col" className="text-right py-3.5 px-2.5 w-[10%]">Balance</th>
+                <th scope="col" className="text-center py-3.5 px-2 w-[11%]">Status</th>
+                <th scope="col" className="text-right py-3.5 px-3 w-[23%]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -519,7 +516,7 @@ export default function Collections() {
                   >
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-bold text-brand-700 dark:text-brand-400 text-xs shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-bold text-brand-700 dark:text-brand-300 text-xs shrink-0">
                           {s.full_name.charAt(0)}
                         </div>
                         <div className="min-w-0">
@@ -559,15 +556,15 @@ export default function Collections() {
                         {s.payment_status}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="py-3 px-3 text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                      <div className="row-actions flex flex-wrap items-center justify-end gap-1.5">
                         {!isAdmin && (
                           <button
                             onClick={() => openQuickPay(s)}
-                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider transition flex items-center gap-1 cursor-pointer shrink-0"
+                            className="inline-flex min-h-8 items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold font-cinzel uppercase tracking-wider text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 cursor-pointer"
                             title="Record payment for this student"
                           >
-                            <CreditCard className="w-3 h-3" />
+                            <CreditCard className="w-3 h-3 fill-current" />
                             <span>Pay</span>
                           </button>
                         )}
@@ -575,27 +572,30 @@ export default function Collections() {
                           <button
                             onClick={() => handleArchiveStudent(s)}
                             disabled={archivingId === s.id}
-                            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition cursor-pointer shrink-0 disabled:opacity-50"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 cursor-pointer disabled:opacity-50"
                             title="Archive student (records are preserved)"
+                            aria-label={`Archive ${s.full_name}`}
                           >
-                            <Archive className="w-3.5 h-3.5" />
+                            <Archive className="w-3.5 h-3.5 fill-current" />
                           </button>
                         )}
                         {s.outstanding_balance > 0 && (
                           <button
                             onClick={() => openNoticeLetter(s.id)}
-                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 rounded-lg transition cursor-pointer shrink-0"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-700 transition hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 cursor-pointer"
                             title="Generate payment notice letter"
+                            aria-label={`Generate payment notice for ${s.full_name}`}
                           >
-                            <FileText className="w-3.5 h-3.5" />
+                            <FileText className="w-3.5 h-3.5 fill-current" />
                           </button>
                         )}
                         <button
                           onClick={() => navigate(`/collections/${s.id}`)}
-                          className="p-1 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer shrink-0"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-700 cursor-pointer"
                           title="View student profile"
+                          aria-label={`View profile for ${s.full_name}`}
                         >
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-4 h-4 fill-current" />
                         </button>
                       </div>
                     </td>
@@ -648,24 +648,24 @@ export default function Collections() {
                       {formatPeso(s.outstanding_balance)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="row-actions flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => openQuickPay(s)}
-                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase font-cinzel"
+                      className="inline-flex min-h-9 items-center rounded-lg bg-emerald-600 px-3 py-2 text-[10px] font-bold uppercase font-cinzel text-white cursor-pointer"
                     >
                       Record Pay
                     </button>
                     <button
                       onClick={() => handleArchiveStudent(s)}
                       disabled={archivingId === s.id}
-                      className="px-2.5 py-1.5 bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 rounded-lg text-[10px] font-bold uppercase font-cinzel disabled:opacity-50"
+                      className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-[10px] font-bold uppercase font-cinzel text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 cursor-pointer disabled:opacity-50"
                     >
                       Archive
                     </button>
                     {s.outstanding_balance > 0 && (
                       <button
                         onClick={() => openNoticeLetter(s.id)}
-                        className="px-2.5 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-bold uppercase font-cinzel"
+                        className="inline-flex min-h-9 items-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-bold uppercase font-cinzel text-rose-700 cursor-pointer"
                       >
                         Notice
                       </button>
@@ -681,32 +681,22 @@ export default function Collections() {
       </div>
 
       {showAddStudentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">
-                  Add New Student Profile
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Initializes 5 standard CCA fee schedules &amp; LRN-generated Parent password
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAddStudentModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateStudent} className="p-6 space-y-4">
+        <Modal
+          isOpen={showAddStudentModal}
+          onClose={() => setShowAddStudentModal(false)}
+          title="Add New Student Profile"
+          maxWidth="max-w-lg"
+        >
+          <p className="text-xs text-slate-400 -mt-2 mb-5">
+            Initializes 5 standard CCA fee schedules &amp; LRN-generated Parent password
+          </p>
+          <form onSubmit={handleCreateStudent} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Student ID / LRN <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="student-id-lrn">
+                    Student ID / LRN <span className="text-rose-500 dark:text-rose-400">*</span>
                   </label>
-                  <input
+                  <input id="student-id-lrn"
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -718,10 +708,10 @@ export default function Collections() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="grade-level">
                     Grade Level
                   </label>
-                  <select
+                  <select id="grade-level"
                     value={newStudent.grade_level}
                     onChange={(e) => {
                       const grade = e.target.value;
@@ -742,10 +732,10 @@ export default function Collections() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Last Name <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="last-name">
+                    Last Name <span className="text-rose-500 dark:text-rose-400">*</span>
                   </label>
-                  <input
+                  <input id="last-name"
                     type="text"
                     required
                     value={newStudent.last_name}
@@ -755,10 +745,10 @@ export default function Collections() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    First Name <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="first-name">
+                    First Name <span className="text-rose-500 dark:text-rose-400">*</span>
                   </label>
-                  <input
+                  <input id="first-name"
                     type="text"
                     required
                     value={newStudent.first_name}
@@ -768,10 +758,10 @@ export default function Collections() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="middle-name">
                     Middle Name
                   </label>
-                  <input
+                  <input id="middle-name"
                     type="text"
                     value={newStudent.middle_name}
                     onChange={(e) => setNewStudent({ ...newStudent, middle_name: e.target.value })}
@@ -783,14 +773,14 @@ export default function Collections() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="section">
                     Section (Auto-Synced)
                   </label>
                   <div className="relative">
                     <input
                       type="text"
                       readOnly
-                      disabled
+                      disabled id="section"
                       value={resolveSection(newStudent.grade_level)}
                       className="w-full px-3.5 py-2 pr-8 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 cursor-not-allowed outline-none"
                     />
@@ -798,10 +788,10 @@ export default function Collections() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="gender">
                     Gender
                   </label>
-                  <select
+                  <select id="gender"
                     value={newStudent.gender}
                     onChange={(e) => setNewStudent({ ...newStudent, gender: e.target.value })}
                     className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
@@ -814,10 +804,10 @@ export default function Collections() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="parent-guardian-name">
                     Parent / Guardian Name
                   </label>
-                  <input
+                  <input id="parent-guardian-name"
                     type="text"
                     value={newStudent.parent_name}
                     onChange={(e) => setNewStudent({ ...newStudent, parent_name: e.target.value })}
@@ -826,10 +816,10 @@ export default function Collections() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="contact-number-11-digits">
                     Contact Number (11 Digits)
                   </label>
-                  <input
+                  <input id="contact-number-11-digits"
                     type="tel"
                     inputMode="numeric"
                     maxLength={11}
@@ -844,7 +834,7 @@ export default function Collections() {
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest font-cinzel flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                    <Lock className="w-3.5 h-3.5 text-brand-600 dark:text-brand-300" />
                     Default Parent Password
                   </span>
                   <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-slate-800 border border-brand-200 dark:border-slate-700 rounded-md">
@@ -856,10 +846,10 @@ export default function Collections() {
                 </p>
               </div>
 
-              <div className="p-3.5 bg-blue-50/90 dark:bg-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl flex items-start gap-2.5">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-brand-50/90 dark:bg-slate-900 border border-brand-200 dark:border-brand-800/80 rounded-2xl flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-brand-600 dark:text-brand-300 shrink-0 mt-0.5" />
                 <div className="text-[11px] leading-relaxed">
-                  <p className="font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wide font-cinzel">
+                  <p className="font-bold text-brand-900 dark:text-brand-200 uppercase tracking-wide font-cinzel">
                     Standard Fee Assessment
                   </p>
                   <p className="text-slate-600 dark:text-slate-300 mt-0.5">
@@ -884,38 +874,27 @@ export default function Collections() {
                   {creatingStudent ? 'Creating Profile...' : 'Save & Open Profile'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
       {showQuickPayModal && selectedStudentForPay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">
-                  Quick Record Payment
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Student: <span className="font-bold text-brand-600 dark:text-brand-400">{selectedStudentForPay.full_name}</span> ({selectedStudentForPay.grade_level})
-                </p>
-              </div>
-              <button
-                onClick={() => setShowQuickPayModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleRecordQuickPayment} className="p-6 space-y-4">
+        <Modal
+          isOpen={showQuickPayModal}
+          onClose={() => setShowQuickPayModal(false)}
+          title="Quick Record Payment"
+          maxWidth="max-w-lg"
+        >
+          <p className="text-xs text-slate-400 -mt-2 mb-5">
+            Student: <span className="font-bold text-brand-600 dark:text-brand-300">{selectedStudentForPay.full_name}</span> ({selectedStudentForPay.grade_level})
+          </p>
+          <form onSubmit={handleRecordQuickPayment} className="space-y-4">
               <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
-                <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5" htmlFor="physical-official-receipt-or-number">
                   <Receipt className="w-3.5 h-3.5" />
-                  <span>Physical Official Receipt (OR) Number <span className="text-rose-500">*</span></span>
+                  <span>Physical Official Receipt (OR) Number <span className="text-rose-500 dark:text-rose-400">*</span></span>
                 </label>
-                <input
+                <input id="physical-official-receipt-or-number"
                   type="text"
                   required
                   value={payOrNumber}
@@ -930,7 +909,7 @@ export default function Collections() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block font-cinzel" htmlFor="pay-fee-type">
                     Fee Category
                   </label>
                   {(() => {
@@ -952,34 +931,28 @@ export default function Collections() {
                     );
                   })()}
                 </div>
-                <select
+                <select id="pay-fee-type"
                   value={payFeeType}
                   onChange={(e) => {
                     const newType = e.target.value;
                     setPayFeeType(newType);
-                    const sched = selectedStudentForPay?.fee_schedules?.find(
-                      (fs) => (fs.category_name || '').toLowerCase() === (newType || '').toLowerCase()
-                    );
-                    const bal = sched ? Math.max(0, (sched.total_due || 0) - (sched.total_paid || 0)) : 0;
-                    if (newType === 'Tuition Fee') setPayAmount(bal > 0 ? (bal < 1906 ? bal.toFixed(2) : '1906.00') : '0.00');
-                    else if (newType === 'Energy Fee') setPayAmount(bal > 0 ? (bal < 300 ? bal.toFixed(2) : '300.00') : '0.00');
-                    else setPayAmount(bal > 0 ? bal.toFixed(2) : '0.00');
+                    setPayAmount(suggestedFeeAmount(selectedStudentForPay, newType));
                   }}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-800 dark:text-white outline-none"
                 >
-                  <option value="Tuition Fee">Tuition Fee (Monthly ₱1,906 / Annual ₱19,060)</option>
-                  <option value="Registration Fee">Registration Fee (Annual ₱5,700)</option>
-                  <option value="Books">Books &amp; Materials (₱6,900)</option>
-                  <option value="Energy Fee">Energy Fee (Monthly ₱300 / Annual ₱3,000)</option>
+                  <option value="Tuition Fee">Tuition Fee (Monthly ₱{(benchmarkFor('Tuition Fee').monthly || 0).toLocaleString()} / Annual ₱{(benchmarkFor('Tuition Fee').total_due || 0).toLocaleString()})</option>
+                  <option value="Registration Fee">Registration Fee (Annual ₱{(benchmarkFor('Registration Fee').total_due || 0).toLocaleString()})</option>
+                  <option value="Books">Books &amp; Materials (₱{(benchmarkFor('Books').total_due || 0).toLocaleString()})</option>
+                  <option value="Energy Fee">Energy Fee (Monthly ₱{(benchmarkFor('Energy Fee').monthly || 0).toLocaleString()} / Annual ₱{(benchmarkFor('Energy Fee').total_due || 0).toLocaleString()})</option>
                   <option value="Other Fees">Other Fees (Tours, Swimming, Activities)</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="pay-amount">
                   Amount to Collect (₱)
                 </label>
-                <input
+                <input id="pay-amount"
                   type="number"
                   step="0.01"
                   required
@@ -1034,10 +1007,10 @@ export default function Collections() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="payment-method">
                     Payment Method
                   </label>
-                  <select
+                  <select id="payment-method"
                     value={payMethod}
                     onChange={(e) => setPayMethod(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-800 dark:text-white outline-none"
@@ -1047,10 +1020,10 @@ export default function Collections() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="ref-check">
                     Ref # / Check #
                   </label>
-                  <input
+                  <input id="ref-check"
                     type="text"
                     value={payRef}
                     onChange={(e) => setPayRef(e.target.value)}
@@ -1076,9 +1049,8 @@ export default function Collections() {
                   {recordingPay ? 'Saving...' : 'Save & View Digital Receipt'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
       {selectedReceipt && (
@@ -1096,32 +1068,21 @@ export default function Collections() {
       )}
 
       {showCsvModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-zoom-in max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-brand-50 dark:bg-brand-950/60 rounded-xl text-brand-600 dark:text-brand-400">
-                  <FileSpreadsheet className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">
-                    Import Enrolled Students (CSV)
-                  </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Sync registrar student roster, grade-level fees &amp; initial LRN passwords
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setShowCsvModal(false); setCsvFile(null); setCsvResult(null); }}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleImportCsv} className="space-y-4 pt-4">
+        <Modal
+          isOpen={showCsvModal}
+          onClose={() => { setShowCsvModal(false); setCsvFile(null); setCsvResult(null); }}
+          title={
+            <span className="inline-flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4" />
+              Import Enrolled Students (CSV)
+            </span>
+          }
+          maxWidth="max-w-lg"
+        >
+          <p className="text-[11px] text-slate-400 -mt-2 mb-5">
+            Sync registrar student roster, grade-level fees &amp; initial LRN passwords
+          </p>
+          <form onSubmit={handleImportCsv} className="space-y-4">
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
                 <p className="font-semibold text-slate-800 dark:text-white">Registrar Sync Format:</p>
                 <p>
@@ -1137,7 +1098,7 @@ export default function Collections() {
                 <button
                   type="button"
                   onClick={handleDownloadTemplate}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download Sample Template (.CSV)</span>
@@ -1145,10 +1106,10 @@ export default function Collections() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="choose-csv-file">
                   Choose CSV File
                 </label>
-                <input
+                <input id="choose-csv-file"
                   type="file"
                   accept=".csv"
                   required
@@ -1194,9 +1155,8 @@ export default function Collections() {
                   <span>{checkingCsv ? 'Checking Duplicates...' : importingCsv ? 'Importing Records...' : 'Upload & Sync'}</span>
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
       <ConfirmModal
@@ -1216,34 +1176,24 @@ export default function Collections() {
       />
 
       {showDuplicateModal && duplicateCheck && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-300" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">
-                    Duplicate data detected
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {duplicateCheck.duplicate_count} duplicate row(s) found out of {duplicateCheck.total_rows}.
-                    You can cancel, or continue and skip the duplicate rows.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setShowDuplicateModal(false); setDuplicateCheck(null); setCsvFile(null); }}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
-                aria-label="Close duplicate notice"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-3">
+        <Modal
+          isOpen={showDuplicateModal}
+          onClose={() => { setShowDuplicateModal(false); setDuplicateCheck(null); setCsvFile(null); }}
+          title={
+            <span className="inline-flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-300" />
+              Duplicate data detected
+            </span>
+          }
+          maxWidth="max-w-2xl"
+          busy={importingCsv}
+          autoFocusClose={false}
+        >
+          <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2 mb-5">
+            {duplicateCheck.duplicate_count} duplicate row(s) found out of {duplicateCheck.total_rows}.
+            You can cancel, or continue and skip the duplicate rows.
+          </p>
+          <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300 font-cinzel">
@@ -1281,28 +1231,28 @@ export default function Collections() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="p-5 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => { setShowDuplicateModal(false); setDuplicateCheck(null); setCsvFile(null); }}
-                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
-              >
-                Cancel Upload
-              </button>
-              <button
-                type="button"
-                disabled={importingCsv}
-                onClick={() => runCsvImport(true)}
-                className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>{importingCsv ? 'Importing Records...' : 'Skip Duplicates & Import'}</span>
-              </button>
-            </div>
           </div>
-        </div>
+
+          <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setShowDuplicateModal(false); setDuplicateCheck(null); setCsvFile(null); }}
+              data-initial-focus="true"
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+            >
+              Cancel Upload
+            </button>
+            <button
+              type="button"
+              disabled={importingCsv}
+              onClick={() => runCsvImport(true)}
+              className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>{importingCsv ? 'Importing Records...' : 'Skip Duplicates & Import'}</span>
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

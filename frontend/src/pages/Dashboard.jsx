@@ -77,7 +77,7 @@ export default function Dashboard() {
   if (!stats) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md text-center">
-        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2 opacity-80" />
+        <AlertCircle className="w-10 h-10 text-rose-500 dark:text-rose-400 mx-auto mb-2 opacity-80" />
         <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">Unable to Load Dashboard Data</h3>
         <p className="text-xs text-slate-400 mt-1">Please ensure the backend service is running and retry.</p>
         <button
@@ -143,7 +143,7 @@ export default function Dashboard() {
           value={`${stats.collection_rate || 0}%`}
           sub={`${stats.fully_paid_students || 0} of ${stats.total_students || 0} students fully paid`}
           icon={CheckCircle2}
-          color="text-brand-600 dark:text-brand-400"
+          color="text-brand-600 dark:text-brand-300"
           accentBg="bg-brand-50 dark:bg-brand-950/60"
         />
 
@@ -173,7 +173,7 @@ export default function Dashboard() {
               2026 Revenue
             </span>
             <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-500 inline-block" />
               2025 Revenue
             </span>
           </div>
@@ -287,7 +287,7 @@ export default function Dashboard() {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white font-cinzel tracking-wider uppercase">
               Collections by Grade Level
             </h3>
-            <span className="text-[11px] font-semibold text-brand-600 dark:text-brand-400">
+            <span className="text-[11px] font-semibold text-brand-600 dark:text-brand-300">
               Collected vs. Balance
             </span>
           </div>
@@ -333,27 +333,27 @@ export default function Dashboard() {
           </div>
           <Link
             to="/income"
-            className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-800 flex items-center font-cinzel shrink-0"
+            className="text-xs font-bold text-brand-600 dark:text-brand-300 hover:text-brand-800 flex items-center font-cinzel shrink-0"
           >
             All Collections <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div role="region" aria-label="dashboard data table 1" className="overflow-x-auto">
+          <table className="w-full text-left border-collapse"><caption className="sr-only">dashboard records table 1</caption>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700">
-                <th className="py-3 px-4">OR #</th>
-                <th className="py-3 px-4">Description / Student</th>
-                <th className="py-3 px-4">Fee Category</th>
-                <th className="py-3 px-4">Date Recorded</th>
-                <th className="py-3 px-4 text-right">Amount Collected</th>
+                <th scope="col" className="py-3 px-4">OR #</th>
+                <th scope="col" className="py-3 px-4">Description / Student</th>
+                <th scope="col" className="py-3 px-4">Fee Category</th>
+                <th scope="col" className="py-3 px-4">Date Recorded</th>
+                <th scope="col" className="py-3 px-4 text-right">Amount Collected</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
               {(stats.recent_transactions || []).map((tx, idx) => (
                 <tr key={`tx-${idx}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
-                  <td className="py-3 px-4 font-mono font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                  <td className="py-3 px-4 font-mono font-bold text-brand-600 dark:text-brand-300 whitespace-nowrap">
                     {tx.or_number || '—'}
                   </td>
                   <td className="py-3 px-4 font-semibold text-slate-800 dark:text-white">

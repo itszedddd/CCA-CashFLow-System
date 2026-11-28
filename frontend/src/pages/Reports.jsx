@@ -96,7 +96,7 @@ export default function Reports() {
   if (!report) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 text-center">
-        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2 opacity-80" />
+        <AlertCircle className="w-10 h-10 text-rose-500 dark:text-rose-400 mx-auto mb-2 opacity-80" />
         <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">
           Unable to Generate Cashflow Report
         </h3>
@@ -223,7 +223,7 @@ export default function Reports() {
             <h1 className="text-lg font-black tracking-wider text-[#022868] dark:text-white font-cinzel uppercase print:text-black">
               {CCA_OFFICE_INFO.schoolName}
             </h1>
-            <p className="text-xs font-bold tracking-widest text-[#022868] dark:text-blue-200 font-cinzel uppercase print:text-black">
+            <p className="text-xs font-bold tracking-widest text-[#022868] dark:text-brand-200 font-cinzel uppercase print:text-black">
               {CCA_OFFICE_INFO.officeName}
             </p>
             <div className="border-t-2 border-slate-800 dark:border-slate-500 my-3 print:my-2" />
@@ -238,13 +238,13 @@ export default function Reports() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:hidden">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={txSearch}
                 onChange={(e) => setTxSearch(e.target.value)}
                 placeholder="Filter by OR#, student LRN, name, or fee..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <p className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
@@ -252,17 +252,17 @@ export default function Reports() {
             </p>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-            <table className="w-full text-xs print:text-[9px]">
+          <div role="region" aria-label="reports data table 1" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+            <table className="w-full text-xs print:text-[9px]"><caption className="sr-only">reports records table 1</caption>
               <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                 <tr>
-                  <th className="py-2 px-3 text-left">Date (PHT)</th>
-                  <th className="py-2 px-3 text-left">OR #</th>
-                  <th className="py-2 px-3 text-left">Student / Payer</th>
-                  <th className="py-2 px-3 text-left">Grade</th>
-                  <th className="py-2 px-3 text-left">Fee Type</th>
-                  <th className="py-2 px-3 text-left">Method</th>
-                  <th className="py-2 px-3 text-right">Amount</th>
+                  <th scope="col" className="py-2 px-3 text-left">Date (PHT)</th>
+                  <th scope="col" className="py-2 px-3 text-left">OR #</th>
+                  <th scope="col" className="py-2 px-3 text-left">Student / Payer</th>
+                  <th scope="col" className="py-2 px-3 text-left">Grade</th>
+                  <th scope="col" className="py-2 px-3 text-left">Fee Type</th>
+                  <th scope="col" className="py-2 px-3 text-left">Method</th>
+                  <th scope="col" className="py-2 px-3 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -305,7 +305,7 @@ export default function Reports() {
             <h1 className="text-lg sm:text-xl font-black tracking-wider text-[#022868] dark:text-white font-cinzel uppercase leading-tight print:text-base print:text-black">
               {CCA_OFFICE_INFO.schoolName}
             </h1>
-            <p className="text-xs sm:text-sm font-bold tracking-widest text-[#022868] dark:text-blue-200 font-cinzel uppercase mt-0.5 print:text-xs print:text-black">
+            <p className="text-xs sm:text-sm font-bold tracking-widest text-[#022868] dark:text-brand-200 font-cinzel uppercase mt-0.5 print:text-xs print:text-black">
               {CCA_OFFICE_INFO.officeName}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 print:text-[8.5px] print:text-black">
@@ -333,12 +333,12 @@ export default function Reports() {
             <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
               Section 1: Financial Summary
             </h3>
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-              <table className="w-full text-xs print:text-[9.5px]">
+            <div role="region" aria-label="reports data table 2" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+              <table className="w-full text-xs print:text-[9.5px]"><caption className="sr-only">reports records table 2</caption>
                 <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                   <tr>
-                    <th className="py-2 px-3 text-left">Financial Summary Metric</th>
-                    <th className="py-2 px-3 text-right">Amount / Value</th>
+                    <th scope="col" className="py-2 px-3 text-left">Financial Summary Metric</th>
+                    <th scope="col" className="py-2 px-3 text-right">Amount / Value</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -389,14 +389,14 @@ export default function Reports() {
             <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
               Section 2: Collection Summary by Fee Category
             </h3>
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-              <table className="w-full text-xs print:text-[9.5px]">
+            <div role="region" aria-label="reports data table 3" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+              <table className="w-full text-xs print:text-[9.5px]"><caption className="sr-only">reports records table 3</caption>
                 <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                   <tr>
-                    <th className="py-2 px-3 text-left">Fee Category</th>
-                    <th className="py-2 px-3 text-right">Expected Amount</th>
-                    <th className="py-2 px-3 text-right">Actual Collection</th>
-                    <th className="py-2 px-3 text-right">Outstanding</th>
+                    <th scope="col" className="py-2 px-3 text-left">Fee Category</th>
+                    <th scope="col" className="py-2 px-3 text-right">Expected Amount</th>
+                    <th scope="col" className="py-2 px-3 text-right">Actual Collection</th>
+                    <th scope="col" className="py-2 px-3 text-right">Outstanding</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -429,15 +429,15 @@ export default function Reports() {
             <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
               Section 3: Collection Summary by Grade Level
             </h3>
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-              <table className="w-full text-xs print:text-[9.5px]">
+            <div role="region" aria-label="reports data table 4" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+              <table className="w-full text-xs print:text-[9.5px]"><caption className="sr-only">reports records table 4</caption>
                 <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                   <tr>
-                    <th className="py-2 px-3 text-left">Grade Level (Section)</th>
-                    <th className="py-2 px-3 text-right">No. of Students</th>
-                    <th className="py-2 px-3 text-right">Expected Collection</th>
-                    <th className="py-2 px-3 text-right">Actual Collection</th>
-                    <th className="py-2 px-3 text-right">Outstanding</th>
+                    <th scope="col" className="py-2 px-3 text-left">Grade Level (Section)</th>
+                    <th scope="col" className="py-2 px-3 text-right">No. of Students</th>
+                    <th scope="col" className="py-2 px-3 text-right">Expected Collection</th>
+                    <th scope="col" className="py-2 px-3 text-right">Actual Collection</th>
+                    <th scope="col" className="py-2 px-3 text-right">Outstanding</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -475,13 +475,13 @@ export default function Reports() {
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
                 Section 4: Monthly Collection Summary
               </h3>
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-                <table className="w-full text-xs print:text-[9px]">
+              <div role="region" aria-label="reports data table 5" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+                <table className="w-full text-xs print:text-[9px]"><caption className="sr-only">reports records table 5</caption>
                   <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                     <tr>
-                      <th className="py-2 px-3 text-left">Month</th>
-                      <th className="py-2 px-3 text-right">Total Collections</th>
-                      <th className="py-2 px-3 text-right">Transactions</th>
+                      <th scope="col" className="py-2 px-3 text-left">Month</th>
+                      <th scope="col" className="py-2 px-3 text-right">Total Collections</th>
+                      <th scope="col" className="py-2 px-3 text-right">Transactions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -508,12 +508,12 @@ export default function Reports() {
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
                 Section 5: Student Payment Status Summary
               </h3>
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-                <table className="w-full text-xs print:text-[9.5px]">
+              <div role="region" aria-label="reports data table 6" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+                <table className="w-full text-xs print:text-[9.5px]"><caption className="sr-only">reports records table 6</caption>
                   <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                     <tr>
-                      <th className="py-2 px-3 text-left">Payment Status</th>
-                      <th className="py-2 px-3 text-right">Number of Students</th>
+                      <th scope="col" className="py-2 px-3 text-left">Payment Status</th>
+                      <th scope="col" className="py-2 px-3 text-right">Number of Students</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -572,18 +572,18 @@ export default function Reports() {
               </div>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-              <table className="w-full text-[11px] print:text-[8.5px]">
+            <div role="region" aria-label="reports data table 7" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+              <table className="w-full text-[11px] print:text-[8.5px]"><caption className="sr-only">reports records table 7</caption>
                 <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                   <tr>
-                    <th className="py-2 px-2.5 text-left">Student ID</th>
-                    <th className="py-2 px-2.5 text-left">Student Name</th>
-                    <th className="py-2 px-2.5 text-left">Grade Level</th>
-                    <th className="py-2 px-2.5 text-right">Total Fees</th>
-                    <th className="py-2 px-2.5 text-right">Amount Paid</th>
-                    <th className="py-2 px-2.5 text-right">Remaining Balance</th>
-                    <th className="py-2 px-2.5 text-left">Unpaid Categories</th>
-                    <th className="py-2 px-2.5 text-center">Status</th>
+                    <th scope="col" className="py-2 px-2.5 text-left">Student ID</th>
+                    <th scope="col" className="py-2 px-2.5 text-left">Student Name</th>
+                    <th scope="col" className="py-2 px-2.5 text-left">Grade Level</th>
+                    <th scope="col" className="py-2 px-2.5 text-right">Total Fees</th>
+                    <th scope="col" className="py-2 px-2.5 text-right">Amount Paid</th>
+                    <th scope="col" className="py-2 px-2.5 text-right">Remaining Balance</th>
+                    <th scope="col" className="py-2 px-2.5 text-left">Unpaid Categories</th>
+                    <th scope="col" className="py-2 px-2.5 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -613,12 +613,12 @@ export default function Reports() {
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
                 Section 7: Transaction &amp; Payment Summary
               </h3>
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-                <table className="w-full text-xs print:text-[9.5px]">
+              <div role="region" aria-label="reports data table 8" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+                <table className="w-full text-xs print:text-[9.5px]"><caption className="sr-only">reports records table 8</caption>
                   <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                     <tr>
-                      <th className="py-2 px-3 text-left">Metric</th>
-                      <th className="py-2 px-3 text-right">Count / Amount</th>
+                      <th scope="col" className="py-2 px-3 text-left">Metric</th>
+                      <th scope="col" className="py-2 px-3 text-right">Count / Amount</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -661,12 +661,12 @@ export default function Reports() {
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
                 Section 8: ML-Based Anomaly Detection Summary
               </h3>
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
-                <table className="w-full text-xs print:text-[9.5px]">
+              <div role="region" aria-label="reports data table 9" className="overflow-x-auto border border-slate-200 dark:border-slate-700 print:border-slate-800 rounded-xl">
+                <table className="w-full text-xs print:text-[9.5px]"><caption className="sr-only">reports records table 9</caption>
                   <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 print:bg-slate-200 print:text-black uppercase font-cinzel">
                     <tr>
-                      <th className="py-2 px-3 text-left">Anomaly Category / Resolution</th>
-                      <th className="py-2 px-3 text-right">Count</th>
+                      <th scope="col" className="py-2 px-3 text-left">Anomaly Category / Resolution</th>
+                      <th scope="col" className="py-2 px-3 text-right">Count</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 print:divide-slate-300">
@@ -724,7 +724,7 @@ export default function Reports() {
               <div>
                 <p className="text-[10px] text-slate-500 print:text-black mb-6 print:mb-4">Prepared by:</p>
                 <div className="border-b border-slate-400 dark:border-slate-500 print:border-black w-44 mx-auto pb-1 font-bold font-cinzel uppercase">
-                  {acct.prepared_by_name || 'Maria Santos'}
+                  {acct.prepared_by_name || 'School Cashier'}
                 </div>
                 <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 print:text-black mt-1">
                   {acct.prepared_by_role || 'Cashier'}

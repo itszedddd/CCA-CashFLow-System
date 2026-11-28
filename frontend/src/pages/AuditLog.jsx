@@ -34,7 +34,7 @@ export default function AuditLog() {
       return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
     }
     if (action.includes('Verified') || action.includes('Cleared') || action.includes('Import')) {
-      return 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      return 'bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border-brand-200 dark:border-brand-800';
     }
     if (action.includes('Voided') || action.includes('Flagged') || action.includes('Deleted')) {
       return 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800';
@@ -90,15 +90,15 @@ export default function AuditLog() {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200/80 dark:border-slate-700 overflow-hidden transition-colors">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div role="region" aria-label="audit log data table 1" className="overflow-x-auto">
+          <table className="w-full text-left border-collapse"><caption className="sr-only">audit log records table 1</caption>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700">
-                <th className="py-3.5 px-4">Timestamp (PH)</th>
-                <th className="py-3.5 px-4">Authorized User</th>
-                <th className="py-3.5 px-4">Action Event</th>
-                <th className="py-3.5 px-4">Entity Target</th>
-                <th className="py-3.5 px-4">Transaction Particulars</th>
+                <th scope="col" className="py-3.5 px-4">Timestamp (PH)</th>
+                <th scope="col" className="py-3.5 px-4">Authorized User</th>
+                <th scope="col" className="py-3.5 px-4">Action Event</th>
+                <th scope="col" className="py-3.5 px-4">Entity Target</th>
+                <th scope="col" className="py-3.5 px-4">Transaction Particulars</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">

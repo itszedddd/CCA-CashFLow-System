@@ -340,7 +340,7 @@ def get_end_of_year_report(
             "unresolved_flagged": unresolved_flagged,
         },
         "accountability": {
-            "prepared_by_name": "Maria Santos",
+            "prepared_by_name": current_user.full_name if current_user and current_user.full_name else "School Cashier",
             "prepared_by_role": "Cashier",
             "approved_by_name": "Michelle Jean Gormley",
             "approved_by_role": "Authorized School Administrator",

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
   ShieldCheck, AlertCircle, Bell, GraduationCap, BookOpen, Zap,
-  Sparkles, FileText, Eye, KeyRound, Lock, X
+  Sparkles, FileText, Eye, KeyRound, Lock
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import YearlyRecordModal from '../components/YearlyRecordModal';
+import Modal from '../components/Modal';
 import { formatPeso, formatPHDateTime, resolveSection } from '../utils/schoolData';
 
 const CATEGORY_ICONS = {
@@ -127,7 +128,7 @@ export default function ParentPortal({ user }) {
   if (!student) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 text-center border border-slate-200 dark:border-slate-700">
-        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
+        <AlertCircle className="w-10 h-10 text-rose-500 dark:text-rose-400 mx-auto mb-2" />
         <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">Student Account Not Found</h3>
       </div>
     );
@@ -155,9 +156,9 @@ export default function ParentPortal({ user }) {
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-[#022868] to-blue-900 rounded-3xl p-5 sm:p-8 text-white shadow-xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+      <div className="bg-gradient-to-br from-[#022868] to-brand-900 rounded-3xl p-5 sm:p-8 text-white shadow-xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
         <div className="min-w-0">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-blue-100 border border-white/20 mb-3 font-cinzel">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-brand-100 border border-white/20 mb-3 font-cinzel">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
             Authorized Parent Portal
           </div>
@@ -182,7 +183,7 @@ export default function ParentPortal({ user }) {
         <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2.5 shrink-0 w-full lg:w-auto">
           <button
             onClick={handleOpenYearlyRecord}
-            className="w-full sm:w-auto justify-center px-4 py-3 bg-white text-brand-900 hover:bg-blue-50 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer"
+            className="w-full sm:w-auto justify-center px-4 py-3 bg-white text-brand-900 hover:bg-brand-50 rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md flex items-center gap-2 transition cursor-pointer"
           >
             <Eye className="w-4 h-4 text-brand-600 shrink-0" />
             <span>View School Year Record</span>
@@ -220,7 +221,7 @@ export default function ParentPortal({ user }) {
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-md min-w-0">
-          <p className="text-[10px] uppercase font-bold text-rose-500 font-cinzel">Outstanding Balance Due</p>
+          <p className="text-[10px] uppercase font-bold text-rose-500 dark:text-rose-400 font-cinzel">Outstanding Balance Due</p>
           <h3 className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono truncate">
             {formatPeso(student.outstanding_balance)}
           </h3>
@@ -248,7 +249,7 @@ export default function ParentPortal({ user }) {
                     <span className="text-xs font-bold text-slate-800 dark:text-white font-cinzel uppercase truncate">
                       {fs.category_name}
                     </span>
-                    <Icon className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+                    <Icon className="w-4 h-4 text-brand-600 dark:text-brand-300 shrink-0" />
                   </div>
                   <p className="text-[11px] text-slate-400 mb-2.5 line-clamp-1">{fs.sub_description}</p>
                   <div className="space-y-1 text-xs">
@@ -291,7 +292,7 @@ export default function ParentPortal({ user }) {
       {notifications.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-md space-y-3">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-700">
-            <Bell className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+            <Bell className="w-4 h-4 text-brand-600 dark:text-brand-300 shrink-0" />
             <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase font-cinzel">
               School Fee &amp; Event Announcements
             </h3>
@@ -316,7 +317,7 @@ export default function ParentPortal({ user }) {
                 <div className="flex sm:flex-col items-center sm:items-end justify-between pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-700 sm:pl-4 shrink-0">
                   <p className="text-[10px] text-slate-400 font-cinzel uppercase">Amount</p>
                   <div className="text-right">
-                    <p className="font-mono font-black text-brand-600 dark:text-brand-400 text-sm">
+                    <p className="font-mono font-black text-brand-600 dark:text-brand-300 text-sm">
                       {formatPeso(n.amount)}
                     </p>
                     {n.due_date && <p className="text-[10px] text-slate-400">Due: {n.due_date}</p>}
@@ -347,7 +348,7 @@ export default function ParentPortal({ user }) {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-mono font-black text-brand-700 dark:text-brand-400 text-xs">
+                    <p className="font-mono font-black text-brand-700 dark:text-brand-300 text-xs">
                       {p.or_number}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">{formatPHDateTime(p.date_recorded)}</p>
@@ -378,7 +379,7 @@ export default function ParentPortal({ user }) {
                         payment_method: p.payment_method,
                         remaining_balance: p.remaining_balance || 0,
                         school_year: student.school_year,
-                        cashier_name: 'Maria Santos',
+                        cashier_name: p.recorder_name || 'School Cashier',
                       })
                     }
                     className="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-[10px] font-bold font-cinzel uppercase tracking-wider inline-flex items-center gap-1.5 cursor-pointer"
@@ -394,17 +395,17 @@ export default function ParentPortal({ user }) {
           )}
         </div>
 
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-xs">
+        <div role="region" aria-label="parent portal data table 1" className="hidden md:block overflow-x-auto">
+          <table className="w-full text-xs"><caption className="sr-only">parent portal records table 1</caption>
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 text-[10px] uppercase font-cinzel font-bold">
-                <th className="text-left py-3 px-3 whitespace-nowrap">Date Recorded (PH)</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">OR Number</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Fee Type</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Description</th>
-                <th className="text-right py-3 px-3 whitespace-nowrap">Amount Paid</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Method</th>
-                <th className="text-center py-3 px-3 whitespace-nowrap">Digital Receipt</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Date Recorded (PH)</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">OR Number</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Fee Type</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Description</th>
+                <th scope="col" className="text-right py-3 px-3 whitespace-nowrap">Amount Paid</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Method</th>
+                <th scope="col" className="text-center py-3 px-3 whitespace-nowrap">Digital Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -414,7 +415,7 @@ export default function ParentPortal({ user }) {
                     <td className="py-3 px-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
                       {formatPHDateTime(p.date_recorded)}
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                    <td className="py-3 px-3 font-mono font-bold text-brand-600 dark:text-brand-300 whitespace-nowrap">
                       {p.or_number}
                     </td>
                     <td className="py-3 px-3 font-semibold text-slate-800 dark:text-white whitespace-nowrap">
@@ -446,12 +447,12 @@ export default function ParentPortal({ user }) {
                             payment_method: p.payment_method,
                             remaining_balance: p.remaining_balance || 0,
                             school_year: student.school_year,
-                            cashier_name: 'Maria Santos',
+                            cashier_name: p.recorder_name || 'School Cashier',
                           })
                         }
                         className="px-2.5 py-1 bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-slate-700 dark:text-white rounded-lg text-[10px] font-bold font-cinzel uppercase tracking-wider inline-flex items-center gap-1 cursor-pointer transition whitespace-nowrap"
                       >
-                        <Eye className="w-3 h-3 text-brand-600 dark:text-brand-400 shrink-0" />
+                        <Eye className="w-3 h-3 text-brand-600 dark:text-brand-300 shrink-0" />
                         <span>View Digital Receipt</span>
                       </button>
                     </td>
@@ -470,28 +471,26 @@ export default function ParentPortal({ user }) {
       </div>
 
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-brand-600" />
-                <h3 className="text-sm font-bold font-cinzel uppercase">Update Parent Password</h3>
-              </div>
-              <button
-                onClick={() => setShowPasswordModal(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleChangePassword} className="p-5 space-y-3.5">
+        <Modal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Lock className="w-4 h-4 text-brand-600" />
+              Update Parent Password
+            </span>
+          }
+          maxWidth="max-w-md"
+          autoFocusClose={false}
+        >
+          <form onSubmit={handleChangePassword} className="space-y-3.5">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase font-cinzel block mb-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase font-cinzel block mb-1" htmlFor="current-password">
                   Current Password
                 </label>
-                <input
+                <input id="current-password"
                   type="password"
+                  autoComplete="current-password"
                   required
                   value={pwForm.current_password}
                   onChange={(e) => setPwForm({ ...pwForm, current_password: e.target.value })}
@@ -500,11 +499,12 @@ export default function ParentPortal({ user }) {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase font-cinzel block mb-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase font-cinzel block mb-1" htmlFor="new-password-min-6-chars">
                   New Password (min 6 chars)
                 </label>
-                <input
+                <input id="new-password-min-6-chars"
                   type="password"
+                  autoComplete="new-password"
                   required
                   minLength={6}
                   value={pwForm.new_password}
@@ -514,11 +514,12 @@ export default function ParentPortal({ user }) {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase font-cinzel block mb-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase font-cinzel block mb-1" htmlFor="confirm-new-password">
                   Confirm New Password
                 </label>
-                <input
+                <input id="confirm-new-password"
                   type="password"
+                  autoComplete="new-password"
                   required
                   minLength={6}
                   value={pwForm.confirm_password}
@@ -528,25 +529,25 @@ export default function ParentPortal({ user }) {
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingPw}
-                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase font-cinzel cursor-pointer disabled:opacity-50"
-                >
-                  {savingPw ? 'Updating...' : 'Save New Password'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="pt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPasswordModal(false)}
+                data-initial-focus="true"
+                className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingPw}
+                className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold uppercase font-cinzel cursor-pointer disabled:opacity-50"
+              >
+                {savingPw ? 'Updating...' : 'Save New Password'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {selectedReceipt && (

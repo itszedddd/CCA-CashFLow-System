@@ -40,6 +40,11 @@ def _reject_admin_csv_upload(current_user: User):
         raise HTTPException(status_code=403, detail="Admin accounts cannot upload CSV rosters.")
 
 
+def _cashier_name(db: Session) -> str:
+    cashier = next((u for u in db.query(User).all() if (u.role or "").lower() == "cashier"), None)
+    return cashier.full_name if cashier and cashier.full_name else "School Cashier"
+
+
 def generate_next_or_number(db: Session) -> str:
     year = ph_now().year
     prefix = f"CSV-{year}-"
@@ -751,6 +756,7 @@ def get_student_detail(
                     date_recorded=p.date_recorded or "",
                     remarks=p.remarks,
                     recorded_by=p.recorded_by,
+                    recorder_name=p.recorder.full_name if p.recorder else None,
                     is_voided=p.is_voided,
                     anomaly_score=p.anomaly_score,
                     anomaly_level=p.anomaly_level,
@@ -1280,7 +1286,7 @@ def record_student_payment(
     db.commit()
     db.refresh(income)
 
-    cashier_name = current_user.full_name if current_user and current_user.full_name else "Maria Santos"
+    cashier_name = current_user.full_name if current_user and current_user.full_name else "School Cashier"
     receipt_date_display = format_ph_timestamp(now_iso)
 
     receipt = {
@@ -1370,7 +1376,7 @@ def get_payment_notice_letter(student_id: str, db: Session = Depends(get_db)):
         "signatories": {
             "administrator": "Michelle Jean Gormley",
             "administrator_title": "Authorized School Administrator",
-            "cashier": "Maria Santos",
+            "cashier": _cashier_name(db),
             "cashier_title": "School Cashier"
         }
     }
@@ -1406,7 +1412,7 @@ def get_end_of_year_record(student_id: str, db: Session = Depends(get_db)):
                 "description": p.description,
                 "amount": p.amount,
                 "payment_method": p.payment_method,
-                "cashier": "Maria Santos"
+                "cashier": p.recorder.full_name if p.recorder else "School Cashier"
             })
 
     receipts_list.sort(key=lambda x: x["date"] or "", reverse=True)
@@ -1438,7 +1444,7 @@ def get_end_of_year_record(student_id: str, db: Session = Depends(get_db)):
         "fee_breakdown": fee_summary,
         "receipts": receipts_list,
         "certified_by": {
-            "cashier": "Maria Santos",
+            "cashier": _cashier_name(db),
             "administrator": "Michelle Jean Gormley"
         }
     }

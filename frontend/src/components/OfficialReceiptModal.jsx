@@ -1,20 +1,23 @@
 import React from 'react';
 import { X, ShieldCheck } from 'lucide-react';
+import Modal from './Modal';
 import { CCA_OFFICE_INFO, formatPeso, formatPHDateTime } from '../utils/schoolData';
 
 export default function OfficialReceiptModal({ receipt, onClose }) {
   if (!receipt) return null;
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto cursor-pointer"
+    <Modal
+      isOpen={!!receipt}
+      onClose={onClose}
+      title="Official Digital Receipt"
+      maxWidth="max-w-xl"
+      hideHeader
+      printable
+      autoFocusClose={false}
+      className="bg-white"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-white text-slate-800 rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col my-auto relative z-10 cursor-default"
-      >
-        <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 shrink-0">
+      <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 shrink-0 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider font-cinzel truncate">
@@ -101,12 +104,12 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
           </div>
 
           <div className="py-2.5 border-b-2 border-slate-900/80">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs"><caption className="sr-only">official receipt modal records table 1</caption>
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500 text-[10px] uppercase font-cinzel font-bold">
-                  <th className="text-left pb-1.5">Fee Category</th>
-                  <th className="text-left pb-1.5">Description</th>
-                  <th className="text-right pb-1.5">Amount Paid</th>
+                  <th scope="col" className="text-left pb-1.5">Fee Category</th>
+                  <th scope="col" className="text-left pb-1.5">Description</th>
+                  <th scope="col" className="text-right pb-1.5">Amount Paid</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,7 +166,7 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             </div>
             <div className="pt-4">
               <div className="border-b border-slate-400 mb-1 font-bold font-cinzel text-slate-900">
-                {receipt.cashier_name || 'Maria Santos'}
+                {receipt.cashier_name || 'School Cashier'}
               </div>
               <p className="font-bold text-slate-800">Authorized School Cashier</p>
               <p className="text-[10px] text-slate-400">Calvary Christian Academy</p>
@@ -180,16 +183,16 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel transition cursor-pointer"
-          >
-            Close Window
-          </button>
-        </div>
+      <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0 print:hidden">
+        <button
+          type="button"
+          onClick={onClose}
+          data-initial-focus="true"
+          className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel transition cursor-pointer"
+        >
+          Close Window
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 }

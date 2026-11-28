@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';
+import Modal from '../components/Modal';
 import { formatPeso, GRADE_LEVELS } from '../utils/schoolData';
 
 const GRADE_OPTIONS = ['All Grades', ...GRADE_LEVELS];
@@ -206,10 +207,10 @@ export default function Notifications() {
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2.5 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-slate-900 dark:text-brand-400 border border-brand-200 dark:border-slate-700 shrink-0">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-slate-900 dark:text-brand-300 border border-brand-200 dark:border-slate-700 shrink-0">
                       {n.fee_type}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase font-cinzel bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase font-cinzel bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                       {n.grade_level ? n.grade_level : 'All Students'}
                     </span>
                   </div>
@@ -236,7 +237,7 @@ export default function Notifications() {
               <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs gap-2">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Fee Amount</p>
-                  <p className="text-base font-black text-brand-600 dark:text-brand-400 font-mono truncate">
+                  <p className="text-base font-black text-brand-600 dark:text-brand-300 font-mono truncate">
                     {formatPeso(n.amount)}
                   </p>
                 </div>
@@ -263,31 +264,21 @@ export default function Notifications() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title="Post Payment Announcement"
+          maxWidth="max-w-lg"
+        >
+          <p className="text-xs text-slate-400 -mt-2 mb-5">
+            Announce upcoming events, educational tours, or activity contributions
+          </p>
+          <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <h3 className="text-base font-bold font-cinzel uppercase text-slate-800 dark:text-white">
-                  Post Payment Announcement
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Announce upcoming events, educational tours, or activity contributions
-                </p>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="announcement-title">
                   Announcement Title
                 </label>
-                <input
+                <input id="announcement-title"
                   type="text"
                   required
                   value={form.title}
@@ -298,15 +289,13 @@ export default function Notifications() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                  Target Audience
-                </label>
-                <div className="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl mb-2">
+                <span id="target-audience-label" className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">Target Audience</span>
+                <div role="group" aria-labelledby="target-audience-label" className="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl mb-2">
                   <button
                     type="button"
                     onClick={() => { setTargetType('all'); setSelectedStudentId(''); }}
                     className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${targetType === 'all'
-                      ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                      ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 shadow-sm'
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
                       }`}
                   >
@@ -316,7 +305,7 @@ export default function Notifications() {
                     type="button"
                     onClick={() => { setTargetType('grade'); setSelectedStudentId(''); }}
                     className={`py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase font-cinzel tracking-wider transition cursor-pointer ${targetType === 'grade'
-                      ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm'
+                      ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 shadow-sm'
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
                       }`}
                   >
@@ -336,10 +325,10 @@ export default function Notifications() {
 
                 {targetType === 'grade' && (
                   <div className="pt-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1 font-cinzel">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1 font-cinzel" htmlFor="target-grade-level">
                       Select Grade Level
                     </label>
-                    <select
+                    <select id="target-grade-level"
                       value={form.grade_level}
                       onChange={(e) => setForm({ ...form, grade_level: e.target.value })}
                       className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
@@ -353,14 +342,14 @@ export default function Notifications() {
 
                 {targetType === 'student' && (
                   <div className="space-y-1.5 p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
-                    <input
+                    <input aria-label="Filter students"
                       type="text"
                       value={studentSearch}
                       onChange={(e) => setStudentSearch(e.target.value)}
                       placeholder="Filter by student name or LRN..."
                       className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-slate-800 dark:text-white outline-none"
                     />
-                    <select
+                    <select aria-label="Choose student"
                       required={targetType === 'student'}
                       value={selectedStudentId}
                       onChange={(e) => setSelectedStudentId(e.target.value)}
@@ -388,10 +377,10 @@ export default function Notifications() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="announcement-type">
                     Announcement Type
                   </label>
-                  <select
+                  <select id="announcement-type"
                     value={form.fee_type}
                     onChange={(e) => setForm({ ...form, fee_type: e.target.value })}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
@@ -408,10 +397,10 @@ export default function Notifications() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="amount">
                     Amount (₱)
                   </label>
-                  <input
+                  <input id="amount"
                     type="number"
                     step="0.01"
                     required
@@ -424,10 +413,10 @@ export default function Notifications() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="due-date">
                   Due Date
                 </label>
-                <input
+                <input id="due-date"
                   type="date"
                   value={form.due_date}
                   onChange={(e) => setForm({ ...form, due_date: e.target.value })}
@@ -436,10 +425,10 @@ export default function Notifications() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="announcement-details">
                   Announcement Details
                 </label>
-                <textarea
+                <textarea id="announcement-details"
                   rows={3}
                   required
                   value={form.description}
@@ -465,9 +454,8 @@ export default function Notifications() {
                   {submitting ? 'Publishing...' : 'Publish Announcement'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

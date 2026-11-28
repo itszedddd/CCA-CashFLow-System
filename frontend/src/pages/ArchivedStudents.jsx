@@ -114,16 +114,16 @@ export default function ArchivedStudents() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[760px]">
+          <div role="region" aria-label="archived students data table 1" className="overflow-x-auto">
+            <table className="w-full text-left min-w-[760px]"><caption className="sr-only">archived students records table 1</caption>
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/60 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest font-cinzel">
-                  <th className="py-3 px-4">Student</th>
-                  <th className="py-3 px-3">LRN</th>
-                  <th className="py-3 px-3">Grade / Section</th>
-                  <th className="py-3 px-3 text-right">Outstanding</th>
-                  <th className="py-3 px-3">Archived</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                <tr className="bg-slate-50 dark:bg-slate-900/60 text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest font-cinzel">
+                  <th scope="col" className="py-3 px-4">Student</th>
+                  <th scope="col" className="py-3 px-3">LRN</th>
+                  <th scope="col" className="py-3 px-3">Grade / Section</th>
+                  <th scope="col" className="py-3 px-3 text-right">Outstanding</th>
+                  <th scope="col" className="py-3 px-3">Archived</th>
+                  <th scope="col" className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">

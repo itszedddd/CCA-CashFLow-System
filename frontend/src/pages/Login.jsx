@@ -56,11 +56,11 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
 
   return (
     <div
-      className={`flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden w-full transition-colors duration-500 font-sans ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'
+      className={`flex min-h-screen w-full flex-col font-sans transition-colors duration-500 lg:flex-row ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'
         }`}
     >
-      <div className="lg:w-[46%] w-full bg-[#022868] flex flex-col items-center justify-center px-6 py-6 lg:px-10 lg:py-6 lg:h-full relative overflow-hidden text-center order-1 shadow-xl">
-        <div className="absolute -top-28 -left-28 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+      <div className="order-1 flex w-full flex-col items-center justify-center bg-[#022868] px-6 py-6 text-center shadow-xl relative overflow-clip lg:sticky lg:top-0 lg:h-screen lg:w-[46%] lg:px-10 lg:py-6">
+        <div className="absolute -top-28 -left-28 w-80 h-80 rounded-full bg-brand-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-28 -right-28 w-80 h-80 rounded-full bg-brand-red/15 blur-3xl pointer-events-none" />
 
         <div className="max-w-md w-full z-10 flex flex-col items-center">
@@ -78,7 +78,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
         </div>
       </div>
 
-      <div className="lg:w-[54%] w-full lg:h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative order-2 bg-slate-100 dark:bg-slate-950 overflow-y-auto">
+      <div className="order-2 flex w-full flex-col items-center justify-center bg-slate-100 p-4 relative dark:bg-slate-950 sm:p-6 lg:min-h-screen lg:w-[54%] lg:p-8">
         <button
           onClick={() => setIsDarkMode((p) => !p)}
           className={`absolute top-4 right-4 p-2.5 rounded-2xl transition-all z-10 border cursor-pointer ${isDarkMode
@@ -94,7 +94,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
         <div className="w-full max-w-md">
           <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_-15px_rgba(2,40,104,0.20)] dark:shadow-[0_24px_70px_-15px_rgba(0,0,0,0.70)] transition-colors animate-zoom-in">
             <div className="mb-4">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2 font-cinzel">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 mb-2 font-cinzel">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Authorized System Access
               </div>
@@ -104,7 +104,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
             </div>
 
             {error && (
-              <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-700/60 text-red-700 dark:text-red-300 text-xs py-2 px-3 rounded-2xl mb-3 font-medium">
+              <div className="bg-brand-red/10 dark:bg-brand-red/20 border border-brand-red/30 dark:border-brand-red/60 text-brand-red-hover dark:text-red-300 text-xs py-2 px-3 rounded-2xl mb-3 font-medium">
                 {error}
               </div>
             )}
@@ -161,7 +161,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-widest rounded-xl shadow-md hover:shadow-lg transition font-cinzel text-xs uppercase cursor-pointer disabled:opacity-60 flex justify-center items-center mt-1"
+                className="w-full py-3 bg-brand-900 hover:bg-brand-800 text-white font-bold tracking-widest rounded-xl shadow-md hover:shadow-lg transition font-cinzel text-xs uppercase cursor-pointer disabled:opacity-60 flex justify-center items-center mt-1"
               >
                 {loading ? (
                   <span className="inline-block animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />

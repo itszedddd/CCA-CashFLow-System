@@ -35,7 +35,7 @@ export function ToastProvider({ children }) {
         };
       case 'error':
         return {
-          icon: <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />,
+          icon: <AlertCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0" />,
           classes: 'bg-rose-50 dark:bg-rose-950/70 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100',
         };
       case 'warning':

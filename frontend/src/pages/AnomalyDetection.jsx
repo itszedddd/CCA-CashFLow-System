@@ -182,11 +182,11 @@ export default function AnomalyDetection() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800">
+            <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-300 border border-brand-100 dark:border-brand-800">
               <Cpu className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-cinzel">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-300 font-cinzel">
                 Machine Learning Intelligence
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
@@ -205,48 +205,33 @@ export default function AnomalyDetection() {
             <p className="text-[10px] font-black uppercase font-cinzel tracking-wider leading-none">
               Autonomous AI Active
             </p>
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
-              Live Background Ledger Monitoring
-            </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-indigo-900/40">
+      <div className="bg-gradient-to-r from-slate-900 via-brand-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-brand-900/40">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-indigo-400" />
-          <h3 className="text-xs font-bold uppercase tracking-widest font-cinzel text-indigo-200">
+          <Sparkles className="w-4 h-4 text-brand-400" />
+          <h3 className="text-xs font-bold uppercase tracking-widest font-cinzel text-brand-200">
             Integrated AI Intelligence Framework (Demonstrated Core Capabilities)
           </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
-            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">1. Reasoning</span>
+            <span className="text-[10px] uppercase font-bold text-brand-300 font-cinzel">1. Reasoning</span>
             <p className="font-bold text-white mt-1">Constraint Conformance</p>
-            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-              Deductive logic evaluating payments against official CCA fee schedules, tuition monthly brackets, and outstanding ledger limits.
-            </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
-            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">2. Learning</span>
+            <span className="text-[10px] uppercase font-bold text-brand-300 font-cinzel">2. Learning</span>
             <p className="font-bold text-white mt-1">Adaptive Contamination</p>
-            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-              Scikit-Learn IsolationForest with one-hot encoding & historical payment tracking dynamically updating without model drift.
-            </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
-            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">3. Perception</span>
+            <span className="text-[10px] uppercase font-bold text-brand-300 font-cinzel">3. Perception</span>
             <p className="font-bold text-white mt-1">Irregularity Recognition</p>
-            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-              Autonomous sensory detection of cross-category fee dumping, rapid 60-min duplicate submissions, and non-bracket payments.
-            </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5">
-            <span className="text-[10px] uppercase font-bold text-indigo-300 font-cinzel">4. Problem-Solving</span>
+            <span className="text-[10px] uppercase font-bold text-brand-300 font-cinzel">4. Problem-Solving</span>
             <p className="font-bold text-white mt-1">Linguistic Directives</p>
-            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-              Generates plain-language root causes and actionable cashier directives for student brown envelope reconciliation.
-            </p>
           </div>
         </div>
       </div>
@@ -294,7 +279,7 @@ export default function AnomalyDetection() {
               Score 70–100 • Critical verification needed
             </p>
           </div>
-          <span className="text-[10px] text-rose-500 font-semibold">Priority Review</span>
+          <span className="text-[10px] text-rose-500 dark:text-rose-400 font-semibold">Priority Review</span>
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
@@ -322,26 +307,23 @@ export default function AnomalyDetection() {
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-cinzel">
               Target Objective Goal
             </span>
-            <span className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
+            <span className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 flex items-center justify-center">
               <TrendingUp className="w-4 h-4" />
             </span>
           </div>
           <div className="my-1">
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-brand-600 dark:text-brand-400">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-brand-600 dark:text-brand-300">
               0.0%
             </h3>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Target recording errors & monthly revenue loss
-            </p>
           </div>
-          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">Manuscript Alignment</span>
+          <span className="text-[10px] text-brand-600 dark:text-brand-300 font-semibold">Manuscript Alignment</span>
         </div>
       </div>
 
       <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-md border border-slate-800">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
+            <Sparkles className="w-5 h-5 text-brand-400" />
             <h4 className="text-sm font-bold uppercase tracking-wider font-cinzel">
               3-Level Anomaly Scoring Thresholds (System Standard)
             </h4>
@@ -393,7 +375,7 @@ export default function AnomalyDetection() {
       {summary?.generative_insights && (
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
-            <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+            <div className="p-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-300">
               <Sparkles className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase font-cinzel tracking-wider">
@@ -413,21 +395,21 @@ export default function AnomalyDetection() {
               <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
                 {summary.generative_insights.key_findings.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <span className="text-indigo-500 font-bold">•</span>
+                    <span className="text-brand-500 font-bold">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
-              <span className="text-[11px] font-bold uppercase tracking-wider font-cinzel text-indigo-700 dark:text-indigo-300 block mb-2">
+            <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/50">
+              <span className="text-[11px] font-bold uppercase tracking-wider font-cinzel text-brand-700 dark:text-brand-300 block mb-2">
                 Cashier Recommended Actions
               </span>
-              <ul className="space-y-1.5 text-xs text-indigo-900 dark:text-indigo-200">
+              <ul className="space-y-1.5 text-xs text-brand-900 dark:text-brand-200">
                 {summary.generative_insights.cashier_action_items.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -492,7 +474,7 @@ export default function AnomalyDetection() {
               setPage(0);
             }}
             placeholder="Search student, OR#, particulars..."
-            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
           />
         </div>
       </div>
@@ -535,19 +517,19 @@ export default function AnomalyDetection() {
           </div>
         </div>
 
-        <div ref={tableContainerRef} className="overflow-x-auto ledger-scrollbar pb-3">
-          <table className="w-full text-left border-collapse text-xs min-w-[950px]">
+        <div role="region" aria-label="anomaly detection data table 1" tabIndex={0} ref={tableContainerRef} className="overflow-x-auto ledger-scrollbar pb-3">
+          <table className="w-full text-left border-collapse text-xs min-w-[950px]"><caption className="sr-only">anomaly detection records table 1</caption>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700 text-[11px] font-bold font-cinzel text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-4">OR # & Date</th>
-                <th className="py-3 px-4">Student / Payer</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4 text-right">Amount Paid</th>
-                <th className="py-3 px-4 text-right">Expected Fee</th>
-                <th className="py-3 px-4 text-center">Envelope Status</th>
-                <th className="py-3 px-4 text-center">3-Level Risk</th>
-                <th className="py-3 px-4 text-center">Resolution</th>
-                <th className="py-3 px-4 text-center sticky right-0 bg-slate-50 dark:bg-slate-800/95 backdrop-blur-xs z-10 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
+                <th scope="col" className="py-3 px-4">OR # & Date</th>
+                <th scope="col" className="py-3 px-4">Student / Payer</th>
+                <th scope="col" className="py-3 px-4">Category</th>
+                <th scope="col" className="py-3 px-4 text-right">Amount Paid</th>
+                <th scope="col" className="py-3 px-4 text-right">Expected Fee</th>
+                <th scope="col" className="py-3 px-4 text-center">Envelope Status</th>
+                <th scope="col" className="py-3 px-4 text-center">3-Level Risk</th>
+                <th scope="col" className="py-3 px-4 text-center">Resolution</th>
+                <th scope="col" className="py-3 px-4 text-center sticky right-0 bg-slate-50 dark:bg-slate-800/95 backdrop-blur-xs z-10 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
                   Actions
                 </th>
               </tr>
@@ -556,7 +538,7 @@ export default function AnomalyDetection() {
               {loading ? (
                 <tr>
                   <td colSpan="9" className="py-12 text-center text-slate-400">
-                    <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Evaluating transactions with ML model...
                   </td>
                 </tr>
@@ -666,7 +648,7 @@ export default function AnomalyDetection() {
                           setSelectedTx(tx);
                           setCashierNotes(tx.cashier_notes || '');
                         }}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 transition cursor-pointer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 text-brand-700 dark:text-brand-300 transition cursor-pointer"
                       >
                         <Info className="w-3.5 h-3.5" />
                         Details
@@ -753,10 +735,10 @@ export default function AnomalyDetection() {
                 </span>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl bg-brand-50/60 dark:bg-brand-950/40 border border-brand-100 dark:border-brand-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase font-cinzel text-indigo-900 dark:text-indigo-200">
+                    <span className="text-xs font-bold uppercase font-cinzel text-brand-900 dark:text-brand-200">
                       Anomaly Score: {selectedTx.anomaly_score} / 100
                     </span>
                     {getBadgeForLevel(selectedTx.anomaly_level, selectedTx.anomaly_score)}
@@ -804,13 +786,13 @@ export default function AnomalyDetection() {
 
             {selectedTx.recommendations && selectedTx.recommendations.length > 0 && (
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider font-cinzel text-indigo-600 dark:text-indigo-400 block mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider font-cinzel text-brand-600 dark:text-brand-300 block mb-2">
                   Actionable Cashier Verification Steps
                 </span>
-                <div className="space-y-1.5 p-3 rounded-xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
+                <div className="space-y-1.5 p-3 rounded-xl bg-brand-50/40 dark:bg-brand-950/20 border border-brand-100 dark:border-brand-900/40">
                   {selectedTx.recommendations.map((rec, i) => (
-                    <div key={i} className="flex items-start gap-2 text-indigo-950 dark:text-indigo-200">
-                      <ArrowRight className="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5" />
+                    <div key={i} className="flex items-start gap-2 text-brand-950 dark:text-brand-200">
+                      <ArrowRight className="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5" />
                       <span>{rec}</span>
                     </div>
                   ))}
@@ -827,14 +809,14 @@ export default function AnomalyDetection() {
                 value={cashierNotes}
                 onChange={(e) => setCashierNotes(e.target.value)}
                 placeholder="e.g. Cross-checked with student brown envelope. Payment verified for 2 months advance tuition."
-                className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
 
             {isAdmin ? (
               <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
                 <span className="inline-flex items-center gap-1.5 font-semibold">
-                  <Eye className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                  <Eye className="w-4 h-4 text-brand-600 dark:text-brand-300" />
                   View-Only Access (Cashier resolves anomaly flags)
                 </span>
                 <button

@@ -62,7 +62,7 @@ export default function AdminUsers({ currentUser }) {
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold uppercase font-cinzel self-start sm:self-auto">
-          <Eye className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+          <Eye className="w-4 h-4 text-brand-600 dark:text-brand-300" />
           <span>View-Only Access</span>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function AdminUsers({ currentUser }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+            <Shield className="w-4 h-4 text-brand-600 dark:text-brand-300" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider font-cinzel text-slate-800 dark:text-white">
               Admin Role (View-Only)
             </h3>
@@ -111,7 +111,7 @@ export default function AdminUsers({ currentUser }) {
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <Users className="w-4 h-4 text-brand-600 dark:text-brand-300" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider font-cinzel text-slate-800 dark:text-white">
               Parent / Student Portal
             </h3>
@@ -124,13 +124,13 @@ export default function AdminUsers({ currentUser }) {
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search username or full name..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
 
@@ -146,15 +146,15 @@ export default function AdminUsers({ currentUser }) {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+        <div role="region" aria-label="admin users data table 1" className="overflow-x-auto">
+          <table className="w-full text-xs"><caption className="sr-only">admin users records table 1</caption>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 text-[10px] uppercase font-cinzel font-bold">
-                <th className="py-3.5 px-4 text-left">Staff Member</th>
-                <th className="py-3.5 px-4 text-left">Username / Login Email</th>
-                <th className="py-3.5 px-4 text-left">Role</th>
-                <th className="py-3.5 px-4 text-left">Status</th>
-                <th className="py-3.5 px-4 text-left">Created (PHT)</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Staff Member</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Username / Login Email</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Role</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Status</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Created (PHT)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">

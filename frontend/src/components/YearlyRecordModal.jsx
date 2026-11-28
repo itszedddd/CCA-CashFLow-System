@@ -1,5 +1,6 @@
 import React from 'react';
 import { Printer, X, ShieldCheck } from 'lucide-react';
+import Modal from './Modal';
 import { CCA_OFFICE_INFO, formatPeso, formatPHDateTime } from '../utils/schoolData';
 
 export default function YearlyRecordModal({ recordData, onClose, viewOnly = false }) {
@@ -12,18 +13,26 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
   const { school, student, financial_summary, fee_breakdown, receipts, certified_by } = recordData;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
-      <div className="bg-white text-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col print:shadow-none print:border-none print:max-w-none print:w-full print:max-h-none">
-        <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
+    <Modal
+      isOpen={!!recordData}
+      onClose={onClose}
+      title="End-of-School-Year Payment Record"
+      maxWidth="max-w-3xl"
+      hideHeader
+      printable
+      autoFocusClose={false}
+      className="bg-white"
+    >
+      <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-600 shrink-0" />
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider font-cinzel truncate">
               End-of-School-Year Payment Record
             </span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {viewOnly ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold uppercase font-cinzel">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 border border-brand-200 text-[10px] font-bold uppercase font-cinzel">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">View-Only Record</span>
                 <span className="sm:hidden">View Only</span>
@@ -40,6 +49,7 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             )}
             <button
               onClick={onClose}
+              data-initial-focus="true"
               className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition cursor-pointer"
               aria-label="Close"
             >
@@ -102,9 +112,9 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 text-center print:grid-cols-3 print:mb-2 print:gap-2">
-            <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl print:bg-transparent print:border-slate-800">
-              <p className="text-[10px] font-bold text-blue-700 print:text-black uppercase font-cinzel">Total Assessment</p>
-              <p className="text-sm sm:text-base font-black text-blue-900 print:text-black font-mono mt-0.5">
+            <div className="p-2.5 bg-brand-50 border border-brand-200 rounded-xl print:bg-transparent print:border-slate-800">
+              <p className="text-[10px] font-bold text-brand-700 print:text-black uppercase font-cinzel">Total Assessment</p>
+              <p className="text-sm sm:text-base font-black text-brand-900 print:text-black font-mono mt-0.5">
                 {formatPeso(financial_summary?.total_assessment)}
               </p>
             </div>
@@ -136,16 +146,16 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             <h3 className="text-xs font-bold text-slate-800 print:text-black uppercase tracking-wider font-cinzel mb-1.5 print:text-[10px]">
               1. Fee Category Assessment Breakdown
             </h3>
-            <div className="border border-slate-200 print:border-slate-800 rounded-xl overflow-x-auto">
-              <table className="w-full text-xs print:text-[9px]">
+            <div role="region" aria-label="yearly record modal data table 1" className="border border-slate-200 print:border-slate-800 rounded-xl overflow-x-auto">
+              <table className="w-full text-xs print:text-[9px]"><caption className="sr-only">yearly record modal records table 1</caption>
                 <thead className="bg-slate-100 print:bg-slate-200 text-slate-600 print:text-black font-cinzel font-bold text-[9px] uppercase">
                   <tr>
-                    <th className="py-1.5 px-2.5 text-left">Category</th>
-                    <th className="py-1.5 px-2.5 text-left hidden sm:table-cell print:table-cell">Description</th>
-                    <th className="py-1.5 px-2.5 text-right">Assessment</th>
-                    <th className="py-1.5 px-2.5 text-right">Total Paid</th>
-                    <th className="py-1.5 px-2.5 text-right">Balance</th>
-                    <th className="py-1.5 px-2.5 text-center">Status</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-left">Category</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-left hidden sm:table-cell print:table-cell">Description</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-right">Assessment</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-right">Total Paid</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-right">Balance</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 print:divide-slate-300">
@@ -183,15 +193,15 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             <h3 className="text-xs font-bold text-slate-800 print:text-black uppercase tracking-wider font-cinzel mb-1.5 print:text-[10px]">
               2. Official Receipts Ledger &amp; Transaction History
             </h3>
-            <div className="border border-slate-200 print:border-slate-800 rounded-xl overflow-x-auto">
-              <table className="w-full text-xs print:text-[9px]">
+            <div role="region" aria-label="yearly record modal data table 2" className="border border-slate-200 print:border-slate-800 rounded-xl overflow-x-auto">
+              <table className="w-full text-xs print:text-[9px]"><caption className="sr-only">yearly record modal records table 2</caption>
                 <thead className="bg-slate-100 print:bg-slate-200 text-slate-600 print:text-black font-cinzel font-bold text-[9px] uppercase">
                   <tr>
-                    <th className="py-1.5 px-2.5 text-left">OR Number</th>
-                    <th className="py-1.5 px-2.5 text-left">Date Recorded (PH)</th>
-                    <th className="py-1.5 px-2.5 text-left">Fee Category</th>
-                    <th className="py-1.5 px-2.5 text-right">Amount Paid</th>
-                    <th className="py-1.5 px-2.5 text-left">Method</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-left">OR Number</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-left">Date Recorded (PH)</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-left">Fee Category</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-right">Amount Paid</th>
+                    <th scope="col" className="py-1.5 px-2.5 text-left">Method</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 print:divide-slate-300">
@@ -230,7 +240,7 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
           <div className="pt-4 border-t border-slate-200 print:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-center text-xs print:grid-cols-2 print:pt-2 print:text-[9px]">
             <div>
               <div className="border-b border-slate-400 mb-1 font-bold font-cinzel text-slate-900 print:text-black pt-3 print:pt-2">
-                {certified_by?.cashier || 'Maria Santos'}
+                {certified_by?.cashier || 'School Cashier'}
               </div>
               <p className="font-semibold text-slate-700 print:text-black">School Cashier</p>
               <p className="text-[10px] text-slate-400 print:text-black">Prepared By</p>
@@ -243,8 +253,7 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
               <p className="text-[10px] text-slate-400 print:text-black">Checked &amp; Approved By</p>
             </div>
           </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

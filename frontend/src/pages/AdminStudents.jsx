@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
   UserCog, Search, Plus, KeyRound, Copy,
-  CheckCircle2, Lock, Edit2, Eye, Info
+  CheckCircle2, Lock, Edit2, Info
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../components/Toast';
+import Modal from '../components/Modal';
 import {
   GRADE_LEVELS,
   resolveSection,
@@ -16,7 +16,6 @@ import {
 } from '../utils/schoolData';
 
 export default function AdminStudents() {
-  const navigate = useNavigate();
   const addToast = useToast();
 
   const [students, setStudents] = useState([]);
@@ -188,13 +187,13 @@ export default function AdminStudents() {
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search LRN, student name, or parent..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
 
@@ -211,16 +210,16 @@ export default function AdminStudents() {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+        <div role="region" aria-label="admin students data table 1" className="overflow-x-auto">
+          <table className="w-full text-xs"><caption className="sr-only">admin students records table 1</caption>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 text-[10px] uppercase font-cinzel font-bold">
-                <th className="py-3.5 px-4 text-left">Student LRN</th>
-                <th className="py-3.5 px-4 text-left">Student Name &amp; Grade</th>
-                <th className="py-3.5 px-4 text-left">Parent / Contact</th>
-                <th className="py-3.5 px-4 text-right">Total Assessment</th>
-                <th className="py-3.5 px-4 text-left">Parent LRN Password</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Student LRN</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Student Name &amp; Grade</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Parent / Contact</th>
+                <th scope="col" className="py-3.5 px-4 text-right">Total Assessment</th>
+                <th scope="col" className="py-3.5 px-4 text-left">Parent LRN Password</th>
+                <th scope="col" className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -285,7 +284,7 @@ export default function AdminStudents() {
                           className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer"
                           title="Generate new initial password for parent"
                         >
-                          <KeyRound className="w-3 h-3" />
+                          <KeyRound className="w-3 h-3 fill-current" />
                           <span>Reset PW</span>
                         </button>
                         <button
@@ -293,14 +292,7 @@ export default function AdminStudents() {
                           className="p-1.5 text-slate-500 hover:text-brand-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                           title="Edit student profile"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/collections/${st.id}`)}
-                          className="p-1.5 text-slate-500 hover:text-emerald-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                          title="Open fee ledger"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Edit2 className="w-3.5 h-3.5 fill-current" />
                         </button>
                       </div>
                     </td>
@@ -313,32 +305,22 @@ export default function AdminStudents() {
       </div>
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold font-cinzel uppercase">
-                  {editingStudent ? 'Edit Student Account Record' : 'Create Student Account'}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Auto-assigns 5 CCA fee schedules and generates a unique LRN initial password
-                </p>
-              </div>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveStudent} className="p-6 space-y-4">
+        <Modal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          title={editingStudent ? 'Edit Student Account Record' : 'Create Student Account'}
+          maxWidth="max-w-lg"
+        >
+          <p className="text-xs text-slate-400 -mt-2 mb-5">
+            Auto-assigns 5 CCA fee schedules and generates a unique LRN initial password
+          </p>
+          <form onSubmit={handleSaveStudent} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Student ID / LRN <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="student-id-lrn">
+                    Student ID / LRN <span className="text-rose-500 dark:text-rose-400">*</span>
                   </label>
-                  <input
+                  <input id="student-id-lrn"
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -350,10 +332,10 @@ export default function AdminStudents() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="grade-level">
                     Grade Level
                   </label>
-                  <select
+                  <select id="grade-level"
                     value={formState.grade_level}
                     onChange={(e) => {
                       const g = e.target.value;
@@ -370,10 +352,10 @@ export default function AdminStudents() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    Last Name <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="last-name">
+                    Last Name <span className="text-rose-500 dark:text-rose-400">*</span>
                   </label>
-                  <input
+                  <input id="last-name"
                     type="text"
                     required
                     value={formState.last_name}
@@ -383,10 +365,10 @@ export default function AdminStudents() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
-                    First Name <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="first-name">
+                    First Name <span className="text-rose-500 dark:text-rose-400">*</span>
                   </label>
-                  <input
+                  <input id="first-name"
                     type="text"
                     required
                     value={formState.first_name}
@@ -396,10 +378,10 @@ export default function AdminStudents() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="middle-name">
                     Middle Name
                   </label>
-                  <input
+                  <input id="middle-name"
                     type="text"
                     value={formState.middle_name}
                     onChange={(e) => setFormState({ ...formState, middle_name: e.target.value })}
@@ -411,14 +393,14 @@ export default function AdminStudents() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="section">
                     Section (Auto-Synced)
                   </label>
                   <div className="relative">
                     <input
                       type="text"
                       readOnly
-                      disabled
+                      disabled id="section"
                       value={resolveSection(formState.grade_level)}
                       className="w-full px-3.5 py-2 pr-8 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-500 cursor-not-allowed"
                     />
@@ -426,10 +408,10 @@ export default function AdminStudents() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="gender">
                     Gender
                   </label>
-                  <select
+                  <select id="gender"
                     value={formState.gender}
                     onChange={(e) => setFormState({ ...formState, gender: e.target.value })}
                     className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
@@ -442,10 +424,10 @@ export default function AdminStudents() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="parent-guardian-name">
                     Parent / Guardian Name
                   </label>
-                  <input
+                  <input id="parent-guardian-name"
                     type="text"
                     value={formState.parent_name}
                     onChange={(e) => setFormState({ ...formState, parent_name: e.target.value })}
@@ -453,10 +435,10 @@ export default function AdminStudents() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1 font-cinzel" htmlFor="contact-number-11-digits">
                     Contact Number (11 Digits)
                   </label>
-                  <input
+                  <input id="contact-number-11-digits"
                     type="tel"
                     inputMode="numeric"
                     maxLength={11}
@@ -471,7 +453,7 @@ export default function AdminStudents() {
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest font-cinzel flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                    <KeyRound className="w-3.5 h-3.5 text-brand-600 dark:text-brand-300" />
                     Default Parent Password
                   </span>
                   <span className="text-xs font-mono font-bold text-brand-700 dark:text-brand-300 px-2 py-0.5 bg-brand-50 dark:bg-slate-800 border border-brand-200 dark:border-slate-700 rounded-md">
@@ -483,10 +465,10 @@ export default function AdminStudents() {
                 </p>
               </div>
 
-              <div className="p-3.5 bg-blue-50/90 dark:bg-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl flex items-start gap-2.5">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-brand-50/90 dark:bg-slate-900 border border-brand-200 dark:border-brand-800/80 rounded-2xl flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-brand-600 dark:text-brand-300 shrink-0 mt-0.5" />
                 <div className="text-[11px] leading-relaxed">
-                  <p className="font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wide font-cinzel">
+                  <p className="font-bold text-brand-900 dark:text-brand-200 uppercase tracking-wide font-cinzel">
                     Standard Fee Assessment
                   </p>
                   <p className="text-slate-600 dark:text-slate-300 mt-0.5">
@@ -511,9 +493,8 @@ export default function AdminStudents() {
                   {saving ? 'Saving...' : editingStudent ? 'Update Record' : 'Create & Generate Password'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
     </div>

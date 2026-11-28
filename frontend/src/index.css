@@ -2,6 +2,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  color-scheme: light dark;
+}
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+}
+:root:has(> head > meta[name="color-scheme"][content="light"]) {
+  color-scheme: light;
+}
+
 @font-face {
   font-family: 'Cinzel';
   src: url('/assets/fonts/Cinzel-VariableFont_wght.ttf') format('truetype');
@@ -40,6 +50,42 @@ body {
   font-family: 'Cinzel', serif;
 }
 
+.skip-link {
+  @apply absolute left-4 top-4 z-[100] -translate-y-24 rounded-xl bg-brand-700 px-4 py-2 text-xs font-bold text-white transition-transform focus:translate-y-0;
+}
+
+#main-content {
+  scroll-margin-top: 4.5rem;
+}
+
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+}
+
+input:user-invalid,
+select:user-invalid,
+textarea:user-invalid {
+  border-color: #bc0c31;
+  box-shadow: 0 0 0 2px rgb(188 12 49 / 0.16);
+}
+
+@media (forced-colors: active) {
+  input:user-invalid,
+  select:user-invalid,
+  textarea:user-invalid {
+    border-color: ButtonText;
+  }
+  .ledger-scrollbar::-webkit-scrollbar-thumb {
+    background: Highlight;
+  }
+}
+
 table thead th {
   font-family: 'Cinzel', serif;
   @apply text-slate-500 dark:text-slate-400 tracking-tighter uppercase font-bold text-xs;
@@ -64,10 +110,25 @@ nav a, .menu-item {
 }
 
 .sidebar-drawer {
-  @apply fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-in-out;
+  @apply fixed left-0 top-0 h-full z-50 transition-transform duration-300 ease-in-out;
   width: 296px;
   max-width: 86vw;
+  height: 100dvh;
+  overscroll-behavior: contain;
 }
+
+.sidebar-scroll {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+@media (pointer: coarse) {
+  .row-actions button {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+}
+
 .sidebar-drawer-closed {
   transform: translateX(-100%);
 }
@@ -103,7 +164,7 @@ html.accessible-mode button {
 }
 
 html.accessible-mode input, html.accessible-mode select, html.accessible-mode textarea {
-  padding: 0.6rem !important;
+  padding-block: 0.6rem !important;
   font-size: 1rem !important;
 }
 
@@ -152,19 +213,19 @@ html.accessible-mode .dark {
   background: rgba(30, 41, 59, 0.95);
 }
 .ledger-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.55);
+  background: rgba(2, 40, 104, 0.55);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 .ledger-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(79, 70, 229, 0.9);
+  background: rgba(2, 40, 104, 0.9);
 }
 .dark .ledger-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(129, 140, 248, 0.55);
+  background: rgba(123, 163, 232, 0.55);
 }
 .dark .ledger-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(165, 180, 252, 0.9);
+  background: rgba(123, 163, 232, 0.9);
 }
 
 * {

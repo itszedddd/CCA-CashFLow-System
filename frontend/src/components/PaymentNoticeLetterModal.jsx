@@ -1,5 +1,6 @@
 import React from 'react';
 import { Printer, X } from 'lucide-react';
+import Modal from './Modal';
 import { CCA_OFFICE_INFO, formatPeso } from '../utils/schoolData';
 
 export default function PaymentNoticeLetterModal({ letterData, onClose }) {
@@ -10,11 +11,20 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
   };
 
   const { letter_date, student, parent, unpaid_fees, total_outstanding, signatories } = letterData;
+  const noticeYear = String(letter_date || '').match(/\d{4}$/)?.[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
-      <div className="bg-white text-slate-800 rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col print:shadow-none print:border-none print:max-w-none print:w-full print:max-h-none print:rounded-none">
-        <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
+    <Modal
+      isOpen={!!letterData}
+      onClose={onClose}
+      title="Official Statement of Account & Payment Notice"
+      maxWidth="max-w-2xl"
+      hideHeader
+      printable
+      autoFocusClose={false}
+      className="bg-white"
+    >
+      <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider font-cinzel truncate">
@@ -31,6 +41,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             </button>
             <button
               onClick={onClose}
+              data-initial-focus="true"
               className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition cursor-pointer"
               aria-label="Close"
             >
@@ -65,7 +76,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
           <div className="flex justify-between items-center text-xs mb-3 print:mb-2">
             <p className="font-semibold text-slate-800">{letter_date}</p>
             <span className="text-[10px] uppercase font-bold text-slate-500 font-cinzel">
-              Ref: NOTICE-{student.student_id}-2026
+              Ref: NOTICE-{student.student_id}{noticeYear ? `-${noticeYear}` : ''}
             </span>
           </div>
 
@@ -100,13 +111,13 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
           </div>
 
           <div className="mb-4 border border-slate-300 rounded-lg overflow-hidden print:mb-3">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs"><caption className="sr-only">payment notice letter modal records table 1</caption>
               <thead className="bg-slate-100 text-slate-700 font-bold text-[10px] uppercase border-b border-slate-300">
                 <tr>
-                  <th className="py-1.5 px-3 text-left">Fee Item</th>
-                  <th className="py-1.5 px-3 text-left">Coverage / Notes</th>
-                  <th className="py-1.5 px-3 text-right">Amount Due</th>
-                  <th className="py-1.5 px-3 text-right">Deadline</th>
+                  <th scope="col" className="py-1.5 px-3 text-left">Fee Item</th>
+                  <th scope="col" className="py-1.5 px-3 text-left">Coverage / Notes</th>
+                  <th scope="col" className="py-1.5 px-3 text-right">Amount Due</th>
+                  <th scope="col" className="py-1.5 px-3 text-right">Deadline</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -119,7 +130,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
                         {formatPeso(item.outstanding_amount)}
                       </td>
                       <td className="py-1.5 px-3 text-right text-[11px] text-slate-600 font-mono">
-                        due date: {item.due_date === 'Immediate' ? 'March 16, 2026' : item.due_date}
+                        due date: {item.due_date}
                       </td>
                     </tr>
                   ))
@@ -148,7 +159,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             <div>
               <p className="text-slate-500 mb-4 print:mb-3 text-[11px]">Prepared by:</p>
               <div className="border-b border-slate-400 mb-0.5 w-44 font-bold text-slate-900">
-                {signatories?.cashier || 'Maria Santos'}
+                {signatories?.cashier || 'School Cashier'}
               </div>
               <p className="text-[11px] font-semibold text-slate-700">{signatories?.cashier_title || 'School Cashier'}</p>
             </div>
@@ -164,8 +175,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
               <p className="text-[10px] text-slate-500">Calvary Christian Academy</p>
             </div>
           </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

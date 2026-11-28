@@ -1,22 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Income from './pages/Income';
-import StudentProfile from './pages/StudentProfile';
-import Notifications from './pages/Notifications';
-import ParentPortal from './pages/ParentPortal';
-import Reports from './pages/Reports';
-import AuditLog from './pages/AuditLog';
-import AnomalyDetection from './pages/AnomalyDetection';
-import AdminStudents from './pages/AdminStudents';
-import AdminUsers from './pages/AdminUsers';
-import ArchivedStudents from './pages/ArchivedStudents';
 import api from './api';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Income = lazy(() => import('./pages/Income'));
+const StudentProfile = lazy(() => import('./pages/StudentProfile'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const ParentPortal = lazy(() => import('./pages/ParentPortal'));
+const Reports = lazy(() => import('./pages/Reports'));
+const AuditLog = lazy(() => import('./pages/AuditLog'));
+const AnomalyDetection = lazy(() => import('./pages/AnomalyDetection'));
+const AdminStudents = lazy(() => import('./pages/AdminStudents'));
+const AdminUsers = lazy(() => import('./pages/AdminUsers'));
+const ArchivedStudents = lazy(() => import('./pages/ArchivedStudents'));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-7 h-7 border-3 border-brand-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-slate-400 font-cinzel">Loading page...</p>
+      </div>
+    </div>
+  );
+}
 
 function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode, setIsAccessibleMode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -74,7 +86,8 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
   const activeTitle = getPageTitle(location.pathname);
 
   return (
-    <div className="flex h-screen print:h-auto print:block bg-slate-50 dark:bg-slate-900 font-sans transition-colors duration-300 overflow-hidden">
+    <div className="flex min-h-screen print:block bg-slate-50 dark:bg-slate-900 font-sans transition-colors duration-300">
+      <a href="#main-content" className="skip-link print:hidden">Skip to main content</a>
       <Sidebar
         user={user}
         onLogout={onLogout}
@@ -83,7 +96,7 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
         pendingCount={pendingCount}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden print:overflow-visible print:h-auto">
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-72 print:pl-0">
         <Header
           activeTitle={activeTitle}
           isDarkMode={isDarkMode}
@@ -95,9 +108,10 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
           pendingCount={pendingCount}
         />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto print:overflow-visible print:h-auto bg-slate-50 dark:bg-slate-900 p-4 md:p-8 transition-colors duration-300">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-x-clip print:overflow-visible bg-slate-50 dark:bg-slate-900 p-3 sm:p-4 lg:p-6 transition-colors duration-300 outline-none">
           <div className="max-w-7xl mx-auto">
-            <Routes>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
               {isParent ? (
                 <>
                   <Route path="/" element={<ParentPortal user={user} />} />
@@ -110,7 +124,7 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                   <Route path="/" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Dashboard />} />
                   <Route path="/income" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Income />} />
                   <Route path="/collections" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Income />} />
-                  <Route path="/collections/:id" element={<StudentProfile />} />
+                  <Route path="/collections/:id" element={isAdmin ? <Navigate to="/admin/users" replace /> : <StudentProfile />} />
                   <Route path="/archive" element={isAdmin ? <Navigate to="/admin/users" replace /> : <ArchivedStudents />} />
                   <Route
                     path="/admin/users"
@@ -140,7 +154,8 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                   <Route path="*" element={<Navigate to={isAdmin ? '/admin/users' : '/'} replace />} />
                 </>
               )}
-            </Routes>
+              </Routes>
+            </Suspense>
           </div>
         </main>
       </div>
@@ -154,8 +169,14 @@ function AppContent() {
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('cca_cf_dark');
-    return saved !== null ? saved === 'true' : false;
+    return saved !== null ? saved === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+  const themeTouched = useRef(false);
+
+  const handleSetDarkMode = (value) => {
+    themeTouched.current = true;
+    setIsDarkMode(value);
+  };
 
   const [isAccessibleMode, setIsAccessibleMode] = useState(() => {
     const saved = localStorage.getItem('cca_cf_accessible');
@@ -164,8 +185,26 @@ function AppContent() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
-    localStorage.setItem('cca_cf_dark', isDarkMode);
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    const saved = localStorage.getItem('cca_cf_dark');
+    if (meta) meta.content = saved === null ? 'light dark' : (isDarkMode ? 'dark' : 'light');
+    if (themeTouched.current) {
+      if (isDarkMode === window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        localStorage.removeItem('cca_cf_dark');
+      } else {
+        localStorage.setItem('cca_cf_dark', String(isDarkMode));
+      }
+    }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      if (localStorage.getItem('cca_cf_dark') === null) setIsDarkMode(e.matches);
+    };
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('accessible-mode', isAccessibleMode);
@@ -215,7 +254,7 @@ function AppContent() {
             <Login
               onLogin={handleLogin}
               isDarkMode={isDarkMode}
-              setIsDarkMode={setIsDarkMode}
+              setIsDarkMode={handleSetDarkMode}
             />
           }
         />
@@ -229,7 +268,7 @@ function AppContent() {
       user={user}
       onLogout={handleLogout}
       isDarkMode={isDarkMode}
-      setIsDarkMode={setIsDarkMode}
+      setIsDarkMode={handleSetDarkMode}
       isAccessibleMode={isAccessibleMode}
       setIsAccessibleMode={setIsAccessibleMode}
     />

@@ -12,6 +12,7 @@ import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
 import ConfirmModal from '../components/ConfirmModal';
 import YearlyRecordModal from '../components/YearlyRecordModal';
+import Modal from '../components/Modal';
 import { formatPeso, formatPHDateTime, resolveSection, getGradeFeeBenchmarks } from '../utils/schoolData';
 
 const CATEGORY_ICONS = {
@@ -24,10 +25,10 @@ const CATEGORY_ICONS = {
 
 const CATEGORY_COLORS = {
   'Tuition Fee': 'border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400',
-  'Registration Fee': 'border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400',
+  'Registration Fee': 'border-brand-500/30 bg-brand-50/50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300',
   'Books': 'border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400',
   'Energy Fee': 'border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400',
-  'Other Fees': 'border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400',
+  'Other Fees': 'border-brand-500/30 bg-brand-50/50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300',
 };
 
 export default function StudentProfile() {
@@ -209,7 +210,7 @@ export default function StudentProfile() {
   if (!student) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 text-center border border-slate-200 dark:border-slate-700">
-        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
+        <AlertCircle className="w-10 h-10 text-rose-500 dark:text-rose-400 mx-auto mb-2" />
         <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel">Student Not Found</h3>
         <p className="text-xs text-slate-400 mt-1">The requested student profile could not be located.</p>
         <button
@@ -265,7 +266,7 @@ export default function StudentProfile() {
               onClick={() => openPaymentModalForCategory('Tuition Fee', 0)}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer"
             >
-              <CreditCard className="w-4 h-4 shrink-0" />
+              <CreditCard className="w-4 h-4 shrink-0 fill-current" />
               <span>Record Payment</span>
             </button>
           )}
@@ -281,8 +282,8 @@ export default function StudentProfile() {
               title={student.is_archived ? 'Restore student to active collections' : 'Archive student (records are preserved)'}
             >
               {student.is_archived
-                ? <RotateCcw className="w-4 h-4 text-emerald-600 shrink-0" />
-                : <Archive className="w-4 h-4 text-slate-500 shrink-0" />}
+                ? <RotateCcw className="w-4 h-4 text-emerald-600 shrink-0 fill-current" />
+                : <Archive className="w-4 h-4 text-slate-500 shrink-0 fill-current" />}
               <span>{student.is_archived ? 'Restore Student' : 'Archive Student'}</span>
             </button>
           )}
@@ -291,7 +292,7 @@ export default function StudentProfile() {
             className="px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
             title="Generate official payment notice letter for parents"
           >
-            <FileText className="w-4 h-4 text-rose-500 shrink-0" />
+            <FileText className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 fill-current" />
             <span>Notice Letter</span>
           </button>
           <button
@@ -299,7 +300,7 @@ export default function StudentProfile() {
             className="px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
             title="Print end of school year payment transcript and receipts"
           >
-            <Printer className="w-4 h-4 text-blue-500 shrink-0" />
+            <Printer className="w-4 h-4 text-brand-500 shrink-0 fill-current" />
             <span>End-of-Year Record</span>
           </button>
         </div>
@@ -308,7 +309,7 @@ export default function StudentProfile() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
           <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
-            <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-black text-brand-600 dark:text-brand-400 text-lg">
+            <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-black text-brand-600 dark:text-brand-300 text-lg">
               {student.full_name.charAt(0)}
             </div>
             <div>
@@ -342,19 +343,19 @@ export default function StudentProfile() {
         <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-brand-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-widest text-blue-200 font-cinzel font-bold">
+              <p className="text-xs uppercase tracking-widest text-brand-200 font-cinzel font-bold">
                 Student Financial Assessment Status
               </p>
               <h3 className="text-2xl sm:text-3xl font-black mt-1 font-mono">
                 {formatPeso(student.outstanding_balance)}
               </h3>
-              <p className="text-xs text-blue-100/70 mt-0.5">
+              <p className="text-xs text-brand-100/70 mt-0.5">
                 Total Remaining Balance for School Year {student.school_year}
               </p>
             </div>
             <div className="flex gap-4 sm:border-l sm:border-white/10 sm:pl-6 text-xs">
               <div>
-                <p className="text-[10px] text-blue-200 uppercase font-cinzel font-bold">Total Assessment</p>
+                <p className="text-[10px] text-brand-200 uppercase font-cinzel font-bold">Total Assessment</p>
                 <p className="text-base font-bold font-mono text-white mt-0.5">{formatPeso(student.total_due)}</p>
               </div>
               <div>
@@ -365,7 +366,7 @@ export default function StudentProfile() {
           </div>
 
           <div className="relative z-10 mt-6 pt-4 border-t border-white/10">
-            <div className="flex justify-between text-[11px] font-semibold text-blue-200 mb-1.5">
+            <div className="flex justify-between text-[11px] font-semibold text-brand-200 mb-1.5">
               <span>Collection Completion Progress</span>
               <span>
                 {student.total_due > 0 ? `${Math.min(100, Math.round((student.total_paid / student.total_due) * 100))}%` : '0%'}
@@ -450,7 +451,7 @@ export default function StudentProfile() {
                   onClick={() => openPaymentModalForCategory(fs.category_name, fs.remaining_balance)}
                   className="w-full py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-bold font-cinzel uppercase tracking-wider transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <Plus className="w-3.5 h-3.5 text-emerald-600 shrink-0 fill-current" />
                   <span className="truncate">{isCleared ? 'Add Payment' : 'Pay Balance'}</span>
                 </button>
               </div>
@@ -464,7 +465,7 @@ export default function StudentProfile() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-800 dark:text-white font-cinzel uppercase flex items-center gap-2">
-                <BrainCircuit className="w-5 h-5 text-indigo-500" />
+                <BrainCircuit className="w-5 h-5 text-brand-500" />
                 AI Payment Intelligence &amp; Autonomous Decisions
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -487,32 +488,32 @@ export default function StudentProfile() {
             )}
           </div>
 
-          <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-blue-900/40 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-brand-900/40 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-brand-500/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2">
-                <ShieldCheck className="w-5 h-5 text-blue-300" />
-                <span className="text-xs font-bold uppercase tracking-widest text-blue-300 font-cinzel">
+                <ShieldCheck className="w-5 h-5 text-brand-300" />
+                <span className="text-xs font-bold uppercase tracking-widest text-brand-300 font-cinzel">
                   {student.ai_payment_plan.autonomous_decision?.strategy_title || 'Autonomous Decision'}
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-blue-50/95 font-medium">
+              <p className="text-sm leading-relaxed text-brand-50/95 font-medium">
                 {student.ai_payment_plan.autonomous_decision?.verdict_narrative}
               </p>
               <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center gap-5 text-xs">
                 <div className="flex items-center gap-1.5">
-                  <Target className="w-3.5 h-3.5 text-blue-300" />
-                  <span className="text-blue-200">Risk Profile:</span>
+                  <Target className="w-3.5 h-3.5 text-brand-300" />
+                  <span className="text-brand-200">Risk Profile:</span>
                   <span className="font-bold text-white">{student.ai_payment_plan.autonomous_decision?.risk_level}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-300" />
-                  <span className="text-blue-200">Predicted Settlement:</span>
+                  <Clock className="w-3.5 h-3.5 text-brand-300" />
+                  <span className="text-brand-200">Predicted Settlement:</span>
                   <span className="font-bold text-white font-mono">{student.ai_payment_plan.predicted_clearance_date || 'In Progress'}</span>
                 </div>
                 {student.ai_payment_plan.autonomous_decision?.payment_health_index !== undefined && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-blue-200">Health Index:</span>
+                    <span className="text-brand-200">Health Index:</span>
                     <span className="font-bold text-white font-mono">{student.ai_payment_plan.autonomous_decision.payment_health_index}%</span>
                   </div>
                 )}
@@ -525,7 +526,7 @@ export default function StudentProfile() {
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5">
-                    <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <Bot className="w-4 h-4 text-brand-600 dark:text-brand-300" />
                     <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel">
                       Pattern Intelligence Narrative
                     </span>
@@ -542,12 +543,12 @@ export default function StudentProfile() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <BrainCircuit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <BrainCircuit className="w-4 h-4 text-brand-600 dark:text-brand-300" />
                       <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel">
                         Learned Behavioral Pattern
                       </span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                       {student.ai_payment_plan.learned_cluster.confidence_pct}% Match
                     </span>
                   </div>
@@ -570,8 +571,8 @@ export default function StudentProfile() {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {[
                 { label: 'Avg Payment', value: formatPeso(student.ai_payment_plan.pattern_details.avg_payment_amount), color: 'text-emerald-600 dark:text-emerald-400' },
-                { label: 'Avg Interval', value: `${student.ai_payment_plan.pattern_details.avg_interval_days} days`, color: 'text-blue-600 dark:text-blue-400' },
-                { label: 'Regularity', value: `${student.ai_payment_plan.pattern_details.payment_consistency_pct}%`, color: 'text-blue-700 dark:text-blue-300' },
+                { label: 'Avg Interval', value: `${student.ai_payment_plan.pattern_details.avg_interval_days} days`, color: 'text-brand-600 dark:text-brand-300' },
+                { label: 'Regularity', value: `${student.ai_payment_plan.pattern_details.payment_consistency_pct}%`, color: 'text-brand-700 dark:text-brand-300' },
                 { label: 'Main Channel', value: student.ai_payment_plan.pattern_details.most_common_method, color: 'text-amber-600 dark:text-amber-400' },
                 { label: 'Completed Payments', value: student.ai_payment_plan.pattern_details.total_payments_made, color: 'text-slate-700 dark:text-slate-300' },
               ].map((item) => (
@@ -586,7 +587,7 @@ export default function StudentProfile() {
           {student.ai_payment_plan.settlement_steps?.length > 0 && (
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
               <h4 className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel mb-3.5 flex items-center gap-2">
-                <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Target className="w-4 h-4 text-brand-600 dark:text-brand-300" />
                 AI-Optimized Step-by-Step Settlement Timeline
               </h4>
               <div className="space-y-2.5">
@@ -619,7 +620,7 @@ export default function StudentProfile() {
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">{step.rationale}</p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Timeline: {step.timeline}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5 font-medium">Timeline: {step.timeline}</p>
                     </div>
                   </div>
                 ))}
@@ -630,9 +631,9 @@ export default function StudentProfile() {
           {student.ai_payment_plan.dynamic_recommendation && (
             <div className="bg-slate-50 dark:bg-slate-800/90 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
               <div className="flex items-start gap-3">
-                <Bot className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                <Bot className="w-5 h-5 text-brand-600 dark:text-brand-300 mt-0.5 shrink-0" />
                 <div>
-                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-widest font-cinzel">
+                  <span className="text-[10px] font-bold text-brand-700 dark:text-brand-300 uppercase tracking-widest font-cinzel">
                     Autonomous System Recommendation
                   </span>
                   <p className="text-xs leading-relaxed text-slate-800 dark:text-slate-200 mt-1 font-medium">
@@ -675,18 +676,18 @@ export default function StudentProfile() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+        <div role="region" aria-label="student profile data table 1" className="overflow-x-auto">
+          <table className="w-full text-xs"><caption className="sr-only">student profile records table 1</caption>
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 text-[10px] uppercase font-cinzel font-bold">
-                <th className="text-left py-3 px-3 whitespace-nowrap">Date Recorded (PH)</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Official Receipt #</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Fee Category</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Description</th>
-                <th className="text-right py-3 px-3 whitespace-nowrap">Amount Paid</th>
-                <th className="text-left py-3 px-3 whitespace-nowrap">Method</th>
-                <th className="text-center py-3 px-3 whitespace-nowrap">Envelope Status</th>
-                <th className="text-center py-3 px-3 whitespace-nowrap">Digital Receipt</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Date Recorded (PH)</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Official Receipt #</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Fee Category</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Description</th>
+                <th scope="col" className="text-right py-3 px-3 whitespace-nowrap">Amount Paid</th>
+                <th scope="col" className="text-left py-3 px-3 whitespace-nowrap">Method</th>
+                <th scope="col" className="text-center py-3 px-3 whitespace-nowrap">Envelope Status</th>
+                <th scope="col" className="text-center py-3 px-3 whitespace-nowrap">Digital Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -696,7 +697,7 @@ export default function StudentProfile() {
                     <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap font-mono text-[11px]">
                       {formatPHDateTime(p.date_recorded)}
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                    <td className="py-3 px-3 font-mono font-bold text-brand-600 dark:text-brand-300 whitespace-nowrap">
                       {p.or_number || 'N/A'}
                     </td>
                     <td className="py-3 px-3 font-semibold text-slate-800 dark:text-white whitespace-nowrap">
@@ -712,10 +713,17 @@ export default function StudentProfile() {
                       {p.payment_method}
                     </td>
                     <td className="py-3 px-3 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                        <CheckCircle2 className="w-3 h-3 shrink-0" />
-                        Verified
-                      </span>
+                      {p.envelope_verified === 1 || p.anomaly_status === 'Verified_Cleared' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                          <CheckCircle2 className="w-3 h-3 shrink-0" />
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          Envelope Unchecked
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-center whitespace-nowrap">
                       <button
@@ -734,11 +742,11 @@ export default function StudentProfile() {
                           reference_number: p.reference_number || 'N/A',
                           remaining_balance: p.remaining_balance || 0,
                           school_year: student.school_year,
-                          cashier_name: 'Maria Santos'
+                          cashier_name: p.recorder_name || 'School Cashier'
                         })}
                         className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-[10px] font-semibold transition inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Eye className="w-3 h-3 text-brand-600 dark:text-brand-400 shrink-0" />
+                        <Eye className="w-3 h-3 text-brand-600 dark:text-brand-300 shrink-0 fill-current" />
                         <span>View Digital OR</span>
                       </button>
                     </td>
@@ -757,32 +765,23 @@ export default function StudentProfile() {
       </div>
 
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold font-cinzel text-slate-800 dark:text-white uppercase">
-                  Record Payment Collection
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Student: <span className="font-bold text-brand-600 dark:text-brand-400">{student.full_name}</span> ({student.grade_level})
-                </p>
-              </div>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
+        <Modal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          title="Record Payment Collection"
+          maxWidth="max-w-lg"
+          autoFocusClose={false}
+        >
+          <p className="text-xs text-slate-400 -mt-2 mb-5">
+            Student: <span className="font-bold text-brand-600 dark:text-brand-300">{student.full_name}</span> ({student.grade_level})
+          </p>
+          <form onSubmit={handleRecordPayment} className="space-y-4">
               <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
-                <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5">
+                <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5" htmlFor="physical-official-receipt-or-number">
                   <Receipt className="w-3.5 h-3.5" />
-                  <span>Physical Official Receipt (OR) Number <span className="text-rose-500">*</span></span>
+                  <span>Physical Official Receipt (OR) Number <span className="text-rose-500 dark:text-rose-400">*</span></span>
                 </label>
-                <input
+                <input id="physical-official-receipt-or-number"
                   type="text"
                   required
                   value={orNumber}
@@ -797,7 +796,7 @@ export default function StudentProfile() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block font-cinzel" htmlFor="fee-type">
                     Fee Category
                   </label>
                   {(() => {
@@ -817,7 +816,7 @@ export default function StudentProfile() {
                     );
                   })()}
                 </div>
-                <select
+                <select id="fee-type"
                   value={feeType}
                   onChange={(e) => {
                     const newType = e.target.value;
@@ -866,10 +865,10 @@ export default function StudentProfile() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel" htmlFor="payment-amount">
                   Amount to Collect (₱)
                 </label>
-                <input
+                <input id="payment-amount"
                   type="number"
                   step="0.01"
                   required
@@ -926,10 +925,10 @@ export default function StudentProfile() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel" htmlFor="payment-method">
                     Payment Method
                   </label>
-                  <select
+                  <select id="payment-method"
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-800 dark:text-white outline-none"
@@ -939,10 +938,10 @@ export default function StudentProfile() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel" htmlFor="reference-check">
                     Reference / Check #
                   </label>
-                  <input
+                  <input id="reference-check"
                     type="text"
                     value={refNumber}
                     onChange={(e) => setRefNumber(e.target.value)}
@@ -953,10 +952,10 @@ export default function StudentProfile() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel" htmlFor="cashier-remarks-note">
                   Cashier Remarks / Note
                 </label>
-                <input
+                <input id="cashier-remarks-note"
                   type="text"
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
@@ -965,25 +964,25 @@ export default function StudentProfile() {
                 />
               </div>
 
-              <div className="pt-3 flex gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowPaymentModal(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                >
-                  {submitting ? 'Recording...' : 'Issue Receipt & Save Payment'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="pt-3 flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                data-initial-focus="true"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {submitting ? 'Recording...' : 'Issue Receipt & Save Payment'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {selectedReceipt && (
