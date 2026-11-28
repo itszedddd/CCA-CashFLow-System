@@ -5,7 +5,14 @@ import os
 from pathlib import Path
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
+if DATABASE_URL:
+    # Accept common hosted-Postgres URL formats and normalize them to the
+    # psycopg driver installed in requirements.txt.
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+    elif DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+else:
     if os.environ.get("VERCEL"):
         DATABASE_URL = "sqlite:////tmp/cashflow.db"
     else:

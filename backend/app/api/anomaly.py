@@ -45,7 +45,10 @@ def get_anomaly_summary(
     3-level threshold breakdown, and generative insights for the Cashier.
     """
     engine = AnomalyEngine(db)
-    summary = engine.train_and_scan_all()
+    # Summary is a read: never rewrite anomaly scores/statuses just because the
+    # dashboard loaded. Cashier verifications must stay exactly as recorded.
+    # Persisting is done only by the explicit /scan-all endpoint.
+    summary = engine.train_and_scan_all(persist=False)
     return summary
 
 

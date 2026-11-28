@@ -569,10 +569,15 @@ class AnomalyEngine:
     def __init__(self, db: Session):
         self.db = db
 
-    def train_and_scan_all(self) -> Dict[str, Any]:
+    def train_and_scan_all(self, persist: bool = True) -> Dict[str, Any]:
         """
         Runs IsolationForest on all active transactions, computes multi-attribute
-        anomaly scores, updates the database records, and returns full telemetry.
+        anomaly scores, and returns full telemetry.
+
+        When persist=False (used by the read-only summary endpoint), scores and
+        statuses are computed for telemetry only and are NOT written back to the
+        database. This prevents a dashboard refresh from overwriting a cashier's
+        verified clearance.
         """
         incomes = self.db.query(Income).filter(Income.is_voided == 0).all()
         if not incomes:
@@ -730,40 +735,42 @@ class AnomalyEngine:
                 final_status = "Normal"
                 low_count += 1
 
-            # Update database record
-            inc.expected_amount = exp_amt
-            if inc.anomaly_status == "Verified_Cleared":
-                inc.anomaly_score = 0.0
-                inc.anomaly_level = "Low"
-                inc.envelope_verified = 1
-                # Preserve existing verified cashier reasons if present
-                if not inc.anomaly_reasons or "CASHIER_VERIFIED_CLEARED" not in inc.anomaly_reasons:
+            # Persist only on an explicit scan. Summary reads compute the same
+            # telemetry but must leave stored verification state untouched.
+            if persist:
+                inc.expected_amount = exp_amt
+                if inc.anomaly_status == "Verified_Cleared":
+                    inc.anomaly_score = 0.0
+                    inc.anomaly_level = "Low"
+                    inc.envelope_verified = 1
+                    # Preserve existing verified cashier reasons if present
+                    if not inc.anomaly_reasons or "CASHIER_VERIFIED_CLEARED" not in inc.anomaly_reasons:
+                        inc.anomaly_reasons = json.dumps({
+                            "reasons": ["Transaction officially verified and cleared by Cashier."],
+                            "recommendations": ["Transaction cleared. All records confirmed compliant."],
+                            "ml_outlier_factor": 0.0,
+                            "sop_rule_factor": 0.0,
+                            "ai_decision": "CASHIER_VERIFIED_CLEARED",
+                            "ai_decision_label": "Verified & Cleared",
+                            "learned_cluster": "Cleared Transaction",
+                            "pattern_confidence": 100.0,
+                            "autonomous_rationale": "Transaction verified and approved against physical brown envelope by Cashier."
+                        })
+                else:
+                    inc.anomaly_score = final_score
+                    inc.anomaly_level = final_level
+                    inc.anomaly_status = final_status
                     inc.anomaly_reasons = json.dumps({
-                        "reasons": ["Transaction officially verified and cleared by Cashier."],
-                        "recommendations": ["Transaction cleared. All records confirmed compliant."],
-                        "ml_outlier_factor": 0.0,
-                        "sop_rule_factor": 0.0,
-                        "ai_decision": "CASHIER_VERIFIED_CLEARED",
-                        "ai_decision_label": "Verified & Cleared",
-                        "learned_cluster": "Cleared Transaction",
-                        "pattern_confidence": 100.0,
-                        "autonomous_rationale": "Transaction verified and approved against physical brown envelope by Cashier."
+                        "reasons": eval_res["reasons"],
+                        "recommendations": eval_res["recommendations"],
+                        "ml_outlier_factor": round(ml_component, 1),
+                        "sop_rule_factor": round(rule_component, 1),
+                        "ai_decision": eval_res.get("ai_decision", "AUTONOMOUS_APPROVED_ROUTINE_SCHEDULE"),
+                        "ai_decision_label": eval_res.get("ai_decision_label", "Auto-Approved"),
+                        "learned_cluster": eval_res.get("learned_cluster", "Structured Monthly Cadence"),
+                        "pattern_confidence": eval_res.get("pattern_confidence", 95.0),
+                        "autonomous_rationale": eval_res.get("autonomous_rationale", "Aligned with standard payment schedule."),
                     })
-            else:
-                inc.anomaly_score = final_score
-                inc.anomaly_level = final_level
-                inc.anomaly_status = final_status
-                inc.anomaly_reasons = json.dumps({
-                    "reasons": eval_res["reasons"],
-                    "recommendations": eval_res["recommendations"],
-                    "ml_outlier_factor": round(ml_component, 1),
-                    "sop_rule_factor": round(rule_component, 1),
-                    "ai_decision": eval_res.get("ai_decision", "AUTONOMOUS_APPROVED_ROUTINE_SCHEDULE"),
-                    "ai_decision_label": eval_res.get("ai_decision_label", "Auto-Approved"),
-                    "learned_cluster": eval_res.get("learned_cluster", "Structured Monthly Cadence"),
-                    "pattern_confidence": eval_res.get("pattern_confidence", 95.0),
-                    "autonomous_rationale": eval_res.get("autonomous_rationale", "Aligned with standard payment schedule."),
-                })
 
             if final_status == "Flagged":
                 flagged_items.append({
@@ -780,7 +787,8 @@ class AnomalyEngine:
                     "ai_decision_label": eval_res.get("ai_decision_label"),
                 })
 
-        self.db.commit()
+        if persist:
+            self.db.commit()
 
         total = len(incomes)
         healthy_pct = round(((low_count + (med_count * 0.5)) / total * 100.0), 1) if total > 0 else 100.0

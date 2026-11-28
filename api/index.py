@@ -8,8 +8,14 @@ backend_dir = os.path.join(os.path.dirname(__file__), "..", "backend")
 if backend_dir not in sys.path:
     sys.path.insert(0, os.path.abspath(backend_dir))
 
-# Set database URL for serverless environment if on Vercel
-if os.environ.get("VERCEL"):
+# Set database URL for serverless environment if on Vercel.
+# A configured DATABASE_URL (e.g. Postgres/Neon/Supabase) is persistent and must
+# be respected. The /tmp SQLite copy below is only an ephemeral demo fallback:
+# serverless /tmp is per-instance and is reset on cold starts, so verification
+# changes made in one invocation would disappear in the next one.
+if os.environ.get("VERCEL") and not os.environ.get("DATABASE_URL"):
+    print("WARNING: DATABASE_URL is not configured on Vercel; using ephemeral "
+          "/tmp/cashflow.db. Saved changes will not persist across instances.")
     tmp_db = "/tmp/cashflow.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db}"
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

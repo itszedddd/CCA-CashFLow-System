@@ -42,6 +42,23 @@ npm run dev
 ### Quick Start (Windows)
 Just run `start_servers.bat` to launch both servers.
 
+### Persistent database on Vercel (required for saved verifications)
+Vercel serverless functions have an ephemeral `/tmp` filesystem. Without a
+configured database, `api/index.py` falls back to `/tmp/cashflow.db` seeded from
+the repository, so each cold start/separate instance sees the original data and
+changes such as **Verify & Clear** can appear to revert.
+
+Set a `DATABASE_URL` environment variable in the Vercel project pointing to a
+persistent database (e.g. Neon/Supabase Postgres):
+
+```text
+DATABASE_URL=postgresql://user:password@host:5432/cca_cashflow?sslmode=require
+```
+
+`postgres://` and `postgresql://` URLs are normalized to the `psycopg` driver
+automatically. Redeploy after adding the variable. When `DATABASE_URL` is set,
+the ephemeral `/tmp` SQLite fallback is skipped entirely.
+
 ---
 
 ## 🔑 Default Login Credentials
