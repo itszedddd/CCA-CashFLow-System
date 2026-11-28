@@ -1,6 +1,7 @@
 import json
 import csv
 import io
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
@@ -155,6 +156,20 @@ def _parse_csv_amount(val) -> float:
         return 0.0
 
 
+def _lrn_digits(value: str) -> str:
+    """Return only the numeric part of an LRN, accepting an optional LRN- prefix."""
+    raw = str(value or "").strip()
+    compact = raw.replace(" ", "")
+    if compact.upper().startswith("LRN-"):
+        compact = compact[4:]
+    elif compact.upper().startswith("LRN"):
+        compact = compact[3:]
+    return compact
+
+
+_SCIENTIFIC_NUMBER = re.compile(r"^\d+(?:\.\d+)?[eE]\+?\d+$")
+
+
 @router.get("/csv-template")
 def download_student_csv_template():
     """
@@ -225,9 +240,12 @@ async def import_students_csv(
     imported = []
     skipped = []
     errors = []
+    seen_sids = set()
 
     for row_idx, row in enumerate(reader, start=2):
-        sid = (row.get("student_id") or row.get("lrn") or row.get("Student ID") or "").strip()
+        raw_sid = (row.get("student_id") or row.get("lrn") or row.get("Student ID") or "").strip()
+        sid = raw_sid
+        sid_digits = _lrn_digits(raw_sid)
         name = (row.get("full_name") or row.get("name") or row.get("Student Name") or "").strip()
         grade = (row.get("grade_level") or row.get("grade") or "Grade 7").strip()
         raw_section = (row.get("section") or "Faith").strip()
@@ -238,6 +256,8 @@ async def import_students_csv(
         clean_c = re.sub(r"\D", "", parent_contact_raw)
         if clean_c.startswith("63") and len(clean_c) == 12:
             clean_c = "0" + clean_c[2:]
+        elif clean_c.startswith("9") and len(clean_c) == 10:
+            clean_c = "0" + clean_c
         parent_contact = clean_c if len(clean_c) == 11 else parent_contact_raw
         parent_email = (row.get("parent_email") or row.get("email") or "").strip()
         address = (row.get("address") or "").strip()
@@ -269,23 +289,42 @@ async def import_students_csv(
             "Other Fees": other_paid,
         }
 
+        if raw_sid and _SCIENTIFIC_NUMBER.match(raw_sid):
+            errors.append(
+                f"Row {row_idx}: LRN '{raw_sid}' was saved as scientific notation by Excel. "
+                "Format the student_id column as Text and re-enter the full LRN."
+            )
+            continue
+
         if not name:
             errors.append(f"Row {row_idx}: Missing student name")
             continue
 
-        # Check existing student by LRN (case-insensitive) OR by Name + Grade (case-insensitive)
+        # Check existing student by LRN (with or without the LRN- prefix) OR by Name + Grade
         existing = None
         if sid:
-            existing = db.query(Student).filter(
-                func.lower(func.trim(Student.student_id)) == sid.lower().strip()
-            ).first()
+            candidates = [sid]
+            if sid_digits and sid_digits != sid:
+                candidates.extend([sid_digits, f"LRN-{sid_digits}"])
+            for candidate in candidates:
+                existing = db.query(Student).filter(
+                    func.lower(func.trim(Student.student_id)) == candidate.lower().strip()
+                ).first()
+                if existing:
+                    break
         if not existing and name and grade:
             existing = db.query(Student).filter(
                 func.lower(func.trim(Student.full_name)) == name.lower().strip(),
                 func.lower(func.trim(Student.grade_level)) == grade.lower().strip()
             ).first()
 
+        sid_key = (sid_digits or sid).lower()
+        if sid_key and sid_key in seen_sids:
+            errors.append(f"Row {row_idx}: Duplicate LRN / Student ID '{sid}' in this CSV")
+            continue
+
         if existing:
+            seen_sids.add(sid_key)
             existing.full_name = name
             existing.grade_level = grade
             existing.section = section
@@ -349,11 +388,15 @@ async def import_students_csv(
         if not sid:
             errors.append(f"Row {row_idx}: Missing required LRN / Student ID for '{name}'. LRN cannot be auto-generated.")
             continue
-        if not sid.isdigit():
-            errors.append(f"Row {row_idx}: Student ID / LRN '{sid}' must contain numbers only.")
+        if not sid_digits.isdigit():
+            errors.append(
+                f"Row {row_idx}: Student ID / LRN '{sid}' must contain numbers only "
+                "(an optional 'LRN-' prefix is allowed)."
+            )
             continue
 
-        gen_pw = generate_lrn_password(sid, name)
+        seen_sids.add(sid_key)
+        gen_pw = generate_lrn_password(sid_digits, name)
         student = Student(
             student_id=sid,
             full_name=name,
