@@ -10,6 +10,7 @@ import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
+import ConfirmModal from '../components/ConfirmModal';
 import YearlyRecordModal from '../components/YearlyRecordModal';
 import { formatPeso, formatPHDateTime, resolveSection, getGradeFeeBenchmarks } from '../utils/schoolData';
 
@@ -60,6 +61,7 @@ export default function StudentProfile() {
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null);
 
   useEffect(() => {
     fetchStudentProfile();
@@ -77,20 +79,23 @@ export default function StudentProfile() {
     }
   };
 
-  const handleArchiveToggle = async () => {
-    const restoring = Boolean(student?.is_archived);
-    const message = restoring
-      ? `Restore ${student.full_name} to the active Collections list?`
-      : `Archive ${student.full_name}? They will be hidden from active collections, but balances and receipts will be kept.`;
-    if (!window.confirm(message)) return;
+  const handleArchiveToggle = () => {
+    setArchiveTarget(student);
+  };
+
+  const confirmArchiveToggle = async () => {
+    const target = archiveTarget;
+    if (!target) return;
+    const restoring = Boolean(target.is_archived);
 
     setArchiving(true);
     try {
       await api.post(`/students/${id}/${restoring ? 'unarchive' : 'archive'}`);
       addToast(
-        restoring ? `${student.full_name} restored successfully` : `${student.full_name} archived successfully`,
+        restoring ? `${target.full_name} restored successfully` : `${target.full_name} archived successfully`,
         'success'
       );
+      setArchiveTarget(null);
       if (restoring) {
         await fetchStudentProfile();
       } else {
@@ -1034,6 +1039,22 @@ export default function StudentProfile() {
           onClose={() => setYearlyRecordData(null)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={confirmArchiveToggle}
+        title={archiveTarget?.is_archived ? 'Restore Student' : 'Archive Student'}
+        message={
+          archiveTarget?.is_archived
+            ? `Restore ${archiveTarget.full_name} to the active Collections list?`
+            : `Archive ${archiveTarget?.full_name}? They will be hidden from active collections, but their balance, fee schedules, and receipts will be kept.`
+        }
+        confirmLabel={archiveTarget?.is_archived ? 'Restore Student' : 'Archive Student'}
+        tone={archiveTarget?.is_archived ? 'restore' : 'archive'}
+        Icon={archiveTarget?.is_archived ? RotateCcw : Archive}
+        busy={archiving}
+      />
     </div>
   );
 }

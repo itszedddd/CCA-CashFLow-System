@@ -52,12 +52,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
   const adminNavItems = [
     { to: '/admin/users', label: 'User Accounts', icon: ShieldCheck, badge: 'Admin' },
     { to: '/admin/students', label: 'Student Accounts', icon: UserCog },
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/income', label: 'Collections', icon: Users },
-    { to: '/anomaly', label: 'AI Ledger Intelligence', icon: Cpu, isAI: true },
-    { to: '/notifications', label: 'Payment Notices', icon: Bell },
-    { to: '/reports', label: 'Financial Reports', icon: FileBarChart },
-    { to: '/audit-log', label: 'Audit Trail', icon: ClipboardList },
   ];
 
   const parentNavItems = [
@@ -153,7 +147,7 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
         </ul>
 
         {/* The 5 Core Fee Categories Quick Reference */}
-        {!isParent && (
+        {!isParent && !isAdmin && (
           <div className="mt-6 px-4 pt-4 border-t border-slate-100 dark:border-slate-700">
             <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 font-cinzel">
               Institutional Fee Scope

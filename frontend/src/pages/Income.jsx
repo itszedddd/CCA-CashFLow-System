@@ -10,6 +10,7 @@ import api from '../api';
 import { useToast } from '../components/Toast';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentNoticeLetterModal from '../components/PaymentNoticeLetterModal';
+import ConfirmModal from '../components/ConfirmModal';
 import {
   GRADE_LEVELS,
   resolveSection,
@@ -51,6 +52,7 @@ export default function Collections() {
   const [importingCsv, setImportingCsv] = useState(false);
   const [csvResult, setCsvResult] = useState(null);
   const [archivingId, setArchivingId] = useState(null);
+  const [archiveTarget, setArchiveTarget] = useState(null);
   const [checkingCsv, setCheckingCsv] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateCheck, setDuplicateCheck] = useState(null);
@@ -172,14 +174,18 @@ export default function Collections() {
     }
   };
 
-  const handleArchiveStudent = async (student) => {
-    if (!window.confirm(
-      `Archive ${student.full_name}? They will be hidden from active collections, but balances and receipts will be kept.`
-    )) return;
+  const handleArchiveStudent = (student) => {
+    setArchiveTarget(student);
+  };
+
+  const confirmArchiveStudent = async () => {
+    const student = archiveTarget;
+    if (!student) return;
     setArchivingId(student.id);
     try {
       await api.post(`/students/${student.id}/archive`);
       addToast(`${student.full_name} archived successfully`, 'success');
+      setArchiveTarget(null);
       await fetchData();
     } catch (err) {
       addToast(err.response?.data?.detail || 'Failed to archive student', 'error');
@@ -1215,6 +1221,22 @@ export default function Collections() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(archiveTarget)}
+        onClose={() => setArchiveTarget(null)}
+        onConfirm={confirmArchiveStudent}
+        title="Archive Student"
+        message={
+          archiveTarget
+            ? `Archive ${archiveTarget.full_name}? They will be hidden from active collections, but their balance, fee schedules, and receipts will be kept.`
+            : ''
+        }
+        confirmLabel="Archive Student"
+        tone="archive"
+        Icon={Archive}
+        busy={Boolean(archiveTarget) && archivingId === archiveTarget.id}
+      />
 
       {/* Duplicate confirmation popup shown before import */}
       {showDuplicateModal && duplicateCheck && (

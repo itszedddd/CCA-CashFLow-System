@@ -24,6 +24,7 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
   const location = useLocation();
 
   const isParent = user?.role === 'Parent';
+  const isAdmin = (user?.role || '').toLowerCase() === 'admin';
 
   // Get active page title based on path
   const getPageTitle = (pathname) => {
@@ -110,15 +111,15 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                 </>
               ) : (
                 <>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/income" element={<Income />} />
-                  <Route path="/collections" element={<Income />} />
+                  <Route path="/" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Dashboard />} />
+                  <Route path="/income" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Income />} />
+                  <Route path="/collections" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Income />} />
                   <Route path="/collections/:id" element={<StudentProfile />} />
-                  <Route path="/archive" element={<ArchivedStudents />} />
+                  <Route path="/archive" element={isAdmin ? <Navigate to="/admin/users" replace /> : <ArchivedStudents />} />
                   <Route
                     path="/admin/users"
                     element={
-                      user?.role?.toLowerCase() === 'admin' ? (
+                      isAdmin ? (
                         <AdminUsers currentUser={user} />
                       ) : (
                         <Navigate to="/" replace />
@@ -128,19 +129,19 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
                   <Route
                     path="/admin/students"
                     element={
-                      user?.role?.toLowerCase() === 'admin' ? (
+                      isAdmin ? (
                         <AdminStudents />
                       ) : (
                         <Navigate to="/" replace />
                       )
                     }
                   />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/parent" element={<ParentPortal user={user} />} />
-                  <Route path="/anomaly" element={<AnomalyDetection />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/audit-log" element={<AuditLog />} />
-                  <Route path="*" element={<Navigate to={user?.role?.toLowerCase() === 'admin' ? '/admin/users' : '/'} replace />} />
+                  <Route path="/notifications" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Notifications />} />
+                  <Route path="/parent" element={isAdmin ? <Navigate to="/admin/users" replace /> : <ParentPortal user={user} />} />
+                  <Route path="/anomaly" element={isAdmin ? <Navigate to="/admin/users" replace /> : <AnomalyDetection />} />
+                  <Route path="/reports" element={isAdmin ? <Navigate to="/admin/users" replace /> : <Reports />} />
+                  <Route path="/audit-log" element={isAdmin ? <Navigate to="/admin/users" replace /> : <AuditLog />} />
+                  <Route path="*" element={<Navigate to={isAdmin ? '/admin/users' : '/'} replace />} />
                 </>
               )}
             </Routes>

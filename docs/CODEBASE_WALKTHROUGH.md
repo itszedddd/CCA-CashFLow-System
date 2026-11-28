@@ -202,7 +202,7 @@ Keeps both account-management menus:
 - **User Accounts** (`/admin/users`) — `AdminUsers.jsx`
 - **Student Accounts** (`/admin/students`) — `AdminStudents.jsx`
 
-Admin can also open Dashboard, Collections, Reports, Notifications, Anomaly, and Audit Trail, but financial mutations are blocked at the API middleware layer.
+Admin intentionally sees **only these two menus**. Dashboard, Collections, AI Ledger Intelligence, Payment Notices, Financial Reports, Audit Trail, and the Institutional Fee Scope panel are not shown for Admin, and direct URLs to those pages redirect back to `/admin/users`. Student Profile remains reachable from Student Accounts for viewing details. Financial mutations are also blocked at the API middleware layer.
 
 ### Cashier
 

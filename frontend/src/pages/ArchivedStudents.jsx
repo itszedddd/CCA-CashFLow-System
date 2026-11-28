@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../api';
 import { useToast } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
 import { GRADE_LEVELS, formatPeso, resolveSection } from '../utils/schoolData';
 
 export default function ArchivedStudents() {
@@ -17,6 +18,7 @@ export default function ArchivedStudents() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('All');
   const [restoringId, setRestoringId] = useState(null);
+  const [restoreTarget, setRestoreTarget] = useState(null);
 
   useEffect(() => {
     fetchArchived();
@@ -37,12 +39,18 @@ export default function ArchivedStudents() {
     }
   };
 
-  const handleRestore = async (student) => {
-    if (!window.confirm(`Restore ${student.full_name} to the active Collections list?`)) return;
+  const handleRestore = (student) => {
+    setRestoreTarget(student);
+  };
+
+  const confirmRestore = async () => {
+    const student = restoreTarget;
+    if (!student) return;
     setRestoringId(student.id);
     try {
       await api.post(`/students/${student.id}/unarchive`);
       addToast(`${student.full_name} restored successfully`, 'success');
+      setRestoreTarget(null);
       await fetchArchived();
     } catch (err) {
       addToast(err.response?.data?.detail || 'Failed to restore student', 'error');
@@ -180,6 +188,22 @@ export default function ArchivedStudents() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(restoreTarget)}
+        onClose={() => setRestoreTarget(null)}
+        onConfirm={confirmRestore}
+        title="Restore Student"
+        message={
+          restoreTarget
+            ? `Restore ${restoreTarget.full_name} to the active Collections list?`
+            : ''
+        }
+        confirmLabel="Restore Student"
+        tone="restore"
+        Icon={RotateCcw}
+        busy={Boolean(restoreTarget) && restoringId === restoreTarget.id}
+      />
     </div>
   );
 }
