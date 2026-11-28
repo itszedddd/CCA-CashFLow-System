@@ -98,22 +98,7 @@ export default function StudentProfile() {
     setRemarks(`AI Decision: ${student?.ai_payment_plan?.autonomous_decision?.strategy_title || 'Optimized Settlement'}`);
   };
 
-  const [enrollingRollover, setEnrollingRollover] = useState(false);
-  const handleRolloverEnroll = async () => {
-    if (!window.confirm(`Enroll ${student.full_name} for the next academic school year? This will automatically promote their grade level and section, advance the school year, and initialize new official fee assessments.`)) {
-      return;
-    }
-    setEnrollingRollover(true);
-    try {
-      const res = await api.post(`/students/${id}/rollover-enroll`, {});
-      addToast(res.data.message || 'Successfully enrolled student for next school year!', 'success');
-      fetchStudentProfile();
-    } catch (err) {
-      addToast(err.response?.data?.detail || 'Failed to re-enroll student', 'error');
-    } finally {
-      setEnrollingRollover(false);
-    }
-  };
+
 
 
   const handleRecordPayment = async (e) => {
@@ -243,17 +228,6 @@ export default function StudentProfile() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {!isAdmin && student.outstanding_balance <= 0 && (
-            <button
-              onClick={handleRolloverEnroll}
-              disabled={enrollingRollover}
-              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
-              title="Promote and re-enroll student for the next academic school year"
-            >
-              <GraduationCap className="w-4 h-4 shrink-0" />
-              <span>{enrollingRollover ? 'Enrolling...' : 'Enroll for Next SY'}</span>
-            </button>
-          )}
           {!isAdmin && (
             <button
               onClick={() => openPaymentModalForCategory('Tuition Fee', 0)}
@@ -441,40 +415,6 @@ export default function StudentProfile() {
           })}
         </div>
       </div>
-
-      {/* ── Academic Year Rollover Ready Banner ── */}
-      {student.outstanding_balance <= 0 && (
-        <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-emerald-500/10 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-emerald-950/30 border border-blue-200 dark:border-blue-800 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-900/60 border border-blue-200 dark:border-blue-700 flex items-center justify-center shrink-0">
-              <GraduationCap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-slate-800 dark:text-white font-cinzel uppercase">
-                  Academic Year Rollover Ready (100% Fully Paid)
-                </h4>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase font-cinzel bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  Cleared
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                {student.full_name} has zero outstanding balance for SY {student.school_year}. Ready for promotion and re-enrollment for the next academic year.
-              </p>
-            </div>
-          </div>
-          {!isAdmin && (
-            <button
-              onClick={handleRolloverEnroll}
-              disabled={enrollingRollover}
-              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-cinzel shadow-sm flex items-center justify-center gap-2 transition cursor-pointer shrink-0 disabled:opacity-50"
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>{enrollingRollover ? 'Processing...' : 'Enroll for Next SY'}</span>
-            </button>
-          )}
-        </div>
-      )}
 
       {/* ── System Payment Intelligence & Pattern Learning Engine ── */}
       {student.ai_payment_plan && (

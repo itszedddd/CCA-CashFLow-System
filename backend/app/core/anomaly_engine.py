@@ -1000,12 +1000,11 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
     next_action = None
 
     if total_outstanding <= 0.0:
-        strategy_type = "ACCOUNT_CLEARED_READY_FOR_ROLLOVER"
+        strategy_type = "ACCOUNT_CLEARED"
         strategy_title = "Account Cleared: 100% Fully Paid"
         verdict = (
             f"The AI has confirmed that all fee obligations for SY {student.school_year} are 100% satisfied. "
-            f"{student.full_name} has zero outstanding balance and is autonomously cleared with highest priority "
-            "for immediate Academic Year Rollover & Re-Enrollment into the next grade level."
+            f"{student.full_name} has zero outstanding balance and is autonomously cleared with highest priority."
         )
         risk_level = "Zero Risk (Cleared)"
         health_index = 100.0
@@ -1198,7 +1197,7 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
         ai_insight_text = (
             f"The system confirms {student.full_name}'s account is 100% fully settled for SY {student.school_year}. "
             f"A total of {total_payments_count} payment(s) were successfully credited. "
-            f"This student is autonomously cleared with top priority for immediate Academic Year Rollover and promotion to the next level."
+            f"This student is autonomously cleared with top priority. All fee obligations for SY {student.school_year} are fully settled."
         )
     elif total_payments_count > 0:
         ai_insight_text = (
@@ -1215,8 +1214,8 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
 
     if total_outstanding <= 0:
         dynamic_rec = (
-            f"Account fully settled. The system recommends proceeding with Academic Year Rollover to automatically "
-            f"promote {student.full_name} and generate fresh fee assessments for the new school year."
+            f"Account fully settled. No further payments are required for SY {student.school_year}. "
+            f"{student.full_name} has zero outstanding balance across all fee categories."
         )
     elif cluster_name == "Lump-Sum Advance Settler":
         target_cat_name = "Registration Fee" if reg_rem > 0 else ("Tuition Fee" if tuit_rem > 0 else "Books")

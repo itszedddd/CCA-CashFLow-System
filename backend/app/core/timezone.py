@@ -91,7 +91,7 @@ def generate_lrn_password(student_id: str, full_name: str = "") -> str:
     return f"{prefix}#0000"
 
 
-# ── Grade Progression & School Year Rollover Helpers ──
+# ── Grade Progression & School Year Helpers ──
 GRADE_PROGRESSION = {
     "Pre-Kinder": "Kindergarten",
     "Kindergarten": "Grade 1",
