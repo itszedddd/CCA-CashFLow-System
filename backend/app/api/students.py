@@ -186,25 +186,25 @@ def download_student_csv_template():
     # Representative sample rows demonstrating different student payment states:
     # 1. Partially paid student (paid registration, books, and partial tuition)
     writer.writerow([
-        "109283746501", "Juan Dela Cruz", "Grade 7", "Goodness", "Male",
+        "LRN-109283746501", "Juan Dela Cruz", "Grade 7", "Goodness", "Male",
         "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "5718.00", "5700.00", "6900.00", "0.00", "0.00", ""
     ])
     # 2. Fully paid student (all 5 fee categories settled in full)
     writer.writerow([
-        "109283746502", "Maria Clara Santos", "Grade 8", "Faithfulness", "Female",
+        "LRN-109283746502", "Maria Clara Santos", "Grade 8", "Faithfulness", "Female",
         "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "19060.00", "5700.00", "6900.00", "3000.00", "1500.00", ""
     ])
     # 3. Lump-sum advance payer (auto-allocates across Registration, Books, Tuition, etc.)
     writer.writerow([
-        "109283746503", "Joshua Ramos", "Kindergarten", "Joy", "Male",
+        "LRN-109283746503", "Joshua Ramos", "Kindergarten", "Joy", "Male",
         "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "", "", "", "", "", "12600.00"
     ])
     # 4. Enrolled student with zero prior payments (full balance remaining)
     writer.writerow([
-        "109283746504", "Ana Marie Reyes", "Grade 1", "Faith", "Female",
+        "LRN-109283746504", "Ana Marie Reyes", "Grade 1", "Faith", "Female",
         "Elena Reyes", "09192233445", "elena.reyes@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "0.00", "0.00", "0.00", "0.00", "0.00", "0.00"
     ])
