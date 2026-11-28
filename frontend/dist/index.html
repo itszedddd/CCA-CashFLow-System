@@ -4,13 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/[CCA L2.2] CCA Logo Icon Blue Transparent.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        const saved = localStorage.getItem('cca_cf_dark');
+        const dark = saved !== null ? saved === 'true' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+        document.querySelector('meta[name="color-scheme"]').content = saved === null ? 'light dark' : (dark ? 'dark' : 'light');
+      } catch {}
+    </script>
     <title>CCA FlowSys — Calvary Christian Academy</title>
     <meta name="description" content="CCA FlowSys — Calvary Christian Academy Student Fee Collections & ML Anomaly Detection System" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-CcKlegxX.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CE3PwhOQ.css">
+    <script type="module" crossorigin src="/assets/index-DUWlRwKK.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/api-CtCF5AJU.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BG14F4cG.css">
   </head>
   <body>
     <div id="root"></div>
