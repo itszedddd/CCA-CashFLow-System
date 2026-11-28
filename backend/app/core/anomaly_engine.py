@@ -711,36 +711,59 @@ class AnomalyEngine:
                 final_score = round(min(100.0, max(0.0, (0.50 * rule_component) + (0.50 * ml_component))), 1)
 
             # Re-threshold on ensemble score
-            if final_score >= 70.0:
+            if inc.anomaly_status == "Verified_Cleared":
+                # Respect manual cashier clearance: do NOT re-flag or re-score as critical!
+                final_score = 0.0
+                final_level = "Low"
+                final_status = "Verified_Cleared"
+                low_count += 1
+            elif final_score >= 70.0:
                 final_level = "High"
-                final_status = "Flagged" if inc.anomaly_status != "Verified_Cleared" else inc.anomaly_status
+                final_status = "Flagged"
                 high_count += 1
             elif final_score >= 40.0:
                 final_level = "Medium"
-                final_status = "Flagged" if inc.anomaly_status != "Verified_Cleared" else inc.anomaly_status
+                final_status = "Flagged"
                 med_count += 1
             else:
                 final_level = "Low"
-                final_status = "Normal" if inc.anomaly_status != "Verified_Cleared" else inc.anomaly_status
+                final_status = "Normal"
                 low_count += 1
 
             # Update database record
             inc.expected_amount = exp_amt
-            inc.anomaly_score = final_score
-            inc.anomaly_level = final_level
-            if inc.anomaly_status != "Verified_Cleared":
+            if inc.anomaly_status == "Verified_Cleared":
+                inc.anomaly_score = 0.0
+                inc.anomaly_level = "Low"
+                inc.envelope_verified = 1
+                # Preserve existing verified cashier reasons if present
+                if not inc.anomaly_reasons or "CASHIER_VERIFIED_CLEARED" not in inc.anomaly_reasons:
+                    inc.anomaly_reasons = json.dumps({
+                        "reasons": ["Transaction officially verified and cleared by Cashier."],
+                        "recommendations": ["Transaction cleared. All records confirmed compliant."],
+                        "ml_outlier_factor": 0.0,
+                        "sop_rule_factor": 0.0,
+                        "ai_decision": "CASHIER_VERIFIED_CLEARED",
+                        "ai_decision_label": "Verified & Cleared",
+                        "learned_cluster": "Cleared Transaction",
+                        "pattern_confidence": 100.0,
+                        "autonomous_rationale": "Transaction verified and approved against physical brown envelope by Cashier."
+                    })
+            else:
+                inc.anomaly_score = final_score
+                inc.anomaly_level = final_level
                 inc.anomaly_status = final_status
-            inc.anomaly_reasons = json.dumps({
-                "reasons": eval_res["reasons"],
-                "recommendations": eval_res["recommendations"],
-                "ml_outlier_factor": round(ml_component, 1),
-                "sop_rule_factor": round(rule_component, 1),
-                "ai_decision": eval_res.get("ai_decision", "AUTONOMOUS_APPROVED_ROUTINE_SCHEDULE"),
-                "ai_decision_label": eval_res.get("ai_decision_label", "Auto-Approved"),
-                "learned_cluster": eval_res.get("learned_cluster", "Structured Monthly Cadence"),
-                "pattern_confidence": eval_res.get("pattern_confidence", 95.0),
-                "autonomous_rationale": eval_res.get("autonomous_rationale", "Aligned with standard payment schedule."),
-            })
+                inc.anomaly_reasons = json.dumps({
+                    "reasons": eval_res["reasons"],
+                    "recommendations": eval_res["recommendations"],
+                    "ml_outlier_factor": round(ml_component, 1),
+                    "sop_rule_factor": round(rule_component, 1),
+                    "ai_decision": eval_res.get("ai_decision", "AUTONOMOUS_APPROVED_ROUTINE_SCHEDULE"),
+                    "ai_decision_label": eval_res.get("ai_decision_label", "Auto-Approved"),
+                    "learned_cluster": eval_res.get("learned_cluster", "Structured Monthly Cadence"),
+                    "pattern_confidence": eval_res.get("pattern_confidence", 95.0),
+                    "autonomous_rationale": eval_res.get("autonomous_rationale", "Aligned with standard payment schedule."),
+                })
 
             if final_status == "Flagged":
                 flagged_items.append({

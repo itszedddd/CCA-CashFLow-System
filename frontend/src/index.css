@@ -150,6 +150,33 @@ html.accessible-mode .dark {
   background: rgba(100, 116, 139, 0.7);
 }
 
+/* Enhanced Scanned Collection Ledger Horizontal Scrollbar */
+.ledger-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+.ledger-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.95);
+  border-radius: 8px;
+}
+.dark .ledger-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.95);
+}
+.ledger-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.55);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.ledger-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.9);
+}
+.dark .ledger-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.55);
+}
+.dark .ledger-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(165, 180, 252, 0.9);
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.4) transparent;

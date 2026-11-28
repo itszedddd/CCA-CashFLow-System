@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ShieldAlert, ShieldCheck, AlertTriangle, CheckCircle2,
   RefreshCw, Search, Filter, Info, Eye, Check, X,
-  FileCheck, ArrowRight, Sparkles, TrendingUp, Cpu, FileText
+  FileCheck, ArrowRight, Sparkles, TrendingUp, Cpu, FileText,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import api from '../api';
 import Modal from '../components/Modal';
@@ -23,6 +24,7 @@ export default function AnomalyDetection() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [cashierNotes, setCashierNotes] = useState('');
+  const tableContainerRef = useRef(null);
   const addToast = useToast();
 
   const currentUser = (() => {
@@ -98,6 +100,21 @@ export default function AnomalyDetection() {
           : 'Transaction flagged for manual correction',
         'info'
       );
+      // Immediately reflect verified clearance in local state
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === incomeId
+            ? {
+                ...t,
+                anomaly_status: action === 'verify_clear' ? 'Verified_Cleared' : 'Pending_Correction',
+                envelope_verified: action === 'verify_clear' ? 1 : t.envelope_verified,
+                anomaly_level: action === 'verify_clear' ? 'Low' : t.anomaly_level,
+                anomaly_score: action === 'verify_clear' ? 0.0 : t.anomaly_score,
+                cashier_notes: cashierNotes || t.cashier_notes,
+              }
+            : t
+        )
+      );
       setSelectedTx(null);
       setCashierNotes('');
       fetchTransactions();
@@ -114,6 +131,13 @@ export default function AnomalyDetection() {
         status: nextStatus,
         cashier_notes: nextStatus === 1 ? 'Verified in student brown envelope' : 'Marked pending envelope check',
       });
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === incomeId
+            ? { ...t, envelope_verified: nextStatus }
+            : t
+        )
+      );
       addToast(
         nextStatus === 1
           ? 'Physical record verified in Student Brown Envelope'
@@ -494,7 +518,7 @@ export default function AnomalyDetection() {
 
       {/* Flagged Transactions Ledger Table */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold font-cinzel uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Scanned Collection Ledger
@@ -503,13 +527,36 @@ export default function AnomalyDetection() {
               ({total} Total Records)
             </span>
           </div>
-          <span className="text-[10px] uppercase font-cinzel font-bold text-slate-400">
-            Sorted by Anomaly Score
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] uppercase font-cinzel font-bold text-slate-400 hidden sm:inline">
+              Scroll Ledger:
+            </span>
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => tableContainerRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}
+                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer shadow-xs"
+                title="Scroll Left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => tableContainerRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}
+                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer shadow-xs"
+                title="Scroll Right to Actions"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <span className="text-[10px] uppercase font-cinzel font-bold text-slate-400">
+              Sorted by Anomaly Score
+            </span>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        <div ref={tableContainerRef} className="overflow-x-auto ledger-scrollbar pb-3">
+          <table className="w-full text-left border-collapse text-xs min-w-[950px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700 text-[11px] font-bold font-cinzel text-slate-400 uppercase tracking-wider">
                 <th className="py-3 px-4">OR # & Date</th>
@@ -520,7 +567,9 @@ export default function AnomalyDetection() {
                 <th className="py-3 px-4 text-center">Envelope Status</th>
                 <th className="py-3 px-4 text-center">3-Level Risk</th>
                 <th className="py-3 px-4 text-center">Resolution</th>
-                <th className="py-3 px-4 text-center">Actions</th>
+                <th className="py-3 px-4 text-center sticky right-0 bg-slate-50 dark:bg-slate-800/95 backdrop-blur-xs z-10 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -542,7 +591,11 @@ export default function AnomalyDetection() {
                   <tr
                     key={tx.id}
                     className={`hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors ${
-                      tx.anomaly_level === 'High' ? 'bg-rose-50/20 dark:bg-rose-950/10' : ''
+                      tx.anomaly_status === 'Verified_Cleared'
+                        ? 'bg-emerald-50/20 dark:bg-emerald-950/10'
+                        : tx.anomaly_level === 'High'
+                        ? 'bg-rose-50/20 dark:bg-rose-950/10'
+                        : ''
                     }`}
                   >
                     <td className="py-3 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
@@ -589,26 +642,35 @@ export default function AnomalyDetection() {
                         onClick={() => handleToggleEnvelope(tx.id, tx.envelope_verified)}
                         title="Click to toggle Brown Envelope physical verification"
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
-                          tx.envelope_verified === 1
+                          tx.envelope_verified === 1 || tx.anomaly_status === 'Verified_Cleared'
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                             : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 hover:bg-emerald-50'
                         }`}
                       >
                         <FileCheck className="w-3 h-3" />
-                        {tx.envelope_verified === 1 ? 'Verified in Envelope' : 'Pending Check'}
+                        {tx.envelope_verified === 1 || tx.anomaly_status === 'Verified_Cleared'
+                          ? 'Verified in Envelope'
+                          : 'Pending Check'}
                       </button>
                     </td>
 
                     {/* 3-Level Risk Badge */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">
-                      {getBadgeForLevel(tx.anomaly_level, tx.anomaly_score)}
+                      {tx.anomaly_status === 'Verified_Cleared' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Cleared (0)
+                        </span>
+                      ) : (
+                        getBadgeForLevel(tx.anomaly_level, tx.anomaly_score)
+                      )}
                     </td>
 
                     {/* Resolution Status */}
                     <td className="py-3 px-4 text-center">
                       {tx.anomaly_status === 'Verified_Cleared' ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md">
-                          <Check className="w-3 h-3" /> Cleared
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
+                          <Check className="w-3 h-3 text-emerald-600" /> Cleared
                         </span>
                       ) : tx.anomaly_status === 'Pending_Correction' ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-md">
@@ -621,8 +683,8 @@ export default function AnomalyDetection() {
                       )}
                     </td>
 
-                    {/* Action */}
-                    <td className="py-3 px-4 text-center">
+                    {/* Sticky Action Column */}
+                    <td className="py-3 px-4 text-center sticky right-0 bg-white dark:bg-slate-800 z-10 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
                       <button
                         onClick={() => {
                           setSelectedTx(tx);
@@ -698,33 +760,54 @@ export default function AnomalyDetection() {
               </div>
             </div>
 
-            {/* Score & Risk Level Meter */}
-            <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase font-cinzel text-indigo-900 dark:text-indigo-200">
-                    Anomaly Score: {selectedTx.anomaly_score} / 100
-                  </span>
-                  {getBadgeForLevel(selectedTx.anomaly_level, selectedTx.anomaly_score)}
+            {/* Score & Risk Level Meter / Cleared Notice */}
+            {selectedTx.anomaly_status === 'Verified_Cleared' ? (
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold uppercase font-cinzel text-emerald-800 dark:text-emerald-300 block">
+                      Transaction Verified &amp; Cleared (Healthy)
+                    </span>
+                    <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80 mt-0.5">
+                      {selectedTx.cashier_notes || 'Confirmed compliant against physical envelope records.'}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Threshold: {selectedTx.anomaly_level === 'High' ? 'Critical (70–100)' : selectedTx.anomaly_level === 'Medium' ? 'Moderate (40–69)' : 'Healthy (0–39)'}
-                </p>
+                <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase font-cinzel bg-emerald-200/80 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200 shrink-0">
+                  Cleared
+                </span>
               </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase font-cinzel text-indigo-900 dark:text-indigo-200">
+                      Anomaly Score: {selectedTx.anomaly_score} / 100
+                    </span>
+                    {getBadgeForLevel(selectedTx.anomaly_level, selectedTx.anomaly_score)}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    Threshold: {selectedTx.anomaly_level === 'High' ? 'Critical (70–100)' : selectedTx.anomaly_level === 'Medium' ? 'Moderate (40–69)' : 'Healthy (0–39)'}
+                  </p>
+                </div>
 
-              <div className="w-full sm:w-48 bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    selectedTx.anomaly_level === 'High'
-                      ? 'bg-rose-500'
-                      : selectedTx.anomaly_level === 'Medium'
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${selectedTx.anomaly_score}%` }}
-                />
+                <div className="w-full sm:w-48 bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      selectedTx.anomaly_level === 'High'
+                        ? 'bg-rose-500'
+                        : selectedTx.anomaly_level === 'Medium'
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${selectedTx.anomaly_score}%` }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Why was this flagged? (Root Cause Insights) */}
             <div>
@@ -802,14 +885,14 @@ export default function AnomalyDetection() {
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
               >
                 <FileCheck className="w-4 h-4 text-emerald-600" />
-                {selectedTx.envelope_verified === 1 ? 'Mark Envelope Unchecked' : 'Verify in Envelope'}
+                {selectedTx.envelope_verified === 1 || selectedTx.anomaly_status === 'Verified_Cleared' ? 'Mark Envelope Unchecked' : 'Verify in Envelope'}
               </button>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleResolve(selectedTx.id, 'mark_correction')}
-                  className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/40 font-semibold transition"
+                  className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/40 font-semibold transition cursor-pointer"
                 >
                   Flag for Correction
                 </button>
@@ -817,9 +900,10 @@ export default function AnomalyDetection() {
                   type="button"
                   title="Verify and clear this transaction"
                   onClick={() => handleResolve(selectedTx.id, 'verify_clear')}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition font-cinzel uppercase tracking-wider"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition font-cinzel uppercase tracking-wider cursor-pointer shadow-sm flex items-center gap-1.5"
                 >
-                  Verify & Clear
+                  <Check className="w-4 h-4" />
+                  <span>{selectedTx.anomaly_status === 'Verified_Cleared' ? 'Re-Verify & Save' : 'Verify & Clear'}</span>
                 </button>
               </div>
             </div>

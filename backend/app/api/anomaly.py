@@ -222,13 +222,28 @@ def resolve_anomaly(
 
     if data.action == "verify_clear":
         income.anomaly_status = "Verified_Cleared"
+        income.envelope_verified = 1
+        income.anomaly_score = 0.0
+        income.anomaly_level = "Low"
+        notes_text = data.cashier_notes or "Verified against official records & physical envelope by Cashier."
+        income.cashier_notes = notes_text
+        income.anomaly_reasons = json.dumps({
+            "reasons": [f"Officially verified and cleared against source records by Cashier {current_user.full_name}."],
+            "recommendations": ["Transaction cleared. All records confirmed compliant with CCA cashier guidelines."],
+            "ml_outlier_factor": 0.0,
+            "sop_rule_factor": 0.0,
+            "ai_decision": "CASHIER_VERIFIED_CLEARED",
+            "ai_decision_label": "Verified & Cleared",
+            "learned_cluster": "Cleared Transaction",
+            "pattern_confidence": 100.0,
+            "autonomous_rationale": "Transaction verified and approved against physical brown envelope by Cashier."
+        })
         action_text = "Verified & Cleared Flagged Anomaly"
     else:
         income.anomaly_status = "Pending_Correction"
         action_text = "Flagged Anomaly for Correction"
-
-    if data.cashier_notes:
-        income.cashier_notes = data.cashier_notes
+        if data.cashier_notes:
+            income.cashier_notes = data.cashier_notes
 
     # Add audit log entry
     log = AuditLog(
