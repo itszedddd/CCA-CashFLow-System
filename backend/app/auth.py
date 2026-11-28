@@ -10,7 +10,7 @@ from .models.models import User, Student
 
 SECRET_KEY = "cca-cashflow-secret-key-2026-calvary-christian-academy"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 720  # 12 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 720
 
 import bcrypt
 
@@ -48,7 +48,6 @@ def _resolve_user_from_payload(payload: dict, db: Session) -> Optional[User]:
 
     clean_un = username.strip().lower()
 
-    # 1. Parent account resolution via Student LRN
     if role == "Parent":
         student = db.query(Student).filter(
             (func.lower(func.trim(Student.student_id)) == clean_un) |
@@ -69,7 +68,6 @@ def _resolve_user_from_payload(payload: dict, db: Session) -> Optional[User]:
             return user
         return None
 
-    # 2. Staff / Cashier / Admin resolution
     user = db.query(User).filter(
         (func.lower(func.trim(User.username)) == clean_un) |
         (func.lower(func.trim(User.username)) == f"{clean_un}@cca.edu.ph")
@@ -98,7 +96,6 @@ def get_optional_current_user(
     token: Optional[str] = Depends(oauth2_scheme_optional),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """Optional user dependency: does not raise 401 if token is omitted."""
     if not token:
         return None
     try:
@@ -109,7 +106,6 @@ def get_optional_current_user(
 
 
 def require_role(*roles):
-    """Dependency: restrict endpoint to specific roles."""
     allowed = {r.lower() for r in roles}
 
     def role_checker(current_user: User = Depends(get_current_user)):

@@ -32,15 +32,9 @@ def get_dashboard_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Revenue & Student Collection metrics strictly within CCA FlowSys study scope
-    (Expenses, Disbursements, Budget Allocations, and Pending Expense Vouchers excluded).
-    Includes 12-month School Revenue Comparison: Year 2026 vs Year 2025.
-    """
     now = ph_now()
     month_prefix = now.strftime("%Y-%m")
 
-    # Total collections / school revenue for school year
     total_income = db.query(func.sum(Income.amount)).filter(
         Income.school_year == school_year, Income.is_voided == 0
     ).scalar() or 0.0
@@ -50,7 +44,6 @@ def get_dashboard_stats(
         Income.is_voided == 0
     ).scalar() or 0.0
 
-    # Student assessment & collection rate stats
     students = db.query(Student).all()
     total_students = len(students)
     total_expected = 0.0
@@ -71,7 +64,6 @@ def get_dashboard_stats(
     total_outstanding = max(0.0, total_expected - total_student_paid)
     collection_rate = round((total_student_paid / total_expected * 100), 1) if total_expected > 0 else 0.0
 
-    # Income by category (Collections breakdown)
     income_cats = db.query(IncomeCategory).all()
     income_by_category = []
     for cat in income_cats:
@@ -83,7 +75,6 @@ def get_dashboard_stats(
         if amt > 0:
             income_by_category.append({"name": cat.name, "amount": amt, "color": cat.color})
 
-    # Grade-level collection summary for Dashboard companion visualization
     grade_collections = []
     for g in ACADEMIC_GRADES:
         g_students = [s for s in students if s.grade_level == g]
@@ -96,7 +87,6 @@ def get_dashboard_stats(
             "outstanding": round(max(0.0, g_due - g_paid), 2),
         })
 
-    # 12-Month School Revenue Comparison: Year 2026 vs Year 2025
     revenue_yoy = []
     for m_num, m_label in CALENDAR_MONTHS:
         prefix_2026 = f"2026-{m_num:02d}"
@@ -118,7 +108,6 @@ def get_dashboard_stats(
             "revenue_2025": round(rev_2025, 2),
         })
 
-    # Recent Financial Transactions (Income / Collections ONLY)
     recent_incomes = db.query(Income).filter(Income.is_voided == 0).order_by(
         Income.date_recorded.desc()
     ).limit(10).all()
@@ -160,18 +149,11 @@ def get_end_of_year_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Complete 8-Section End-of-School-Year Cashflow Report per System Inspection Report v0.0:
-    Sections 1–8 covering Financial Summary, Fee Categories, Grade Levels, Monthly Summary,
-    Student Payment Status, Outstanding Balances, Transaction Summary, ML Anomaly Detection Summary,
-    plus institutional accountability signatories.
-    """
     students = db.query(Student).order_by(Student.grade_level, Student.full_name).all()
     all_incomes = db.query(Income).filter(Income.school_year == school_year).all()
     active_incomes = [i for i in all_incomes if not i.is_voided]
     voided_incomes = [i for i in all_incomes if i.is_voided]
 
-    # Section 1 & Section 5 aggregates
     total_expected = 0.0
     total_actual_from_schedules = 0.0
     total_overpayments = 0.0
@@ -225,7 +207,6 @@ def get_end_of_year_report(
     total_net_collections = max(0.0, total_actual_collections - total_refunds_adjustments)
     collection_rate = round((total_actual_from_schedules / total_expected * 100), 1) if total_expected > 0 else 0.0
 
-    # Section 2: Collection Summary by Fee Category
     fee_categories = ["Tuition Fee", "Registration Fee", "Books", "Energy Fee", "Other Fees"]
     by_fee_category = []
     for cat_name in fee_categories:
@@ -240,7 +221,6 @@ def get_end_of_year_report(
             "outstanding": round(out_amt, 2),
         })
 
-    # Section 3: Collection Summary by Grade Level
     by_grade_level = []
     grades_order = ["Pre-Kinder"] + ACADEMIC_GRADES
     for g in grades_order:
@@ -259,10 +239,8 @@ def get_end_of_year_report(
             "outstanding": round(g_out, 2),
         })
 
-    # Section 4: Monthly Collection Summary (Academic calendar June - May)
     monthly_summary = []
     for ym_prefix, month_label in ACADEMIC_MONTHS:
-        # Match either 2026-MM / 2027-MM or month number MM within active_incomes
         target_year, target_month = ym_prefix.split("-")
         m_items = [
             inc for inc in active_incomes
@@ -280,13 +258,11 @@ def get_end_of_year_report(
             "transaction_count": len(m_items),
         })
 
-    # Section 7: Transaction & Payment Summary
     total_cash = sum(i.amount for i in active_incomes if (i.payment_method or "Cash").lower() == "cash")
     total_check = sum(i.amount for i in active_incomes if (i.payment_method or "").lower() == "check")
     refunded_count = sum(1 for i in voided_incomes if "refund" in (i.remarks or "").lower())
     adjusted_count = sum(1 for i in active_incomes if "adjust" in (i.remarks or "").lower() or "adjust" in (i.cashier_notes or "").lower())
 
-    # Section 8: ML Anomaly Detection Summary
     unusual_amounts = 0
     incorrect_classification = 0
     potential_duplicates = 0
@@ -374,7 +350,6 @@ def get_end_of_year_report(
     }
 
 
-# ── Global Search (Incomes & Students Only) ──
 @router.get("/search")
 def search_records(
     q: str = Query("", min_length=1),
@@ -422,7 +397,6 @@ def search_records(
     }
 
 
-# ── Audit Logs ──
 @router.get("/audit-logs")
 def list_audit_logs(
     skip: int = 0, limit: int = 50,

@@ -24,7 +24,6 @@ export default function AdminStudents() {
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState('All');
 
-  // Create / Edit modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -42,7 +41,6 @@ export default function AdminStudents() {
     address: 'City of San Jose del Monte, Bulacan',
   });
 
-  // CSV Modal
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
   const [importingCsv, setImportingCsv] = useState(false);
@@ -206,7 +204,6 @@ export default function AdminStudents() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -242,7 +239,6 @@ export default function AdminStudents() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
@@ -267,7 +263,6 @@ export default function AdminStudents() {
         </select>
       </div>
 
-      {/* Student Accounts Table */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
@@ -370,7 +365,6 @@ export default function AdminStudents() {
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
@@ -527,7 +521,6 @@ export default function AdminStudents() {
                 </div>
               </div>
 
-              {/* Default Password Section */}
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest font-cinzel flex items-center gap-1.5">
@@ -543,7 +536,6 @@ export default function AdminStudents() {
                 </p>
               </div>
 
-              {/* Fee Schedule Information */}
               <div className="p-3.5 bg-blue-50/90 dark:bg-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-[11px] leading-relaxed">
@@ -577,7 +569,6 @@ export default function AdminStudents() {
         </div>
       )}
 
-      {/* CSV Upload Modal */}
       {showCsvModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">

@@ -1,10 +1,3 @@
-"""
-ML-Based Anomaly Detection Engine for CCA FlowSys (CashFlow Management System):
-- Scikit-Learn IsolationForest outlier scoring
-- Multi-attribute heuristics (expected fee schedule deviation, student history, cross-category mismatch, void clustering)
-- 3-Level Anomaly Threshold (Low/Healthy: 0-39, Medium/Verification: 40-69, High/Critical: 70-100)
-- Generative AI root-cause insights and Cashier verification recommendations
-"""
 
 import json
 import math
@@ -21,7 +14,6 @@ except Exception:
 from sqlalchemy.orm import Session
 from ..models.models import Income, IncomeCategory, AuditLog
 
-# Official CCA SY 2026-2027 Fee Benchmarks
 CCA_FEE_BENCHMARKS = {
     "Tuition Fees": {
         "monthly_cbc": 1906.0,
@@ -54,12 +46,10 @@ CCA_FEE_BENCHMARKS = {
 
 
 def _safe_mean(values: List[float]) -> float:
-    """Compute arithmetic mean without requiring numpy."""
     return float(sum(values) / len(values)) if values else 0.0
 
 
 def _safe_std(values: List[float], mean_val: Optional[float] = None) -> float:
-    """Compute population standard deviation without requiring numpy."""
     if len(values) <= 1:
         return 0.0
     m = _safe_mean(values) if mean_val is None else mean_val
@@ -68,11 +58,9 @@ def _safe_std(values: List[float], mean_val: Optional[float] = None) -> float:
 
 
 def _parse_grade_tier(grade_level: Optional[str]) -> str:
-    """Resolve grade level string safely to 'kinder', 'g1_6', or 'g7_10' without substring collisions."""
     gl = (grade_level or "").strip().lower()
     if any(k in gl for k in ["pre-kinder", "pre kinder", "kinder"]):
         return "kinder"
-    # Check 7-10 BEFORE 1-6 so 'grade 10' never matches '1'
     if any(k in gl for k in ["grade 10", "grade 9", "grade 8", "grade 7", "g10", "g9", "g8", "g7", "10", "7", "8", "9"]):
         return "g7_10"
     if any(k in gl for k in ["grade 1", "grade 2", "grade 3", "grade 4", "grade 5", "grade 6", "g1", "g2", "g3", "g4", "g5", "g6", "1", "2", "3", "4", "5", "6"]):
@@ -81,7 +69,6 @@ def _parse_grade_tier(grade_level: Optional[str]) -> str:
 
 
 def _get_valid_tuition_monthly_tiers(grade_level: Optional[str] = None) -> List[float]:
-    """Return valid monthly tuition options (Non-Member and CBC Member) for a grade tier."""
     if not grade_level:
         return [1606.0, 1701.0, 1706.0, 1801.0, 1906.0, 2006.0]
     tier = _parse_grade_tier(grade_level)
@@ -93,7 +80,6 @@ def _get_valid_tuition_monthly_tiers(grade_level: Optional[str] = None) -> List[
 
 
 def _get_category_expected_fee(category_name: str, grade_level: Optional[str] = None) -> float:
-    """Helper to determine benchmark expected fee based on category name and grade level."""
     cat_lower = (category_name or "").lower()
     tier = _parse_grade_tier(grade_level) if grade_level else None
 
@@ -139,7 +125,6 @@ def _get_category_expected_fee(category_name: str, grade_level: Optional[str] = 
 
 
 def _get_category_fee_ceiling(category_name: str, grade_level: Optional[str] = None) -> float:
-    """Returns the maximum official assessment ceiling for a category."""
     cat_lower = (category_name or "").lower()
     tier = _parse_grade_tier(grade_level) if grade_level else None
 
@@ -192,20 +177,10 @@ def evaluate_single_transaction(
     duplicate_count: int = 0,
     envelope_verified: int = 1,
 ) -> Dict[str, Any]:
-    """
-    Evaluates a single transaction on-the-fly and produces:
-    - anomaly_score: 0 to 100
-    - anomaly_level: 'Low' (0-39), 'Medium' (40-69), 'High' (70-100)
-    - reasons: list of human-readable justifications
-    - recommendations: specific cashier instructions
-    """
     reasons = []
     recommendations = []
     anomaly_points = 0.0
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 0-A: Brown Envelope Verification Check (CCA Cashier SOP)
-    # ──────────────────────────────────────────────────────────
     if envelope_verified == 0:
         anomaly_points += 45.0
         reasons.append(
@@ -221,8 +196,6 @@ def evaluate_single_transaction(
     cat_name = category_name or "General"
     cat_lower = cat_name.lower()
 
-    # ── Pre-compute: Multi-Month Advance Payment flag ──
-    # For tuition/energy, check if amount is an exact multiple of a valid monthly fee tier (Non-Member or CBC Member)
     is_valid_multi_month = False
     multi_month_count = 0
     matched_monthly_fee = 0.0
@@ -247,12 +220,8 @@ def evaluate_single_transaction(
                 multi_month_count = nearest_months
                 matched_monthly_fee = monthly_fee_for_cat
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 0: Outstanding Balance Overpayment (Direct Ledger Check)
-    # ──────────────────────────────────────────────────────────
     if current_balance is not None:
         if current_balance <= 0.0 and amount > 0:
-            # Student already has zero remaining balance (Already Fully Paid)
             anomaly_points += 90.0
             reasons.append(
                 f"CRITICAL OVERPAYMENT: Student {payer_name or 'account'} has ₱0.00 outstanding balance "
@@ -264,7 +233,6 @@ def evaluate_single_transaction(
         elif current_balance > 0.0 and amount > current_balance:
             overpay_bal_diff = amount - current_balance
             overpay_bal_pct = (overpay_bal_diff / current_balance) * 100.0
-            # Guaranteed High Anomaly points (>= 75.0)
             added_pts = min(95.0, 75.0 + (overpay_bal_diff / current_balance) * 20.0)
             anomaly_points += added_pts
             reasons.append(
@@ -275,13 +243,9 @@ def evaluate_single_transaction(
                 f"Adjust payment amount to match exact outstanding balance (₱{current_balance:,.2f}) or verify if advance credit across categories is intended."
             )
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 1: Expected Fee Schedule Deviation (SOP Feature #2)
-    # ──────────────────────────────────────────────────────────
     fee_ceiling = max(expected_amount, _get_category_fee_ceiling(category_name, grade_level))
     if fee_ceiling > 0:
         if amount > fee_ceiling:
-            # Overpayment beyond official fee ceiling (e.g. > ₱19,060 tuition, > ₱5,700 reg, > ₱3,000 energy)
             overpay_diff = amount - fee_ceiling
             abs_diff_pct = (overpay_diff / fee_ceiling) * 100.0
             anomaly_points += min(95.0, 75.0 + (overpay_diff / fee_ceiling) * 20.0)
@@ -296,7 +260,6 @@ def evaluate_single_transaction(
             diff_ratio = (amount - expected_amount) / expected_amount
             abs_diff_pct = abs(diff_ratio) * 100.0
             if not is_partial:
-                # Underpayment without marking as partial
                 anomaly_points += 40.0
                 reasons.append(
                     f"Payment (₱{amount:,.2f}) is lower than expected fee (₱{expected_amount:,.2f}) "
@@ -306,7 +269,6 @@ def evaluate_single_transaction(
                     f"Mark transaction as Partial Payment and record the remaining balance (₱{expected_amount - amount:,.2f})."
                 )
             else:
-                # Marked as partial: check if amount is an irregular fraction
                 rem = expected_amount - amount
                 if amount < 100.0:
                     anomaly_points += 30.0
@@ -314,10 +276,6 @@ def evaluate_single_transaction(
                 else:
                     anomaly_points += 15.0
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 2: Cross-Category Pattern Mismatch
-    # ──────────────────────────────────────────────────────────
-    # Check if amount matches Tuition rather than miscellaneous or energy
     if "energy" in cat_lower and amount in [1606.0, 1701.0, 1801.0, 1906.0, 2006.0]:
         anomaly_points += 75.0
         reasons.append(
@@ -333,9 +291,6 @@ def evaluate_single_transaction(
             f"Registration Fee deviation: CCA official registration fee is fixed at ₱5,700.00; entered amount is ₱{amount:,.2f}."
         )
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 3: Student Historical Payment Pattern Inconsistency
-    # ──────────────────────────────────────────────────────────
     if student_historical_avg and student_historical_avg > 0:
         ratio_to_hist = amount / student_historical_avg
         if ratio_to_hist > 2.8:
@@ -352,9 +307,6 @@ def evaluate_single_transaction(
                 f"({ratio_to_hist:.1f}x of ₱{student_historical_avg:,.2f})."
             )
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 4: Unusual Concentration of Corrections or Voids
-    # ──────────────────────────────────────────────────────────
     if recent_void_count > 0:
         void_penalty = min(35.0, recent_void_count * 15.0)
         anomaly_points += void_penalty
@@ -364,9 +316,6 @@ def evaluate_single_transaction(
         )
         recommendations.append("Audit prior voided records to prevent accidental duplicate entries.")
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 5: Category Statistical Outlier (Z-Score / Distribution)
-    # ──────────────────────────────────────────────────────────
     if category_mean and category_std and category_std > 0:
         z_score = abs(amount - category_mean) / category_std
         if z_score > 3.0:
@@ -381,9 +330,6 @@ def evaluate_single_transaction(
                 f"Moderate Variance (Z={z_score:.1f}) relative to category distribution (₱{category_mean:,.2f})."
             )
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 6: Duplicate / Rapid Submission Detection
-    # ──────────────────────────────────────────────────────────
     if duplicate_count > 0:
         anomaly_points += 80.0
         reasons.append(
@@ -394,20 +340,16 @@ def evaluate_single_transaction(
             "Void the duplicate transaction or confirm with student's brown envelope if multiple installments were intended."
         )
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 7: Cross-Category Fee Dumping Detection
-    # ──────────────────────────────────────────────────────────
     if not is_valid_multi_month:
         _cross_cat_benchmarks = {
             "tuition": [1606.0, 1701.0, 1706.0, 1801.0, 1906.0, 2006.0],
             "registration": [5700.0],
             "book": [5500.0, 6300.0, 6900.0, 8500.0, 9200.0],
-            # Exclude 1500.0 from Energy cross-cat because 1500.0 is also the official Other Fees benchmark
             "energy": [150.0, 300.0, 3000.0],
         }
         for other_cat_key, benchmarks in _cross_cat_benchmarks.items():
             if other_cat_key in cat_lower:
-                continue  # skip the category the payment is actually filed under
+                continue
             for bench_val in benchmarks:
                 if bench_val > 0 and (abs(amount - bench_val) <= 1.0 or abs(amount - bench_val) / bench_val < 0.005):
                     other_label = other_cat_key.replace("book", "Books & Materials").replace(
@@ -421,11 +363,8 @@ def evaluate_single_transaction(
                     recommendations.append(
                         f"Verify brown envelope: this payment may belong under {other_label} instead of {cat_name}."
                     )
-                    break  # one match per foreign category is enough
+                    break
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 8: Multi-Month Advance Payment Validation
-    # ──────────────────────────────────────────────────────────
     if "tuition" in cat_lower or "energy" in cat_lower:
         base_monthly = matched_monthly_fee if is_valid_multi_month else _get_category_expected_fee(cat_name, grade_level)
         min_monthly = min(_get_valid_tuition_monthly_tiers(grade_level)) if "tuition" in cat_lower else base_monthly
@@ -452,19 +391,13 @@ def evaluate_single_transaction(
                     "Confirm payment breakdown with student or parent. Amount may combine fees from multiple categories."
                 )
 
-    # Base noise baseline for healthy entries
     if not reasons:
         anomaly_points = max(2.0, min(18.0, abs(amount % 100) / 10.0))
         reasons.append("Payment amount and classification align with established CCA fee benchmarks and historical data.")
         recommendations.append("Record verified. Proceed with regular collection receipt issuance.")
 
-    # Cap score strictly between 0 and 100
     anomaly_score = round(min(100.0, max(0.0, anomaly_points)), 1)
 
-    # 3-Level Threshold:
-    # Low: 0 - 39
-    # Medium: 40 - 69
-    # High: 70 - 100
     if anomaly_score >= 70.0:
         anomaly_level = "High"
         anomaly_status = "Flagged"
@@ -475,9 +408,6 @@ def evaluate_single_transaction(
         anomaly_level = "Low"
         anomaly_status = "Normal"
 
-    # ──────────────────────────────────────────────────────────
-    # CHECK 5: Autonomous AI Decision & Learned Pattern Assignment
-    # ──────────────────────────────────────────────────────────
     if current_balance is not None and current_balance <= 0.0 and amount > 0:
         ai_decision = "CRITICAL_OVERPAYMENT_BLOCKED"
         ai_decision_label = "Autonomous Action: Blocked Overpayment"
@@ -561,31 +491,17 @@ def evaluate_single_transaction(
 
 
 class AnomalyEngine:
-    """
-    Ensemble ML Anomaly Detector combining Isolation Forest with deterministic heuristics
-    across the entire CCA CashFlow transaction ledger.
-    """
 
     def __init__(self, db: Session):
         self.db = db
 
     def train_and_scan_all(self, persist: bool = True) -> Dict[str, Any]:
-        """
-        Runs IsolationForest on all active transactions, computes multi-attribute
-        anomaly scores, and returns full telemetry.
-
-        When persist=False (used by the read-only summary endpoint), scores and
-        statuses are computed for telemetry only and are NOT written back to the
-        database. This prevents a dashboard refresh from overwriting a cashier's
-        verified clearance.
-        """
         incomes = self.db.query(Income).filter(Income.is_voided == 0).all()
         if not incomes:
             return {"total_analyzed": 0, "health_score": 100.0, "message": "No income records found to analyze."}
 
         categories = {c.id: c for c in self.db.query(IncomeCategory).all()}
 
-        # 1. Compute category statistics (pure-Python safe when numpy is not installed)
         cat_stats = {}
         for cat_id, cat in categories.items():
             cat_incomes = [float(inc.amount) for inc in incomes if inc.category_id == cat_id]
@@ -603,7 +519,6 @@ class AnomalyEngine:
                     "expected": cat.expected_amount or 0.0,
                 }
 
-        # 2. Compute student historical payment averages (by student_id_ref FK, fallback to payer_name)
         student_history_by_id = {}
         student_history_by_name = {}
         for inc in incomes:
@@ -618,7 +533,6 @@ class AnomalyEngine:
         student_avg_by_id = {sid: _safe_mean(amounts) for sid, amounts in student_history_by_id.items()}
         student_avg_by_name = {name: _safe_mean(amounts) for name, amounts in student_history_by_name.items()}
 
-        # 3. Compute recent voids per payer
         voided_counts = {}
         voided_incomes = self.db.query(Income).filter(Income.is_voided == 1).all()
         for v in voided_incomes:
@@ -626,8 +540,6 @@ class AnomalyEngine:
             if pname:
                 voided_counts[pname] = voided_counts.get(pname, 0) + 1
 
-        # 4. Prepare feature vectors for IsolationForest
-        # Features: [log(amount + 1), *one_hot_category, expected_diff_ratio, ratio_to_cat_mean, is_partial]
         all_cat_ids = sorted(categories.keys())
         feature_matrix = []
         for inc in incomes:
@@ -637,7 +549,6 @@ class AnomalyEngine:
             ratio_mean = (inc.amount / c_mean) if c_mean > 0 else 1.0
             exp_diff = (abs(inc.amount - expected) / expected) if expected > 0 else 0.0
 
-            # One-hot encode category_id instead of using raw integer
             one_hot_cat = [1.0 if inc.category_id == cid else 0.0 for cid in all_cat_ids]
 
             feature_matrix.append([
@@ -648,23 +559,17 @@ class AnomalyEngine:
                 1.0 if inc.is_partial else 0.0,
             ])
 
-        # 5. Fit IsolationForest if enough samples and scikit-learn is available
         if SKLEARN_AVAILABLE and len(feature_matrix) >= 10:
             engine_mode = "IsolationForest (scikit-learn)"
             X = np.array(feature_matrix)
-            # Adaptive contamination: use 'auto' to prevent data-poisoning over time
             iso = IsolationForest(n_estimators=100, contamination="auto", random_state=42)
             iso.fit(X)
-            # decision_function: lower means more anomalous (negative for outliers)
             raw_scores = iso.decision_function(X)
-            # Normalize to 0-70 range (invert so higher is more anomalous)
             min_s, max_s = float(np.min(raw_scores)), float(np.max(raw_scores))
             denom = (max_s - min_s) if max_s != min_s else 1.0
             iso_anomaly_scores = [float((max_s - s) / denom * 70.0) for s in raw_scores]
         else:
             engine_mode = "Statistical Outlier Model (Pure Python)"
-            # Normalized statistical outlier scoring when scikit-learn isn't installed:
-            # evaluates per-category Z-score deviation and expected-ratio distance, scaled 0-70
             iso_anomaly_scores = []
             for inc in incomes:
                 c_stat = cat_stats.get(inc.category_id, {})
@@ -673,7 +578,6 @@ class AnomalyEngine:
                 z_dev = (abs(float(inc.amount) - c_mean) / c_std) if c_std > 0 else 0.0
                 iso_anomaly_scores.append(round(min(70.0, max(0.0, z_dev * 15.0)), 1))
 
-        # 6. Evaluate each income and store results
         high_count = 0
         med_count = 0
         low_count = 0
@@ -704,10 +608,8 @@ class AnomalyEngine:
                 envelope_verified=inc.envelope_verified if inc.envelope_verified is not None else 1,
             )
 
-            # Combine rule-based score with ML Isolation Forest score
             ml_component = iso_anomaly_scores[idx]
             rule_component = eval_res["anomaly_score"]
-            # Weighted ensemble: Do not allow ML baseline to suppress high or medium deterministic SOP rule violations
             if rule_component >= 70.0:
                 final_score = max(rule_component, round((0.40 * rule_component) + (0.60 * ml_component), 1))
             elif rule_component >= 40.0:
@@ -715,9 +617,7 @@ class AnomalyEngine:
             else:
                 final_score = round(min(100.0, max(0.0, (0.50 * rule_component) + (0.50 * ml_component))), 1)
 
-            # Re-threshold on ensemble score
             if inc.anomaly_status == "Verified_Cleared":
-                # Respect manual cashier clearance: do NOT re-flag or re-score as critical!
                 final_score = 0.0
                 final_level = "Low"
                 final_status = "Verified_Cleared"
@@ -735,15 +635,12 @@ class AnomalyEngine:
                 final_status = "Normal"
                 low_count += 1
 
-            # Persist only on an explicit scan. Summary reads compute the same
-            # telemetry but must leave stored verification state untouched.
             if persist:
                 inc.expected_amount = exp_amt
                 if inc.anomaly_status == "Verified_Cleared":
                     inc.anomaly_score = 0.0
                     inc.anomaly_level = "Low"
                     inc.envelope_verified = 1
-                    # Preserve existing verified cashier reasons if present
                     if not inc.anomaly_reasons or "CASHIER_VERIFIED_CLEARED" not in inc.anomaly_reasons:
                         inc.anomaly_reasons = json.dumps({
                             "reasons": ["Transaction officially verified and cleared by Cashier."],
@@ -793,10 +690,8 @@ class AnomalyEngine:
         total = len(incomes)
         healthy_pct = round(((low_count + (med_count * 0.5)) / total * 100.0), 1) if total > 0 else 100.0
 
-        # Extract learned behavioral patterns across all historical transactions
         learned_patterns = self._extract_learned_behavioral_patterns(incomes)
 
-        # 7. Generate Executive Generative Insights
         generative_insights = self._generate_executive_insights(
             total=total,
             low=low_count,
@@ -826,13 +721,9 @@ class AnomalyEngine:
         }
 
     def _extract_learned_behavioral_patterns(self, incomes: List[Income]) -> List[Dict[str, Any]]:
-        """
-        Dynamically clusters historical transactions into 3 distinct learned behavioral patterns
-        exhibiting empirical traits, transaction volumes, channel preferences, and autonomous policies.
-        """
-        c1_items = []  # Lump-Sum Advance Settlers
-        c2_items = []  # Structured Monthly Cadence
-        c3_items = []  # Staggered Micro-Payers
+        c1_items = []
+        c2_items = []
+        c3_items = []
 
         for inc in incomes:
             amt = float(inc.amount or 0.0)
@@ -921,7 +812,6 @@ class AnomalyEngine:
         cat_stats: dict,
         categories: dict,
     ) -> Dict[str, Any]:
-        """Creates narrative generative insights explaining detected patterns to the Cashier."""
         summary = (
             f"The CCA FlowSys ML Anomaly Detection model analyzed {total} active collection transactions. "
             f"Overall system ledger health is currently rated at {healthy_pct}%. "
@@ -964,14 +854,6 @@ class AnomalyEngine:
 
 
 def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None) -> Dict[str, Any]:
-    """
-    Autonomous AI Decision & Payment Planning Engine for an individual student:
-    - Learns from the student's historical payment methods and amounts.
-    - Inspects remaining unpaid fee schedules across Tuition, Registration, Books, Energy, Other Fees.
-    - Autonomously decides the optimal settlement strategy and prioritizes which fee should be paid first.
-    - Generates actionable step-by-step payment schedule recommendations with rationale.
-    """
-    # 1. Inspect fee schedules for active school year
     schedules = [fs for fs in getattr(student, "fee_schedules", []) if not fs.school_year or fs.school_year == student.school_year]
     if not schedules:
         schedules = getattr(student, "fee_schedules", [])
@@ -997,7 +879,6 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
     energy_rem = cat_balances.get("Energy Fee", {}).get("remaining", 0.0)
     other_rem = cat_balances.get("Other Fees", {}).get("remaining", 0.0)
 
-    # 2. Learn behavioral pattern from past payments
     payments = getattr(student, "payments", []) or []
     valid_payments = [p for p in payments if not getattr(p, "is_voided", 0)]
 
@@ -1023,7 +904,6 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
         pref_channel = "Cash at Cashier's Counter"
         cluster_desc = "Prefers flexible installment amounts (₱500 - ₱1,200); benefits from structured bi-weekly pacing."
 
-    # 3. Autonomous AI Strategy Decision
     monthly_tuition_options = _get_valid_tuition_monthly_tiers(student.grade_level)
     target_monthly_tuition = monthly_tuition_options[0] if monthly_tuition_options else 1906.0
 
@@ -1130,7 +1010,6 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
             "button_label": f"Apply AI Plan: Pay Tuition Installment (₱{installment:,.2f})",
         }
     else:
-        # Tuition & Registration fully paid; only auxiliary fees remain
         target_cat = "Books" if books_rem > 0 else ("Energy Fee" if energy_rem > 0 else "Other Fees")
         target_amt = books_rem if books_rem > 0 else (energy_rem if energy_rem > 0 else other_rem)
         strategy_type = "FAST_TRACK_FULL_CLEARANCE"
@@ -1158,7 +1037,6 @@ def generate_student_ai_payment_plan(student: Any, db: Optional[Session] = None)
             "button_label": f"Apply AI Plan: Settle {target_cat} (₱{target_amt:,.2f})",
         }
 
-    # ── 4. Compute Learned Pattern Analytics & System Insight ──
     from datetime import datetime as _dt, timedelta as _td
 
     payment_dates = []

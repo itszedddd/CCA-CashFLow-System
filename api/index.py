@@ -3,16 +3,10 @@ import sys
 import shutil
 import urllib.parse
 
-# Ensure backend directory is in sys.path
 backend_dir = os.path.join(os.path.dirname(__file__), "..", "backend")
 if backend_dir not in sys.path:
     sys.path.insert(0, os.path.abspath(backend_dir))
 
-# Set database URL for serverless environment if on Vercel.
-# A configured DATABASE_URL (e.g. Postgres/Neon/Supabase) is persistent and must
-# be respected. The /tmp SQLite copy below is only an ephemeral demo fallback:
-# serverless /tmp is per-instance and is reset on cold starts, so verification
-# changes made in one invocation would disappear in the next one.
 if os.environ.get("VERCEL") and not os.environ.get("DATABASE_URL"):
     print("WARNING: DATABASE_URL is not configured on Vercel; using ephemeral "
           "/tmp/cashflow.db. Saved changes will not persist across instances.")
@@ -37,7 +31,6 @@ if os.environ.get("VERCEL") and not os.environ.get("DATABASE_URL"):
 
 from app.main import app as fastapi_app
 
-# ASGI Wrapper to intercept Vercel serverless request scope before FastAPI routing
 class VercelASGIApp:
     def __init__(self, inner_app):
         self.inner_app = inner_app
@@ -47,7 +40,6 @@ class VercelASGIApp:
             raw_qs = scope.get("query_string", b"").decode("utf-8", "ignore")
             headers = dict(scope.get("headers", []))
             
-            # Check __path query parameter from Vercel rewrite: /api/(.*) -> /api/index.py?__path=$1
             q_dict = urllib.parse.parse_qs(raw_qs)
             if "__path" in q_dict:
                 sub_path = q_dict.pop("__path")[0].lstrip("/")

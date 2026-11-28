@@ -49,7 +49,6 @@ export default function AdminUsers({ currentUser }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -71,7 +70,6 @@ export default function AdminUsers({ currentUser }) {
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-cinzel">Total Staff Accounts</p>
@@ -91,7 +89,6 @@ export default function AdminUsers({ currentUser }) {
         </div>
       </div>
 
-      {/* Role Scope Matrix */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs">
           <div className="flex items-center gap-2 mb-2">
@@ -128,7 +125,6 @@ export default function AdminUsers({ currentUser }) {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
@@ -152,7 +148,6 @@ export default function AdminUsers({ currentUser }) {
         </select>
       </div>
 
-      {/* Users Table (Strictly Read-Only) */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">

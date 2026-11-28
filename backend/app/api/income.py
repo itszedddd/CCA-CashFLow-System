@@ -59,9 +59,7 @@ def create_income(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Uses top-level imports for anomaly_engine and json
 
-    # Validate category
     cat = db.query(IncomeCategory).filter(IncomeCategory.id == data.category_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="Income category not found")
@@ -70,21 +68,13 @@ def create_income(
     is_partial = data.is_partial or 0
     rem_balance = data.remaining_balance or 0.0
 
-    # ────────────────────────────────────────────────────────
-    # FEATURE #2 & #6: Automated Validation, Computation & Anomaly Detection
-    # ────────────────────────────────────────────────────────
     if expected_amt > 0:
         if data.amount < expected_amt:
-            # Automatically flag as partial payment and compute remaining balance
             is_partial = 1
             rem_balance = round(expected_amt - data.amount, 2)
         elif data.amount > expected_amt:
             rem_balance = 0.0
 
-    # ────────────────────────────────────────────────────────
-    # ML Anomaly Scoring
-    # ────────────────────────────────────────────────────────
-    # Check for duplicate payments within last 60 minutes
     cutoff_time = (ph_now() - timedelta(minutes=60)).isoformat()
     dup_query = db.query(Income).filter(
         Income.amount == data.amount,
@@ -120,7 +110,6 @@ def create_income(
         "recommendations": anomaly_eval["recommendations"]
     })
 
-    # Official Receipt (OR) Number validation and duplicate prevention
     clean_or = (data.or_number or "").strip() if data.or_number else ""
     if clean_or:
         existing_or = db.query(Income).filter(
@@ -146,7 +135,6 @@ def create_income(
     db.add(income)
     db.flush()
 
-    # Audit log
     partial_note = f" (Partial Payment - Remaining: ₱{rem_balance:,.2f})" if is_partial else ""
     anomaly_note = f" [Anomaly: {anomaly_eval['anomaly_level']} {anomaly_eval['anomaly_score']}]" if anomaly_eval['anomaly_status'] == 'Flagged' else ""
     log = AuditLog(
@@ -218,7 +206,6 @@ def void_income(
     return {"message": "Income voided"}
 
 
-# ── Income Categories ──
 @router.get("/categories")
 def list_income_categories(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cats = db.query(IncomeCategory).all()
@@ -247,20 +234,15 @@ def create_income_category(
     db.refresh(cat)
     return {"message": "Category created", "id": cat.id}
 
-# ── CSV Import & Template ──
 
 def _match_category(cat_raw: str, all_cats: list) -> IncomeCategory:
-    """Fuzzy-match a raw category string to a known IncomeCategory."""
     c_lower = (cat_raw or "").strip().lower()
-    # Exact match first
     for c in all_cats:
         if c.name.lower() == c_lower:
             return c
-    # Contains match
     for c in all_cats:
         if c_lower in c.name.lower() or c.name.lower() in c_lower:
             return c
-    # Word overlap match
     for c in all_cats:
         words = set(c_lower.split())
         cat_words = set(c.name.lower().split())
@@ -270,7 +252,6 @@ def _match_category(cat_raw: str, all_cats: list) -> IncomeCategory:
 
 
 def _parse_amount(raw: str) -> float:
-    """Parse an amount string that may contain currency symbols, commas, or spaces."""
     cleaned = re.sub(r'[^\d.]', '', str(raw or '0'))
     return float(cleaned) if cleaned else 0.0
 
@@ -281,19 +262,15 @@ def import_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Import transactions from a CSV file exported from Excel."""
-    # Read and decode file
     try:
         raw_bytes = file.file.read()
-        # Try UTF-8 first, fallback to latin-1
         try:
-            content = raw_bytes.decode('utf-8-sig')  # handles BOM from Excel
+            content = raw_bytes.decode('utf-8-sig')
         except UnicodeDecodeError:
             content = raw_bytes.decode('latin-1')
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Could not read uploaded file: {str(e)}")
 
-    # Parse CSV
     reader = csv.DictReader(io.StringIO(content))
     all_cats = db.query(IncomeCategory).all()
 
@@ -301,12 +278,10 @@ def import_csv(
     errors = []
     total_amount = 0.0
 
-    for row_idx, row in enumerate(reader, start=2):  # start=2 because row 1 is header
+    for row_idx, row in enumerate(reader, start=2):
         try:
-            # Normalize column names (strip whitespace, case-insensitive)
             norm = {k.strip().lower(): (v or "").strip() for k, v in row.items() if k}
 
-            # Extract fields with flexible column name matching
             date_val = norm.get('date', '') or norm.get('date_recorded', '') or datetime.now().strftime('%Y-%m-%d')
             or_number = norm.get('or number', '') or norm.get('or_number', '') or norm.get('receipt', '') or ''
             student_name = norm.get('student name', '') or norm.get('student_name', '') or norm.get('payer', '') or norm.get('payer_name', '') or 'Unknown'
@@ -317,32 +292,27 @@ def import_csv(
             remarks = norm.get('remarks', '') or norm.get('notes', '') or ''
             description = norm.get('description', '') or norm.get('details', '') or ''
 
-            # Parse amount
             amount = _parse_amount(amt_raw)
             if amount <= 0:
                 errors.append({"row": row_idx, "error": "Amount must be greater than 0", "data": dict(row)})
                 continue
 
-            # Match category
             cat = _match_category(cat_raw, all_cats)
             if not cat:
                 errors.append({"row": row_idx, "error": f"Unknown category: '{cat_raw}'", "data": dict(row)})
                 continue
 
-            # Calculate expected amount and partial status
             expected_amt = cat.expected_amount or _get_category_expected_fee(cat.name, grade_level)
             is_partial = 0
             rem_balance = 0.0
 
             if expected_amt > 0:
                 if amount > expected_amt:
-                    # Allow in CSV import but flag it
                     pass
                 elif amount < expected_amt:
                     is_partial = 1
                     rem_balance = round(expected_amt - amount, 2)
 
-            # ML Anomaly scoring
             anomaly_eval = evaluate_single_transaction(
                 amount=amount,
                 category_id=cat.id,
@@ -395,7 +365,6 @@ def import_csv(
         except Exception as e:
             errors.append({"row": row_idx, "error": str(e), "data": dict(row)})
 
-    # Create batch audit log
     if imported:
         log = AuditLog(
             user_id=current_user.id,
@@ -420,7 +389,6 @@ def import_csv(
 
 @router.get("/csv-template")
 def download_csv_template(current_user: User = Depends(get_current_user)):
-    """Download a sample CSV template for batch import."""
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Date", "OR Number", "Student Name", "Grade Level", "Category", "Amount", "Payment Method", "Remarks"])

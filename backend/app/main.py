@@ -11,7 +11,6 @@ from .auth import get_password_hash, SECRET_KEY, ALGORITHM
 from .core.timezone import ph_now_iso, resolve_section, generate_lrn_password
 import os
 
-# Create all tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -20,13 +19,9 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Enforce strictly view-only access for Admin role on mutating API routes
 @app.middleware("http")
 async def admin_readonly_middleware(request: Request, call_next):
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path.startswith("/api/"):
-        # Student account management is an Admin capability. Allow Admin to
-        # create/edit/import students and reset LRN passwords, but keep all
-        # financial mutations (including student payments) view-only.
         student_management_path = (
             request.url.path.startswith("/api/students")
             and "/payments" not in request.url.path
@@ -49,7 +44,6 @@ async def admin_readonly_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# CORS (added after custom middleware so CORS wraps all responses including 403s)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -58,7 +52,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers (Expenses & Disbursements excluded per v2.0 study scope)
 app.include_router(auth.router)
 app.include_router(income.router)
 app.include_router(dashboard.router)
@@ -69,10 +62,7 @@ app.include_router(users.router)
 
 
 def _ensure_sqlite_migrations(db):
-    """Non-destructive column & institutional role/LRN password synchronization."""
     try:
-        # Works for both SQLite and Postgres. create_all() creates columns on a
-        # fresh database; existing databases need these additive ALTERs.
         existing_cols = {c["name"] for c in inspect(db.bind).get_columns("students")}
         column_ddl = {
             "initial_password": "TEXT",
@@ -88,7 +78,6 @@ def _ensure_sqlite_migrations(db):
     except Exception as e:
         print(f"Schema migration note: {e}")
 
-    # Seed/ensure Admin, Cashier accounts
     now_iso = ph_now_iso()
     required_staff = [
         ("cashier@cca.edu.ph", "Maria Santos", "Cashier"),
@@ -105,13 +94,11 @@ def _ensure_sqlite_migrations(db):
                 is_active=1,
                 created_at=now_iso
             ))
-    # Purge existing principal user account if present
     db.query(User).filter(
         (User.username == "principal@cca.edu.ph") | (func.lower(User.role) == "principal")
     ).delete(synchronize_session=False)
     db.commit()
 
-    # Sync deterministic Grade->Section & ensure every student LRN has its own unique generated initial password
     all_students = db.query(Student).all()
     for st in all_students:
         canonical_sec = resolve_section(st.grade_level, st.section or "Faith")
@@ -126,7 +113,6 @@ def _ensure_sqlite_migrations(db):
             st.password_changed = 0
     db.commit()
 
-    # Purge auto-generated overdue balance spam from Announcements board (Inspection Report 2.5.1)
     try:
         db.query(PaymentNotification).filter(
             PaymentNotification.title.like("Official Overdue Balance Notice%")

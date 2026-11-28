@@ -1,9 +1,5 @@
 import React from 'react';
 
-/**
- * Lucide-compatible Philippine Peso (₱) SVG Icon
- * Renders the official ₱ symbol with standard Lucide stroke, viewBox, and sizing.
- */
 export function PesoSign({ className = 'w-4 h-4', size, strokeWidth = 2, ...props }) {
   return (
     <svg
@@ -18,9 +14,7 @@ export function PesoSign({ className = 'w-4 h-4', size, strokeWidth = 2, ...prop
       className={className}
       {...props}
     >
-      {/* Letter P */}
       <path d="M7 20V4h7a5 5 0 0 1 0 10H7" />
-      {/* Philippine Peso Crossbars */}
       <path d="M4.5 8.5h11" />
       <path d="M4.5 12.5h11" />
     </svg>

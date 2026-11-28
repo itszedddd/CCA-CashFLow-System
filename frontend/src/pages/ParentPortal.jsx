@@ -26,7 +26,6 @@ export default function ParentPortal({ user }) {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [yearlyRecordData, setYearlyRecordData] = useState(null);
 
-  // Change Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [savingPw, setSavingPw] = useState(false);
@@ -39,7 +38,6 @@ export default function ParentPortal({ user }) {
   const fetchParentData = async () => {
     setLoading(true);
     try {
-      // Robust multi-fallback to resolve child's student record
       const targetId = user?.student_id || user?.student_lrn || user?.username || 'me';
       let stuData = null;
       try {
@@ -64,7 +62,6 @@ export default function ParentPortal({ user }) {
           );
           setNotifications(cleanAnnouncements);
         } catch {
-          // Notification failure should not block child's payment portal view
         }
       }
     } catch {
@@ -105,7 +102,6 @@ export default function ParentPortal({ user }) {
         const stored = JSON.parse(localStorage.getItem('cca_cf_user') || '{}');
         localStorage.setItem('cca_cf_user', JSON.stringify({ ...stored, password_changed: true }));
       } catch {
-        // Ignore storage parse edge case
       }
       addToast('Password changed successfully!', 'success');
       setShowPasswordModal(false);
@@ -139,7 +135,6 @@ export default function ParentPortal({ user }) {
 
   return (
     <div className="space-y-5 sm:space-y-6 pb-8">
-      {/* Initial Password Reminder Banner (Mobile-friendly) */}
       {!pwChanged && (
         <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
@@ -160,7 +155,6 @@ export default function ParentPortal({ user }) {
         </div>
       )}
 
-      {/* Mobile-First Welcome Banner (Print Complete Record removed per Inspection 3.2.1 -> View Only) */}
       <div className="bg-gradient-to-br from-[#022868] to-blue-900 rounded-3xl p-5 sm:p-8 text-white shadow-xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-blue-100 border border-white/20 mb-3 font-cinzel">
@@ -175,7 +169,6 @@ export default function ParentPortal({ user }) {
             <strong className="text-white underline">{student.full_name}</strong>
           </p>
 
-          {/* Clean wrapping mobile pills */}
           <div className="flex flex-wrap items-center gap-2 mt-3.5">
             <span className="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-black font-mono text-xs shadow-sm tracking-wider inline-flex items-center gap-1.5">
               <span className="text-[10px] uppercase font-bold">LRN:</span>
@@ -190,7 +183,6 @@ export default function ParentPortal({ user }) {
           </div>
         </div>
 
-        {/* View-only School Year Record + Change Password Actions */}
         <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2.5 shrink-0 w-full lg:w-auto">
           <button
             onClick={handleOpenYearlyRecord}
@@ -210,7 +202,6 @@ export default function ParentPortal({ user }) {
         </div>
       </div>
 
-      {/* KPI Cards: Total Due, Total Paid, Balance */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-md min-w-0">
           <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Total Annual Assessment</p>
@@ -243,7 +234,6 @@ export default function ParentPortal({ user }) {
         </div>
       </div>
 
-      {/* The 5 Fee Categories Breakdown */}
       <div>
         <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white font-cinzel uppercase mb-3">
           Fee Categories Breakdown &amp; Balances
@@ -302,7 +292,6 @@ export default function ParentPortal({ user }) {
         </div>
       </div>
 
-      {/* Announcements Inbox for Parent */}
       {notifications.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-md space-y-3">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-700">
@@ -343,7 +332,6 @@ export default function ParentPortal({ user }) {
         </div>
       )}
 
-      {/* Official Digital Receipts History (Mobile-First Cards + Desktop Table) */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-md space-y-4">
         <div className="pb-3 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white font-cinzel uppercase">
@@ -354,7 +342,6 @@ export default function ParentPortal({ user }) {
           </p>
         </div>
 
-        {/* Mobile Receipt Cards (Inspection Page 16 fix for smartphone usability) */}
         <div className="md:hidden space-y-3">
           {student.payments && student.payments.length > 0 ? (
             student.payments.map((p) => (
@@ -411,7 +398,6 @@ export default function ParentPortal({ user }) {
           )}
         </div>
 
-        {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -487,7 +473,6 @@ export default function ParentPortal({ user }) {
         </div>
       </div>
 
-      {/* Change Password Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -568,7 +553,6 @@ export default function ParentPortal({ user }) {
         </div>
       )}
 
-      {/* Official Digital Receipt Modal (View-only) */}
       {selectedReceipt && (
         <OfficialReceiptModal
           receipt={selectedReceipt}
@@ -576,7 +560,6 @@ export default function ParentPortal({ user }) {
         />
       )}
 
-      {/* End-of-Year Complete Record Modal (Strictly View-Only in Parent Portal per Inspection 3.2.1) */}
       {yearlyRecordData && (
         <YearlyRecordModal
           recordData={yearlyRecordData}

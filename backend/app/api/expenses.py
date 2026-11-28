@@ -120,7 +120,6 @@ def approve_expense(
     expense.approved_by = current_user.id
     expense.date_approved = datetime.now().isoformat()
 
-    # Update budget spent
     budget = db.query(Budget).filter(
         Budget.category_id == expense.category_id,
         Budget.school_year == expense.school_year
@@ -183,7 +182,6 @@ def void_expense(
     return {"message": "Expense voided"}
 
 
-# ── Expense Categories ──
 @router.get("/categories")
 def list_expense_categories(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cats = db.query(ExpenseCategory).all()

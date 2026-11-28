@@ -14,7 +14,6 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
       <div className="bg-white text-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col print:shadow-none print:border-none print:max-w-none print:w-full print:max-h-none">
-        {/* Modal Controls - hidden in print */}
         <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
@@ -49,9 +48,7 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
           </div>
         </div>
 
-        {/* Scrollable / Printable Certificate & Statement */}
         <div className="p-4 sm:p-8 font-sans overflow-y-auto print:overflow-visible print:p-0 print:text-black" id="printable-yearly-record">
-          {/* New Standard [CCA L3] Header Design (Inspection Report Page 14) */}
           <div className="text-center pb-3 mb-4 print:pb-2 print:mb-2">
             <img
               src={CCA_OFFICE_INFO.crestLogoUrl}
@@ -85,7 +82,6 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             </p>
           </div>
 
-          {/* Student Profile Overview */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs mb-4 print:grid-cols-2 print:p-2 print:border-slate-800 print:bg-transparent print:mb-2 print:text-[9.5px]">
             <div>
               <p className="text-[10px] font-bold text-slate-400 print:text-black uppercase font-cinzel">Student Name</p>
@@ -105,7 +101,6 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             </div>
           </div>
 
-          {/* Financial Summary KPI Box */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 text-center print:grid-cols-3 print:mb-2 print:gap-2">
             <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl print:bg-transparent print:border-slate-800">
               <p className="text-[10px] font-bold text-blue-700 print:text-black uppercase font-cinzel">Total Assessment</p>
@@ -137,7 +132,6 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             </div>
           </div>
 
-          {/* Fee Categories Table */}
           <div className="mb-4 print:mb-2">
             <h3 className="text-xs font-bold text-slate-800 print:text-black uppercase tracking-wider font-cinzel mb-1.5 print:text-[10px]">
               1. Fee Category Assessment Breakdown
@@ -185,7 +179,6 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             </div>
           </div>
 
-          {/* Official Receipts History Table */}
           <div className="mb-4 print:mb-2">
             <h3 className="text-xs font-bold text-slate-800 print:text-black uppercase tracking-wider font-cinzel mb-1.5 print:text-[10px]">
               2. Official Receipts Ledger &amp; Transaction History
@@ -234,7 +227,6 @@ export default function YearlyRecordModal({ recordData, onClose, viewOnly = fals
             </div>
           </div>
 
-          {/* Institutional Certification Stamp */}
           <div className="pt-4 border-t border-slate-200 print:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-center text-xs print:grid-cols-2 print:pt-2 print:text-[9px]">
             <div>
               <div className="border-b border-slate-400 mb-1 font-bold font-cinzel text-slate-900 print:text-black pt-3 print:pt-2">

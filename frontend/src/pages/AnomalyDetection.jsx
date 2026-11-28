@@ -19,8 +19,8 @@ export default function AnomalyDetection() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [selectedTx, setSelectedTx] = useState(null);
-  const [filterLevel, setFilterLevel] = useState('All'); // 'All' | 'High' | 'Medium' | 'Low'
-  const [filterStatus, setFilterStatus] = useState('All'); // 'All' | 'Flagged' | 'Verified_Cleared'
+  const [filterLevel, setFilterLevel] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [cashierNotes, setCashierNotes] = useState('');
@@ -100,7 +100,6 @@ export default function AnomalyDetection() {
           : 'Transaction flagged for manual correction',
         'info'
       );
-      // Immediately reflect verified clearance in local state
       setTransactions((prev) =>
         prev.map((t) =>
           t.id === incomeId
@@ -180,7 +179,6 @@ export default function AnomalyDetection() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -202,7 +200,6 @@ export default function AnomalyDetection() {
           </p>
         </div>
 
-        {/* Autonomous Real-time Status Indicator (Replaced manual scan button) */}
         <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 self-start md:self-auto shadow-sm">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -219,7 +216,6 @@ export default function AnomalyDetection() {
         </div>
       </div>
 
-      {/* 4 Core Pillars of Integrated AI */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-indigo-900/40">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -259,9 +255,7 @@ export default function AnomalyDetection() {
         </div>
       </div>
 
-      {/* 4 Overview Telemetry Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Ledger Health Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-cinzel">
@@ -287,7 +281,6 @@ export default function AnomalyDetection() {
           </div>
         </div>
 
-        {/* Critical High Risk Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-cinzel">
@@ -308,7 +301,6 @@ export default function AnomalyDetection() {
           <span className="text-[10px] text-rose-500 font-semibold">Priority Review</span>
         </div>
 
-        {/* Moderate Verification Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-cinzel">
@@ -329,7 +321,6 @@ export default function AnomalyDetection() {
           <span className="text-[10px] text-amber-500 font-semibold">Verification Recommended</span>
         </div>
 
-        {/* Manuscript Objective Target Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-cinzel">
@@ -351,7 +342,6 @@ export default function AnomalyDetection() {
         </div>
       </div>
 
-      {/* 3-Level Anomaly Threshold Scale Guide */}
       <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-md border border-slate-800">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
@@ -404,7 +394,6 @@ export default function AnomalyDetection() {
         </div>
       </div>
 
-      {/* Generative AI Insights Panel */}
       {summary?.generative_insights && (
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
@@ -452,10 +441,8 @@ export default function AnomalyDetection() {
         </div>
       )}
 
-      {/* Filter and Search Bar */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col lg:flex-row items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-          {/* Level Filter */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl text-xs">
             {['All', 'High', 'Medium', 'Low'].map((lvl) => (
               <button
@@ -475,7 +462,6 @@ export default function AnomalyDetection() {
             ))}
           </div>
 
-          {/* Status Filter */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl text-xs">
             {[
               { id: 'All', label: 'All Status' },
@@ -500,7 +486,6 @@ export default function AnomalyDetection() {
           </div>
         </div>
 
-        {/* Search */}
         <div className="relative w-full lg:w-72">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
@@ -516,7 +501,6 @@ export default function AnomalyDetection() {
         </div>
       </div>
 
-      {/* Flagged Transactions Ledger Table */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -636,7 +620,6 @@ export default function AnomalyDetection() {
                       {tx.expected_amount ? formatPeso(tx.expected_amount) : '—'}
                     </td>
 
-                    {/* Physical Envelope Verification Check */}
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={() => handleToggleEnvelope(tx.id, tx.envelope_verified)}
@@ -654,7 +637,6 @@ export default function AnomalyDetection() {
                       </button>
                     </td>
 
-                    {/* 3-Level Risk Badge */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">
                       {tx.anomaly_status === 'Verified_Cleared' ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -666,7 +648,6 @@ export default function AnomalyDetection() {
                       )}
                     </td>
 
-                    {/* Resolution Status */}
                     <td className="py-3 px-4 text-center">
                       {tx.anomaly_status === 'Verified_Cleared' ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
@@ -683,7 +664,6 @@ export default function AnomalyDetection() {
                       )}
                     </td>
 
-                    {/* Sticky Action Column */}
                     <td className="py-3 px-4 text-center sticky right-0 bg-white dark:bg-slate-800 z-10 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
                       <button
                         onClick={() => {
@@ -703,7 +683,6 @@ export default function AnomalyDetection() {
           </table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500">
             <span>
@@ -729,7 +708,6 @@ export default function AnomalyDetection() {
         )}
       </div>
 
-      {/* Detailed AI Anomaly Review Modal */}
       {selectedTx && (
         <Modal
           isOpen={!!selectedTx}
@@ -738,7 +716,6 @@ export default function AnomalyDetection() {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4 text-xs">
-            {/* Transaction Overview Card */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-bold block">Student</span>
@@ -760,7 +737,6 @@ export default function AnomalyDetection() {
               </div>
             </div>
 
-            {/* Score & Risk Level Meter / Cleared Notice */}
             {selectedTx.anomaly_status === 'Verified_Cleared' ? (
               <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -809,7 +785,6 @@ export default function AnomalyDetection() {
               </div>
             )}
 
-            {/* Why was this flagged? (Root Cause Insights) */}
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider font-cinzel text-slate-600 dark:text-slate-300 block mb-2">
                 Why was this flagged by the ML Model?
@@ -831,7 +806,6 @@ export default function AnomalyDetection() {
               </div>
             </div>
 
-            {/* Cashier Verification Guide */}
             {selectedTx.recommendations && selectedTx.recommendations.length > 0 && (
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider font-cinzel text-indigo-600 dark:text-indigo-400 block mb-2">
@@ -848,7 +822,6 @@ export default function AnomalyDetection() {
               </div>
             )}
 
-            {/* Cashier Verification Notes Input */}
             <div className="space-y-1 pt-2">
               <label className="text-[11px] font-bold uppercase font-cinzel tracking-wider text-slate-500">
                 Cashier Review Notes / Physical Envelope Verification Log
@@ -862,7 +835,6 @@ export default function AnomalyDetection() {
               />
             </div>
 
-            {/* Modal Actions */}
             {isAdmin ? (
               <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
                 <span className="inline-flex items-center gap-1.5 font-semibold">

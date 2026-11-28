@@ -36,12 +36,10 @@ export default function Collections() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters
   const [selectedGrade, setSelectedGrade] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  // Modals
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showQuickPayModal, setShowQuickPayModal] = useState(false);
   const [selectedStudentForPay, setSelectedStudentForPay] = useState(null);
@@ -128,7 +126,6 @@ export default function Collections() {
     }
   };
 
-  // New Student Form State (LRN strictly manual, Section auto-synced to Grade Level)
   const [newStudent, setNewStudent] = useState({
     student_id: '',
     last_name: '',
@@ -144,7 +141,6 @@ export default function Collections() {
   });
   const [creatingStudent, setCreatingStudent] = useState(false);
 
-  // Quick Payment Form State (Manual Physical OR# Input per Inspection 2.3.3)
   const [payOrNumber, setPayOrNumber] = useState('');
   const [payFeeType, setPayFeeType] = useState('Tuition Fee');
   const [payAmount, setPayAmount] = useState('1906.00');
@@ -327,7 +323,6 @@ export default function Collections() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-1">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -380,7 +375,6 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -439,7 +433,6 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Grade Level Filter Bar */}
       <div className="bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-x-auto">
         <div className="flex items-center gap-1.5 min-w-max">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 font-cinzel">
@@ -464,7 +457,6 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Search and Status Filters */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
@@ -497,9 +489,7 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Students Collections Table — Non-Horizontally Scrollable in Full Window Desktop View (Inspection 2.3.2) */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden">
-        {/* Desktop Full-Width Table (No Horizontal Scroll Needed) */}
         <div className="hidden md:block">
           <table className="w-full text-xs table-fixed">
             <thead>
@@ -625,7 +615,6 @@ export default function Collections() {
           </table>
         </div>
 
-        {/* Mobile Cards List View */}
         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700/60">
           {loading ? (
             <div className="py-10 text-center text-xs text-slate-400 font-cinzel">Loading students...</div>
@@ -694,7 +683,6 @@ export default function Collections() {
         </div>
       </div>
 
-      {/* Add New Student Modal (Grade Level auto-syncs Non-Editable Section per Inspection 2.3.1) */}
       {showAddStudentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
@@ -856,7 +844,6 @@ export default function Collections() {
                 </div>
               </div>
 
-              {/* Default Password Preview */}
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest font-cinzel flex items-center gap-1.5">
@@ -872,7 +859,6 @@ export default function Collections() {
                 </p>
               </div>
 
-              {/* Fee Schedule Information */}
               <div className="p-3.5 bg-blue-50/90 dark:bg-slate-900 border border-blue-200 dark:border-blue-800/80 rounded-2xl flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-[11px] leading-relaxed">
@@ -906,7 +892,6 @@ export default function Collections() {
         </div>
       )}
 
-      {/* Quick Payment Modal (Manual OR Number from Physical Receipt per Inspection 2.3.3) */}
       {showQuickPayModal && selectedStudentForPay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
@@ -928,7 +913,6 @@ export default function Collections() {
             </div>
 
             <form onSubmit={handleRecordQuickPayment} className="p-6 space-y-4">
-              {/* Manual Physical OR Number Input */}
               <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
                 <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5">
                   <Receipt className="w-3.5 h-3.5" />
@@ -1008,7 +992,6 @@ export default function Collections() {
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-mono font-bold text-slate-800 dark:text-white outline-none"
                 />
 
-                {/* Real-time ML/AI Anomaly Alert */}
                 {(() => {
                   const sched = selectedStudentForPay?.fee_schedules?.find(
                     (fs) => (fs.category_name || '').toLowerCase() === (payFeeType || '').toLowerCase()
@@ -1101,7 +1084,6 @@ export default function Collections() {
         </div>
       )}
 
-      {/* Official Digital Receipt Modal */}
       {selectedReceipt && (
         <OfficialReceiptModal
           receipt={selectedReceipt}
@@ -1109,7 +1091,6 @@ export default function Collections() {
         />
       )}
 
-      {/* Payment Notice Letter Modal */}
       {noticeLetterData && (
         <PaymentNoticeLetterModal
           letterData={noticeLetterData}
@@ -1117,7 +1098,6 @@ export default function Collections() {
         />
       )}
 
-      {/* CSV Import Modal */}
       {showCsvModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 animate-zoom-in max-h-[90vh] overflow-y-auto">
@@ -1238,7 +1218,6 @@ export default function Collections() {
         busy={Boolean(archiveTarget) && archivingId === archiveTarget.id}
       />
 
-      {/* Duplicate confirmation popup shown before import */}
       {showDuplicateModal && duplicateCheck && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">

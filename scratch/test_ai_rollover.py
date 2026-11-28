@@ -5,7 +5,6 @@ if not os.path.exists(repo_backend):
     repo_backend = os.path.join(os.getcwd(), 'backend')
 sys.path.insert(0, repo_backend)
 
-# Set database working directory so sqlite finds cashflow.db
 os.chdir(os.path.join(repo_backend, '..'))
 
 from app.database import SessionLocal

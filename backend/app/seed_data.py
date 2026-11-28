@@ -1,7 +1,3 @@
-"""
-Seed data for CCA CashFlow Management System.
-Creates default users, categories, sample transactions, students, fee schedules, and notifications.
-"""
 from datetime import datetime, timedelta
 import random
 from sqlalchemy.orm import Session
@@ -14,27 +10,16 @@ from .core.timezone import get_grade_fee_benchmarks
 
 
 STUDENT_DATA = [
-    # Kindergarten
     {"name": "Ramos, Liam, Noah", "grade": "Kindergarten", "section": "Joy", "gender": "Male", "parent": "Ramos, Carlos", "contact": "09171234501"},
-    # Grade 1
     {"name": "Santos, Juan, Miguel", "grade": "Grade 1", "section": "Faith", "gender": "Male", "parent": "Santos, Antonio", "contact": "09175551122"},
-    # Grade 2
     {"name": "Lopez, Ana, Patricia", "grade": "Grade 2", "section": "Grace", "gender": "Female", "parent": "Lopez, Maricel", "contact": "09205554455"},
-    # Grade 3
     {"name": "Torres, Miguel, Angelo", "grade": "Grade 3", "section": "Hope", "gender": "Male", "parent": "Torres, Ramon", "contact": "09235557788"},
-    # Grade 4
     {"name": "Ramos, Andres, Daniel", "grade": "Grade 4", "section": "Peace", "gender": "Male", "parent": "Ramos, Manuel", "contact": "09255559900"},
-    # Grade 5
     {"name": "Hernandez, Diego, Alexander", "grade": "Grade 5", "section": "Patience", "gender": "Male", "parent": "Hernandez, Vicente", "contact": "09275551122"},
-    # Grade 6
     {"name": "Gonzales, Mateo, Sebastian", "grade": "Grade 6", "section": "Kindness", "gender": "Male", "parent": "Gonzales, Alfonso", "contact": "09295553344"},
-    # Grade 7
     {"name": "Villanueva, Sebastian, Kyle", "grade": "Grade 7", "section": "Goodness", "gender": "Male", "parent": "Villanueva, Danilo", "contact": "09315555566"},
-    # Grade 8
     {"name": "Dela Cruz, Nicolas, Jose", "grade": "Grade 8", "section": "Faithfulness", "gender": "Male", "parent": "Dela Cruz, Gregorio", "contact": "09335557788"},
-    # Grade 9
     {"name": "Manalo, Rafael, Dominic", "grade": "Grade 9", "section": "Gentleness", "gender": "Male", "parent": "Manalo, Bernardo", "contact": "09355559900"},
-    # Grade 10
     {"name": "Fernandez, Jose, Lorenzo", "grade": "Grade 10", "section": "Self-Control", "gender": "Male", "parent": "Fernandez, Felipe", "contact": "09375551122"},
 ]
 
@@ -48,9 +33,7 @@ DEFAULT_FEE_SCHEDULE = [
 
 
 def seed_database(db: Session):
-    """Seed the database with initial users, students, categories, and transactions."""
 
-    # 1. ── Cashier User ──
     cashier = db.query(User).filter(User.username == "cashier@cca.edu.ph").first()
     if not cashier:
         cashier = User(
@@ -66,7 +49,6 @@ def seed_database(db: Session):
 
     cashier_user_id = cashier.id
 
-    # 2. ── Income Categories ──
     if db.query(IncomeCategory).count() == 0:
         income_cats = [
             IncomeCategory(name="Tuition Fees", description="Monthly and yearly tuition payments from students", color="#10b981", expected_amount=1906.0),
@@ -82,7 +64,6 @@ def seed_database(db: Session):
         db.add_all(income_cats)
         db.flush()
 
-    # 3. ── Expense Categories ──
     if db.query(ExpenseCategory).count() == 0:
         expense_cats = [
             ExpenseCategory(name="Staff Salaries", description="Monthly payroll for teachers and staff", color="#ef4444", budget_limit=350000),
@@ -94,7 +75,6 @@ def seed_database(db: Session):
         db.add_all(expense_cats)
         db.flush()
 
-    # 4. ── Students and Fee Schedules ──
     if db.query(Student).count() == 0:
         print("[*] Seeding Students & Fee Schedules...")
         created_students = []
@@ -124,24 +104,18 @@ def seed_database(db: Session):
             db.flush()
             created_students.append(student)
 
-            # Create standard 5 fee schedules tailored to student's grade level per CCA Guidelines
             grade_fees = get_grade_fee_benchmarks(sdata["grade"])
             for f in grade_fees:
                 f_due = f["total_due"]
                 f_name = f["category_name"]
                 f_sub = f["sub_description"]
-                # Randomize paid amount for realistic variety
                 if idx % 4 == 0:
-                    # Fully paid student
                     paid = f_due
                 elif idx % 4 == 1:
-                    # Partial payment (50% or 30%)
                     paid = round(f_due * random.choice([0.3, 0.5, 0.7]), 2)
                 elif idx % 4 == 2:
-                    # Registration & Books paid, Tuition & Energy partial
                     paid = f_due if f_name in ["Registration Fee", "Books"] else round(f_due * 0.2, 2)
                 else:
-                    # Only Registration paid, rest unpaid
                     paid = f_due if f_name == "Registration Fee" else 0.0
 
                 fs = StudentFeeSchedule(
@@ -157,13 +131,11 @@ def seed_database(db: Session):
 
         db.flush()
 
-        # 5. ── Generate Sample Payment Receipts Linked to Students ──
         or_counter = 20260100
         payment_methods = ["Cash", "Cash", "Cash", "Check"]
         now = datetime.now()
 
         for s in created_students:
-            # Look at fee schedules with paid amounts
             for fs in s.fee_schedules:
                 if fs.total_paid > 0:
                     date_rec = (now - timedelta(days=random.randint(5, 60))).isoformat()
@@ -198,7 +170,6 @@ def seed_database(db: Session):
 
         db.flush()
 
-    # 6. ── Payment Notifications ──
     if db.query(PaymentNotification).count() == 0:
         notifs = [
             PaymentNotification(

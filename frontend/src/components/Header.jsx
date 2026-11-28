@@ -26,7 +26,6 @@ export default function Header({
 
   const isParent = (user?.role || '').toLowerCase() === 'parent';
 
-  // Real-time Philippine Standard Time (Asia/Manila) clock synced across system
   useEffect(() => {
     const timer = setInterval(() => {
       setPhClock(new Date());
@@ -48,7 +47,6 @@ export default function Header({
     hour12: true,
   });
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
@@ -62,7 +60,6 @@ export default function Header({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced search (Incomes & Students only)
   useEffect(() => {
     if (isParent || !searchQuery.trim()) {
       setSearchResults({ incomes: [], students: [] });
@@ -103,7 +100,6 @@ export default function Header({
 
   return (
     <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 h-16 flex items-center justify-between px-3 sm:px-4 md:px-6 z-30 print:hidden transition-colors duration-300 shadow-xs">
-      {/* Left: Mobile hamburger, Page Title & SY badge */}
       <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1 mr-2">
         <button
           onClick={onMenuToggle}
@@ -117,7 +113,6 @@ export default function Header({
           <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-800 dark:text-white truncate font-cinzel tracking-tight">
             {activeTitle}
           </h1>
-          {/* Live compact clock on mobile screens */}
           <p className="md:hidden text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">
             {phDateStr} • {phTimeStr} PHT
           </p>
@@ -130,9 +125,7 @@ export default function Header({
         </div>
       </div>
 
-      {/* Right Actions */}
       <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
-        {/* Live Philippine Standard Time Date & Time Display (Desktop / Tablet) */}
         <div
           className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-xs shrink-0"
           title="Official Philippine Standard Time (Asia/Manila)"
@@ -148,7 +141,6 @@ export default function Header({
           </div>
         </div>
 
-        {/* Search Bar for Staff/Cashier/Admin */}
         {!isParent && (
           <div className="relative hidden lg:block" ref={searchRef}>
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
@@ -174,7 +166,6 @@ export default function Header({
               </button>
             )}
 
-            {/* Search Dropdown Modal */}
             {showSearchResults && searchQuery.trim().length > 0 && (
               <div className="absolute top-11 right-0 w-80 md:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-fade-in">
                 <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/70 flex justify-between items-center">
@@ -254,7 +245,6 @@ export default function Header({
           </div>
         )}
 
-        {/* Dark Mode Toggle */}
         <button
           onClick={() => setIsDarkMode((p) => !p)}
           className="p-2 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors focus:outline-none rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer"
@@ -264,7 +254,6 @@ export default function Header({
           {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
 
-        {/* Accessibility Mode Toggle */}
         <button
           onClick={() => setIsAccessibleMode((p) => !p)}
           className={`p-2 transition-colors focus:outline-none rounded-xl font-bold text-xs cursor-pointer ${isAccessibleMode
@@ -277,7 +266,6 @@ export default function Header({
           A+
         </button>
 
-        {/* Payment Announcements Bell */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setShowNotifications((p) => !p)}
@@ -336,7 +324,6 @@ export default function Header({
           )}
         </div>
 
-        {/* User Mini Avatar and Parent LRN Badge */}
         {user && (
           <div className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-slate-200 dark:border-slate-700">
             {user.role === 'Parent' && (user.student_lrn || user.username) && (

@@ -3,9 +3,6 @@ from sqlalchemy.orm import relationship
 from ..database import Base
 
 
-# ──────────────────────────────────────────────
-# USER / AUTH
-# ──────────────────────────────────────────────
 class User(Base):
     __tablename__ = "users"
 
@@ -13,56 +10,49 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     full_name = Column(String, nullable=True)
     hashed_password = Column(String)
-    role = Column(String)  # Admin, Cashier, Parent
+    role = Column(String)
     is_active = Column(Integer, default=1)
     profile_picture = Column(String, nullable=True)
     created_at = Column(String, nullable=True)
 
 
-# ──────────────────────────────────────────────
-# STUDENT MODEL (ICC-Style Individual Student Profiles)
-# ──────────────────────────────────────────────
 class Student(Base):
     __tablename__ = "students"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(String, unique=True, index=True)  # LRN / Student ID (e.g. "LRN-2026-001")
+    student_id = Column(String, unique=True, index=True)
     full_name = Column(String, index=True)
-    grade_level = Column(String, index=True)  # Kindergarten, Grade 1 to Grade 10
+    grade_level = Column(String, index=True)
     section = Column(String, default="Faith")
-    gender = Column(String, nullable=True)  # Male, Female
+    gender = Column(String, nullable=True)
     birthdate = Column(String, nullable=True)
     parent_name = Column(String, nullable=True)
     parent_contact = Column(String, nullable=True)
     parent_email = Column(String, nullable=True)
     parent_username = Column(String, nullable=True)
     parent_password_hash = Column(String, nullable=True)
-    initial_password = Column(String, nullable=True)  # Admin-visible initial LRN password until changed
-    password_changed = Column(Integer, default=0)  # 0: initial password active, 1: parent updated password
+    initial_password = Column(String, nullable=True)
+    password_changed = Column(Integer, default=0)
     address = Column(String, nullable=True)
     school_year = Column(String, default="2026-2027")
-    enrollment_status = Column(String, default="Enrolled")  # Enrolled, Pending, Transferred
+    enrollment_status = Column(String, default="Enrolled")
     created_at = Column(String, nullable=True)
-    is_archived = Column(Integer, default=0, index=True)  # 1: hidden from active student lists
+    is_archived = Column(Integer, default=0, index=True)
     archived_at = Column(String, nullable=True)
     archived_by = Column(String, nullable=True)
 
-    # Relationships
     payments = relationship("Income", back_populates="student", cascade="all, delete-orphan")
     fee_schedules = relationship("StudentFeeSchedule", back_populates="student", cascade="all, delete-orphan")
     notifications = relationship("PaymentNotification", back_populates="student", cascade="all, delete-orphan")
 
 
-# ──────────────────────────────────────────────
-# STUDENT FEE SCHEDULE (Tuition, Registration, Books, Energy, Other)
-# ──────────────────────────────────────────────
 class StudentFeeSchedule(Base):
     __tablename__ = "student_fee_schedules"
 
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("students.id"), index=True)
-    category_name = Column(String, index=True)  # Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees
-    sub_description = Column(String, nullable=True)  # e.g., "Educational Tour", "Swimming Class", "Graduation"
+    category_name = Column(String, index=True)
+    sub_description = Column(String, nullable=True)
     total_due = Column(Float, default=0.0)
     total_paid = Column(Float, default=0.0)
     remaining_balance = Column(Float, default=0.0)
@@ -73,17 +63,14 @@ class StudentFeeSchedule(Base):
     student = relationship("Student", back_populates="fee_schedules")
 
 
-# ──────────────────────────────────────────────
-# PAYMENT NOTIFICATION (Fee announcements & reminders)
-# ──────────────────────────────────────────────
 class PaymentNotification(Base):
     __tablename__ = "payment_notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=True, index=True)  # Null = Broadcast to grade/all
-    grade_level = Column(String, nullable=True)  # Null = All grades
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True, index=True)
+    grade_level = Column(String, nullable=True)
     title = Column(String)
-    fee_type = Column(String)  # Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees
+    fee_type = Column(String)
     description = Column(Text)
     amount = Column(Float, default=0.0)
     due_date = Column(String, nullable=True)
@@ -93,24 +80,18 @@ class PaymentNotification(Base):
     student = relationship("Student", back_populates="notifications")
 
 
-# ──────────────────────────────────────────────
-# INCOME CATEGORIES
-# ──────────────────────────────────────────────
 class IncomeCategory(Base):
     __tablename__ = "income_categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)  # Tuition Fees, Registration Fee, Books, Energy Fee, Other Fees
+    name = Column(String, unique=True, index=True)
     description = Column(String, nullable=True)
-    color = Column(String, default="#3b82f6")  # For chart color coding
-    expected_amount = Column(Float, default=0.0)  # Official CCA benchmark fee
+    color = Column(String, default="#3b82f6")
+    expected_amount = Column(Float, default=0.0)
 
     incomes = relationship("Income", back_populates="category")
 
 
-# ──────────────────────────────────────────────
-# EXPENSE CATEGORIES
-# ──────────────────────────────────────────────
 class ExpenseCategory(Base):
     __tablename__ = "expense_categories"
 
@@ -123,9 +104,6 @@ class ExpenseCategory(Base):
     expenses = relationship("Expense", back_populates="category")
 
 
-# ──────────────────────────────────────────────
-# INCOME RECORDS (All school collections & student payments)
-# ──────────────────────────────────────────────
 class Income(Base):
     __tablename__ = "incomes"
 
@@ -134,17 +112,17 @@ class Income(Base):
     student_id_ref = Column(Integer, ForeignKey("students.id"), nullable=True, index=True)
     amount = Column(Float)
     expected_amount = Column(Float, nullable=True)
-    is_partial = Column(Integer, default=0)  # 0: Full Payment, 1: Partial Payment
+    is_partial = Column(Integer, default=0)
     remaining_balance = Column(Float, default=0.0)
-    student_id = Column(String, nullable=True)  # Student LRN string for quick search
-    grade_level = Column(String, nullable=True)  # Kindergarten, Grade 1 to 10
-    fee_type = Column(String, default="Tuition Fee")  # Tuition Fee, Registration Fee, Books, Energy Fee, Other Fees
+    student_id = Column(String, nullable=True)
+    grade_level = Column(String, nullable=True)
+    fee_type = Column(String, default="Tuition Fee")
     envelope_verified = Column(Integer, default=0)
     description = Column(String)
-    or_number = Column(String, nullable=True, index=True)  # Official Receipt Number
+    or_number = Column(String, nullable=True, index=True)
     payer_name = Column(String, nullable=True)
     payer_type = Column(String, default="Student")
-    payment_method = Column(String, default="Cash")  # Cash, Check
+    payment_method = Column(String, default="Cash")
     reference_number = Column(String, nullable=True)
     school_year = Column(String, default="2026-2027")
     date_recorded = Column(String)
@@ -152,7 +130,6 @@ class Income(Base):
     remarks = Column(Text, nullable=True)
     is_voided = Column(Integer, default=0)
 
-    # ML-Based Anomaly Detection Fields
     anomaly_score = Column(Float, default=0.0)
     anomaly_level = Column(String, default="Low")
     anomaly_reasons = Column(Text, nullable=True)
@@ -164,9 +141,6 @@ class Income(Base):
     student = relationship("Student", back_populates="payments")
 
 
-# ──────────────────────────────────────────────
-# EXPENSE RECORDS (All school expenditures)
-# ──────────────────────────────────────────────
 class Expense(Base):
     __tablename__ = "expenses"
 
@@ -174,12 +148,12 @@ class Expense(Base):
     category_id = Column(Integer, ForeignKey("expense_categories.id"))
     amount = Column(Float)
     description = Column(String)
-    payee = Column(String, nullable=True)  # Who was paid
+    payee = Column(String, nullable=True)
     payment_method = Column(String, default="Cash")
     reference_number = Column(String, nullable=True)
-    voucher_number = Column(String, nullable=True, index=True)  # Disbursement voucher
+    voucher_number = Column(String, nullable=True, index=True)
     school_year = Column(String, default="2026-2027")
-    status = Column(String, default="Pending")  # Pending, Approved, Rejected, Paid
+    status = Column(String, default="Pending")
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     date_recorded = Column(String)
     date_approved = Column(String, nullable=True)
@@ -192,9 +166,6 @@ class Expense(Base):
     approver = relationship("User", foreign_keys=[approved_by])
 
 
-# ──────────────────────────────────────────────
-# BUDGET ALLOCATIONS (Per category, per school year)
-# ──────────────────────────────────────────────
 class Budget(Base):
     __tablename__ = "budgets"
 
@@ -210,14 +181,11 @@ class Budget(Base):
     creator = relationship("User")
 
 
-# ──────────────────────────────────────────────
-# CASHFLOW SUMMARY (Monthly snapshots)
-# ──────────────────────────────────────────────
 class CashflowSummary(Base):
     __tablename__ = "cashflow_summaries"
 
     id = Column(Integer, primary_key=True, index=True)
-    month = Column(String)  # e.g. "2026-10"
+    month = Column(String)
     school_year = Column(String)
     total_income = Column(Float, default=0.0)
     total_expenses = Column(Float, default=0.0)
@@ -227,16 +195,13 @@ class CashflowSummary(Base):
     generated_at = Column(String, nullable=True)
 
 
-# ──────────────────────────────────────────────
-# AUDIT LOG (Track all financial actions)
-# ──────────────────────────────────────────────
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    action = Column(String)  # Created Income, Approved Expense, Voided, etc.
-    entity_type = Column(String, nullable=True)  # Income, Expense, Budget
+    action = Column(String)
+    entity_type = Column(String, nullable=True)
     entity_id = Column(Integer, nullable=True)
     details = Column(Text, nullable=True)
     ip_address = Column(String, nullable=True)
@@ -245,9 +210,6 @@ class AuditLog(Base):
     user = relationship("User")
 
 
-# ──────────────────────────────────────────────
-# SYSTEM SETTINGS
-# ──────────────────────────────────────────────
 class SystemSettings(Base):
     __tablename__ = "system_settings"
 

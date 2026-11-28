@@ -46,13 +46,11 @@ export default function StudentProfile() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Modals state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [noticeLetterData, setNoticeLetterData] = useState(null);
   const [yearlyRecordData, setYearlyRecordData] = useState(null);
 
-  // Payment form state
   const [orNumber, setOrNumber] = useState('');
   const [feeType, setFeeType] = useState('Tuition Fee');
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -166,7 +164,6 @@ export default function StudentProfile() {
       }
       setShowPaymentModal(false);
 
-      // Auto-show official digital receipt
       if (res.data.receipt) {
         setSelectedReceipt(res.data.receipt);
       }
@@ -227,7 +224,6 @@ export default function StudentProfile() {
 
   return (
     <div className="space-y-6">
-      {/* Top Navigation & Action Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -263,7 +259,6 @@ export default function StudentProfile() {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {!isAdmin && !student.is_archived && (
             <button
@@ -310,9 +305,7 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      {/* Student Profile Info Card & Overall Balances */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Student & Parent Details */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
           <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
             <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-slate-900 border border-brand-200 dark:border-slate-700 flex items-center justify-center font-cinzel font-black text-brand-600 dark:text-brand-400 text-lg">
@@ -346,7 +339,6 @@ export default function StudentProfile() {
           </div>
         </div>
 
-        {/* Right: Total Financial Snapshot */}
         <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-brand-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -372,7 +364,6 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          {/* Progress bar */}
           <div className="relative z-10 mt-6 pt-4 border-t border-white/10">
             <div className="flex justify-between text-[11px] font-semibold text-blue-200 mb-1.5">
               <span>Collection Completion Progress</span>
@@ -392,7 +383,6 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      {/* The 5 Core Fee Categories Breakdown */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -448,7 +438,6 @@ export default function StudentProfile() {
                     </div>
                   </div>
 
-                  {/* Micro Progress bar */}
                   <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-3">
                     <div
                       className="h-full bg-emerald-500 rounded-full"
@@ -470,7 +459,6 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      {/* ── System Payment Intelligence & Pattern Learning Engine ── */}
       {student.ai_payment_plan && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -499,7 +487,6 @@ export default function StudentProfile() {
             )}
           </div>
 
-          {/* Strategy Banner */}
           <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-blue-900/40 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             <div className="relative z-10">
@@ -533,9 +520,7 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          {/* System Insight & Pattern Analysis Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* System Insight */}
             {student.ai_payment_plan.ai_insight && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
                 <div>
@@ -552,7 +537,6 @@ export default function StudentProfile() {
               </div>
             )}
 
-            {/* Learned Behavioral Cluster */}
             {student.ai_payment_plan.learned_cluster && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
                 <div>
@@ -582,7 +566,6 @@ export default function StudentProfile() {
             )}
           </div>
 
-          {/* Pattern Details Grid */}
           {student.ai_payment_plan.pattern_details && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {[
@@ -600,7 +583,6 @@ export default function StudentProfile() {
             </div>
           )}
 
-          {/* Settlement Steps Timeline */}
           {student.ai_payment_plan.settlement_steps?.length > 0 && (
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
               <h4 className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest font-cinzel mb-3.5 flex items-center gap-2">
@@ -645,7 +627,6 @@ export default function StudentProfile() {
             </div>
           )}
 
-          {/* Dynamic Recommendation */}
           {student.ai_payment_plan.dynamic_recommendation && (
             <div className="bg-slate-50 dark:bg-slate-800/90 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
               <div className="flex items-start gap-3">
@@ -662,7 +643,6 @@ export default function StudentProfile() {
             </div>
           )}
 
-          {/* Next Best Action Button */}
           {!isAdmin && student.ai_payment_plan.next_best_action && (
             <button
               onClick={() => handleApplyAiRecommendation(student.ai_payment_plan.next_best_action)}
@@ -676,7 +656,6 @@ export default function StudentProfile() {
         </div>
       )}
 
-      {/* Payment Transactions & Digital Receipts Table */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
           <div>
@@ -777,7 +756,6 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      {/* Record Payment Collection Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">
@@ -799,7 +777,6 @@ export default function StudentProfile() {
             </div>
 
             <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
-              {/* Manual Physical OR Number Input (Inspection 2.3.3) */}
               <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
                 <label className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block mb-1.5 font-cinzel flex items-center gap-1.5">
                   <Receipt className="w-3.5 h-3.5" />
@@ -818,7 +795,6 @@ export default function StudentProfile() {
                 </p>
               </div>
 
-              {/* Fee Category Selector */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block font-cinzel">
@@ -865,7 +841,6 @@ export default function StudentProfile() {
                         setPaymentAmount(bal.toFixed(2));
                       }
                     } else if (matchedBenchmark) {
-                      // First time payment / activating fee
                       if (newType === 'Tuition Fee') {
                         setPaymentAmount((matchedBenchmark.monthly || 1801).toFixed(2));
                       } else if (newType === 'Energy Fee') {
@@ -890,7 +865,6 @@ export default function StudentProfile() {
                 </select>
               </div>
 
-              {/* Amount input & Real-Time ML Anomaly Detection Alert */}
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
                   Amount to Collect (₱)
@@ -905,7 +879,6 @@ export default function StudentProfile() {
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-mono font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
                 />
 
-                {/* Real-time ML/AI Anomaly Warning */}
                 {(() => {
                   const sched = student?.fee_schedules?.find(
                     (fs) => (fs.category_name || '').toLowerCase() === (feeType || '').toLowerCase()
@@ -951,7 +924,6 @@ export default function StudentProfile() {
                 })()}
               </div>
 
-              {/* Payment Method */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
@@ -980,7 +952,6 @@ export default function StudentProfile() {
                 </div>
               </div>
 
-              {/* Remarks */}
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest block mb-1.5 font-cinzel">
                   Cashier Remarks / Note
@@ -994,7 +965,6 @@ export default function StudentProfile() {
                 />
               </div>
 
-              {/* Action Buttons */}
               <div className="pt-3 flex gap-2 justify-end">
                 <button
                   type="button"
@@ -1016,7 +986,6 @@ export default function StudentProfile() {
         </div>
       )}
 
-      {/* Official Receipt Modal */}
       {selectedReceipt && (
         <OfficialReceiptModal
           receipt={selectedReceipt}
@@ -1024,7 +993,6 @@ export default function StudentProfile() {
         />
       )}
 
-      {/* Payment Notice Letter Modal */}
       {noticeLetterData && (
         <PaymentNoticeLetterModal
           letterData={noticeLetterData}
@@ -1032,7 +1000,6 @@ export default function StudentProfile() {
         />
       )}
 
-      {/* End-of-School-Year Record Modal */}
       {yearlyRecordData && (
         <YearlyRecordModal
           recordData={yearlyRecordData}

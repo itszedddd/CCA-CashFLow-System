@@ -14,7 +14,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
         onClick={(e) => e.stopPropagation()}
         className="bg-white text-slate-800 rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col my-auto relative z-10 cursor-default"
       >
-        {/* Top Header Bar - Digital View Only (Print buttons removed per Inspection Report 2.3.4) */}
         <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
@@ -38,9 +37,7 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
           </div>
         </div>
 
-        {/* Receipt Body */}
         <div className="p-5 sm:p-8 font-sans overflow-y-auto flex-1">
-          {/* New Standard [CCA L3] Header Design (Inspection Report Page 7) */}
           <div className="text-center pb-3 mb-3">
             <img
               src={CCA_OFFICE_INFO.crestLogoUrl}
@@ -63,7 +60,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             <div className="border-b-2 border-slate-800 mt-3" />
           </div>
 
-          {/* Receipt Info Bar (Synced to Philippine Standard Time) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2.5 border-b border-slate-200 text-xs">
             <div>
               <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Official Receipt No.</p>
@@ -79,7 +75,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             </div>
           </div>
 
-          {/* Student Info */}
           <div className="py-2.5 border-b border-slate-200 text-xs space-y-1.5">
             <div className="flex justify-between gap-2">
               <span className="text-slate-500 font-medium">Received From (Student):</span>
@@ -105,7 +100,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             </div>
           </div>
 
-          {/* Fee Itemization */}
           <div className="py-2.5 border-b-2 border-slate-900/80">
             <table className="w-full text-xs">
               <thead>
@@ -137,7 +131,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             </table>
           </div>
 
-          {/* Payment Details & Balance */}
           <div className="py-2.5 border-b border-slate-200 text-xs grid grid-cols-2 gap-4">
             <div>
               <p className="text-[10px] uppercase font-bold text-slate-400 font-cinzel">Payment Method</p>
@@ -162,7 +155,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             </div>
           </div>
 
-          {/* Signatures & Certification */}
           <div className="pt-4 grid grid-cols-2 gap-6 text-center text-xs">
             <div className="pt-4">
               <div className="border-b border-slate-400 mb-1" />
@@ -178,7 +170,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
             </div>
           </div>
 
-          {/* Institutional Footer */}
           <div className="mt-4 pt-2.5 border-t border-dashed border-slate-200 text-center">
             <p className="text-[10px] text-slate-500">
               Official Digital Receipt • Preserved in CCA FlowSys Student Profile for verification only.
@@ -189,7 +180,6 @@ export default function OfficialReceiptModal({ receipt, onClose }) {
           </div>
         </div>
 
-        {/* Bottom Actions Bar - Close Window Only (No Printable Digital Receipt per Inspection 2.3.4) */}
         <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
           <button
             type="button"

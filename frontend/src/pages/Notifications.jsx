@@ -25,7 +25,6 @@ export default function Notifications() {
   const isParent = (currentUser?.role || '').toLowerCase() === 'parent';
   const isAdmin = (currentUser?.role || '').toLowerCase() === 'admin';
 
-  // Form state
   const [form, setForm] = useState({
     title: '',
     fee_type: 'Educational Tour',
@@ -35,8 +34,7 @@ export default function Notifications() {
     due_date: ''
   });
 
-  // Target audience selection
-  const [targetType, setTargetType] = useState('all'); // 'all' | 'grade' | 'student'
+  const [targetType, setTargetType] = useState('all');
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
   const [studentsList, setStudentsList] = useState([]);
@@ -53,7 +51,6 @@ export default function Notifications() {
       const res = await api.get('/students/');
       setStudentsList(res.data || []);
     } catch {
-      // Non-critical if fails
     }
   };
 
@@ -68,7 +65,6 @@ export default function Notifications() {
 
       const parentStudentId = currentUser?.student_id || currentUser?.id;
       const safeData = (res.data || []).filter((n) => {
-        // Strictly announcements only (never overdue balance notices per Inspection 2.5.1)
         if ((n.title || '').startsWith('Official Overdue Balance Notice')) {
           return false;
         }
@@ -157,7 +153,6 @@ export default function Notifications() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header (Strictly Payment Announcements Only per Inspection 2.5.1) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white font-cinzel tracking-tight uppercase">
@@ -181,7 +176,6 @@ export default function Notifications() {
         )}
       </div>
 
-      {/* Parent Account Privacy Indicator */}
       {isParent && (
         <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-900 dark:text-emerald-200">
           <div className="flex items-start sm:items-center gap-2.5">
@@ -202,7 +196,6 @@ export default function Notifications() {
         </div>
       )}
 
-      {/* Announcements Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           <div className="col-span-full py-16 text-center">
@@ -274,7 +267,6 @@ export default function Notifications() {
         )}
       </div>
 
-      {/* Post Announcement Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-[92vh] overflow-y-auto">

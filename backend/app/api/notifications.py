@@ -18,11 +18,6 @@ def get_notifications(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):
-    """
-    List Fee & Payment Announcements (e.g., Educational Tour, school event contributions).
-    Per v2.0 Inspection Report (2.5.1), overdue balance notices are handled via individual
-    formal Payment Notice Letters and excluded from this announcements board.
-    """
     query = db.query(PaymentNotification).filter(
         ~PaymentNotification.title.like("Official Overdue Balance Notice%")
     )
@@ -75,10 +70,6 @@ def create_notification(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Cashier / Admin posts a payment announcement (event fee, educational tour, school contribution).
-    Parents are strictly blocked from posting announcements.
-    """
     user_role = (current_user.role or "").strip().lower()
     if user_role == "parent":
         raise HTTPException(
@@ -138,7 +129,6 @@ def delete_notification(
 
 @router.put("/{notification_id}/read")
 def mark_as_read(notification_id: int, db: Session = Depends(get_db)):
-    """Mark announcement as read by parent."""
     notif = db.query(PaymentNotification).filter(PaymentNotification.id == notification_id).first()
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")

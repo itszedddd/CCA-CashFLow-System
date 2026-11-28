@@ -1,6 +1,3 @@
-"""
-Philippine Standard Time (Asia/Manila, UTC+8) & Canonical CCA Grade-Section Helpers.
-"""
 from datetime import datetime, timezone, timedelta
 
 PH_TZ = timezone(timedelta(hours=8))
@@ -22,22 +19,18 @@ GRADE_SECTION_MAP = {
 
 
 def ph_now() -> datetime:
-    """Return current datetime strictly in Philippine Standard Time (Asia/Manila, UTC+8)."""
     return datetime.now(PH_TZ)
 
 
 def ph_now_iso() -> str:
-    """Return ISO-8601 timestamp string anchored at UTC+08:00."""
     return ph_now().isoformat(timespec="seconds")
 
 
 def ph_now_display() -> str:
-    """Return formal human-readable PH timestamp (e.g., November 27, 2026 • 09:05 AM PHT)."""
     return ph_now().strftime("%B %d, %Y • %I:%M %p PHT")
 
 
 def format_ph_timestamp(iso_str: str) -> str:
-    """Parse an ISO timestamp string and display it in Philippine Standard Time."""
     if not iso_str:
         return ph_now_display()
     try:
@@ -53,7 +46,6 @@ def format_ph_timestamp(iso_str: str) -> str:
 
 
 def resolve_section(grade_level: str, fallback: str = "Faith") -> str:
-    """Return the single canonical CCA section for a given grade level."""
     if not grade_level:
         return fallback
     g_clean = grade_level.strip().lower()
@@ -66,13 +58,6 @@ def resolve_section(grade_level: str, fallback: str = "Faith") -> str:
 
 
 def generate_lrn_password(student_id: str, full_name: str = "") -> str:
-    """
-    Generate default initial password for a student account.
-    Format: First 3 letters of last name (uppercase) + '#0000'.
-    Handles both 'LastName, FirstName MiddleName' and 'FirstName LastName'.
-    Example: 'Santos, Juan Miguel' or 'Juan Miguel Santos' -> 'SAN#0000'
-    Fallback: 'CCA#0000' if name is unavailable or has < 3 letters.
-    """
     last_word = ""
     if full_name:
         cleaned = full_name.strip()
@@ -91,7 +76,6 @@ def generate_lrn_password(student_id: str, full_name: str = "") -> str:
     return f"{prefix}#0000"
 
 
-# ── Grade Progression & School Year Helpers ──
 GRADE_PROGRESSION = {
     "Pre-Kinder": "Kindergarten",
     "Kindergarten": "Grade 1",
@@ -109,14 +93,6 @@ GRADE_PROGRESSION = {
 
 
 def get_next_grade_and_section(current_grade: str) -> tuple[str, str, bool]:
-    """
-    Returns (next_grade_level, next_canonical_section, is_graduated).
-    Kindergarten -> Grade 1 (Faith)
-    Grade 1 -> Grade 2 (Grace)
-    ...
-    Grade 9 -> Grade 10 (Self-Control)
-    Grade 10 -> JHS Completer / Graduated (Alumni, is_graduated=True)
-    """
     clean_g = (current_grade or "").strip()
     next_grade = GRADE_PROGRESSION.get(clean_g)
     if not next_grade:
@@ -125,7 +101,6 @@ def get_next_grade_and_section(current_grade: str) -> tuple[str, str, bool]:
                 next_grade = v
                 break
     if not next_grade:
-        # Fallback based on substring
         if "kinder" in clean_g.lower():
             next_grade = "Grade 1"
         elif "10" in clean_g:
@@ -139,7 +114,6 @@ def get_next_grade_and_section(current_grade: str) -> tuple[str, str, bool]:
 
 
 def get_next_school_year(sy: str) -> str:
-    """Return next academic school year string (e.g. '2026-2027' -> '2027-2028')."""
     clean = (sy or "2026-2027").strip()
     try:
         parts = clean.split("-")
@@ -151,35 +125,16 @@ def get_next_school_year(sy: str) -> str:
         pass
     return "2027-2028"
 
-# Source: Calvary Christian Academy Inc. Official Payment Guidelines
-# Registration & Misc: 5,700 (all levels)
-# Tuition:
-#   Pre-Kinder to Kinder: 16,060/yr (1,606/mo CBC Member) | 17,060/yr (1,706/mo Non-Member)
-#   Grade 1 to 6:         17,010/yr (1,701/mo CBC Member) | 18,010/yr (1,801/mo Non-Member)
-#   Grade 7 to 10:        19,060/yr (1,906/mo CBC Member) | 20,060/yr (2,006/mo Non-Member)
-# Energy Fee:
-#   Pre-Kinder to Kinder: 150/month (1,500/yr)
-#   Grade 1 to 10:        300/month (3,000/yr)
-# Books (SY 2026-2027):
-#   Kinder: 5,500 | Grade 1: 6,900 | Grade 2: 6,300 | Grade 3: 6,900 | Grade 4-6: 8,500 | Grade 7-10: 9,200
-# Note: Total 1-year baseline (Tuition Non-Member + Reg + Energy, without books):
-#   Kinder: 24,260 | Grade 1 to 6: 26,710 | Grade 7 to 10: 28,760
 
 def get_grade_fee_benchmarks(grade_level: str, is_cbc_member: bool = False) -> list[dict]:
-    """
-    Returns standard official 5 fee schedules for a given grade level according to
-    Calvary Christian Academy Payment Guidelines SY 2026-2027.
-    """
     g = (grade_level or "").strip().lower()
 
-    # 1. Registration Fee: ₱5,700 flat across all grade levels
     reg_fee = {
         "category_name": "Registration Fee",
         "sub_description": "Registration & Miscellaneous (Due upon enrollment)",
         "total_due": 5700.0
     }
 
-    # 2. Tuition Fee & Energy Fee
     if any(k in g for k in ["pre-kinder", "pre kinder", "kinder"]):
         tuition_due = 16060.0 if is_cbc_member else 17060.0
         monthly_tuit = 1606 if is_cbc_member else 1706
@@ -209,7 +164,6 @@ def get_grade_fee_benchmarks(grade_level: str, is_cbc_member: bool = False) -> l
         }
         books_due = 9200.0
     else:
-        # Grade 1 to 6
         tuition_due = 17010.0 if is_cbc_member else 18010.0
         monthly_tuit = 1701 if is_cbc_member else 1801
         tuit_fee = {
@@ -229,7 +183,6 @@ def get_grade_fee_benchmarks(grade_level: str, is_cbc_member: bool = False) -> l
         elif "grade 3" in g or g == "g3":
             books_due = 6900.0
         else:
-            # Grade 4 to 6
             books_due = 8500.0
 
     books_fee = {

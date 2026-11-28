@@ -12,7 +12,6 @@
 @theme {
   --font-cinzel: 'Cinzel', serif;
   
-  /* Navy Blue Primary Scale (from Thesis_Project) */
   --color-brand-50: #eff3f9;
   --color-brand-100: #daddf0;
   --color-brand-200: #b0bfd9;
@@ -25,11 +24,9 @@
   --color-brand-900: #022868;
   --color-brand-950: #01163e;
 
-  /* Crimson Red Accent */
   --color-brand-red: #bc0c31;
   --color-brand-red-hover: #9c0928;
   
-  /* Charcoal Grey */
   --color-brand-charcoal: #545454;
 }
 
@@ -43,20 +40,17 @@ body {
   font-family: 'Cinzel', serif;
 }
 
-/* Titles of the tables in CINZEL font with subtle letter spacing */
 table thead th {
   font-family: 'Cinzel', serif;
   @apply text-slate-500 dark:text-slate-400 tracking-tighter uppercase font-bold text-xs;
   letter-spacing: -0.02em;
 }
 
-/* Sidebar and Navigation Menu font */
 nav a, .menu-item {
   font-family: 'Cinzel', serif;
   @apply tracking-wider uppercase;
 }
 
-/* Mobile Sidebar Drawer */
 .sidebar-backdrop {
   @apply fixed inset-0 bg-black/50 z-40 transition-opacity duration-300;
 }
@@ -81,7 +75,6 @@ nav a, .menu-item {
   transform: translateX(0);
 }
 
-/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -98,7 +91,6 @@ nav a, .menu-item {
   animation: zoomIn 0.25s ease-out;
 }
 
-/* Accessibility Mode */
 html.accessible-mode {
   font-size: 105%;
 }
@@ -128,7 +120,6 @@ html.accessible-mode .dark {
   background-color: rgb(15 23 42 / var(--tw-bg-opacity));
 }
 
-/* Global Scrollbar Styles */
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -150,7 +141,6 @@ html.accessible-mode .dark {
   background: rgba(100, 116, 139, 0.7);
 }
 
-/* Enhanced Scanned Collection Ledger Horizontal Scrollbar */
 .ledger-scrollbar::-webkit-scrollbar {
   height: 10px;
 }
@@ -185,7 +175,6 @@ html.accessible-mode .dark {
   scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
 }
 
-/* Print Layout CSS (Default US Letter 8.5 x 11 inches) */
 @media print {
   @page {
     size: letter portrait;

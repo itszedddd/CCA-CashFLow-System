@@ -48,7 +48,6 @@ function parseSafePHDate(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
   const str = String(value).trim();
-  // If formatted already like "November 27, 2026 • 09:05 AM PHT", keep caller check
   const hasOffset = /[zZ]$|[+-]\d{2}:\d{2}$/.test(str);
   const normalized = str.includes('T') && !hasOffset ? `${str}+08:00` : str;
   const d = new Date(normalized);
@@ -94,7 +93,6 @@ export const CCA_OFFICE_INFO = {
   crestLogoUrl: '/assets/[CCA L2.2] CCA Logo Icon Blue Transparent.png',
 };
 
-// Official SY 2026-2027 CCA Payment Guidelines & Fee Schedules
 export function getGradeFeeBenchmarks(gradeLevel, isCbcMember = false) {
   const g = String(gradeLevel || '').trim().toLowerCase();
 
@@ -123,7 +121,6 @@ export function getGradeFeeBenchmarks(gradeLevel, isCbcMember = false) {
     monthlyEnergy = 300;
     booksDue = 9200;
   } else {
-    // Grade 1-6
     tuitionDue = isCbcMember ? 17010 : 18010;
     monthlyTuition = isCbcMember ? 1701 : 1801;
     energyDue = 3000;
@@ -131,7 +128,7 @@ export function getGradeFeeBenchmarks(gradeLevel, isCbcMember = false) {
     if (g.includes('grade 1') || g === 'g1') booksDue = 6900;
     else if (g.includes('grade 2') || g === 'g2') booksDue = 6300;
     else if (g.includes('grade 3') || g === 'g3') booksDue = 6900;
-    else booksDue = 8500; // Grade 4-6
+    else booksDue = 8500;
   }
 
   const tuitFee = {
@@ -179,7 +176,6 @@ export function formatStudentFullName(lastName = '', firstName = '', middleName 
   const mn = String(middleName || '').trim();
   if (!ln && !fn) return '';
   if (!ln) return [fn, mn].filter(Boolean).join(' ');
-  // Canonical CCA format: Last, First, Middle
   return [ln, fn, mn].filter(Boolean).join(', ');
 }
 

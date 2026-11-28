@@ -6,11 +6,11 @@ import { CCA_OFFICE_INFO, formatPeso, formatPHDateTime } from '../utils/schoolDa
 export default function Reports() {
   const [report, setReport] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [activeTab, setActiveTab] = useState('financial'); // 'financial' | 'transactions'
+  const [activeTab, setActiveTab] = useState('financial');
   const [txSearch, setTxSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [schoolYear, setSchoolYear] = useState('2026-2027');
-  const [balanceFilter, setBalanceFilter] = useState('outstanding'); // 'outstanding' | 'all'
+  const [balanceFilter, setBalanceFilter] = useState('outstanding');
 
   useEffect(() => {
     fetchReportData();
@@ -153,7 +153,6 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      {/* Top Controls - Hidden on print */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
         <div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight">
@@ -299,9 +298,7 @@ export default function Reports() {
           </div>
         </div>
       ) : (
-        /* Formal Printable Letter Document Area */
         <div className="printable-area bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-3xl p-6 sm:p-10 shadow-md border border-slate-200 dark:border-slate-700 print:p-2 print:border-none print:shadow-none print:bg-white print:text-black space-y-8 print:space-y-5">
-          {/* New Standard [CCA L3] Header (Inspection Report Page 9) */}
           <div className="text-center pb-3 print:pb-2">
             <img
               src={CCA_OFFICE_INFO.crestLogoUrl}
@@ -335,7 +332,6 @@ export default function Reports() {
             </p>
           </div>
 
-          {/* SECTION 1: FINANCIAL SUMMARY */}
           <section className="break-inside-avoid">
             <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
               Section 1: Financial Summary
@@ -392,7 +388,6 @@ export default function Reports() {
             </div>
           </section>
 
-          {/* SECTION 2: COLLECTION SUMMARY BY FEE CATEGORY */}
           <section className="break-inside-avoid">
             <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
               Section 2: Collection Summary by Fee Category
@@ -433,7 +428,6 @@ export default function Reports() {
             </div>
           </section>
 
-          {/* SECTION 3: COLLECTION SUMMARY BY GRADE LEVEL */}
           <section className="break-inside-avoid">
             <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
               Section 3: Collection Summary by Grade Level
@@ -479,7 +473,6 @@ export default function Reports() {
             </div>
           </section>
 
-          {/* SECTION 4 & 5: MONTHLY COLLECTION SUMMARY + STUDENT PAYMENT STATUS SUMMARY */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:grid-cols-1 print:gap-4">
             <section className="break-inside-avoid">
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
@@ -555,7 +548,6 @@ export default function Reports() {
             </section>
           </div>
 
-          {/* SECTION 6: OUTSTANDING BALANCE REPORT */}
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-1 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel print:text-black">
@@ -619,7 +611,6 @@ export default function Reports() {
             </div>
           </section>
 
-          {/* SECTION 7 & 8: TRANSACTION SUMMARY + ML ANOMALY DETECTION SUMMARY */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:grid-cols-1 print:gap-4">
             <section className="break-inside-avoid">
               <h3 className="text-xs font-extrabold text-brand-900 dark:text-white uppercase tracking-widest font-cinzel mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 print:text-black">
@@ -728,7 +719,6 @@ export default function Reports() {
             </section>
           </div>
 
-          {/* Bottom Accountability and Authorization Block (Inspection Page 12) */}
           <section className="break-inside-avoid pt-8 mt-6 border-t-2 border-slate-300 dark:border-slate-600 print:border-slate-800 print:pt-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 print:text-black font-cinzel mb-6 print:mb-4">
               Accountability &amp; Authorization

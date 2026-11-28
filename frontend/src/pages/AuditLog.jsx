@@ -53,7 +53,6 @@ export default function AuditLog() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-cinzel tracking-tight">
@@ -70,7 +69,6 @@ export default function AuditLog() {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-md border border-slate-200/80 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors">
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="w-56">
@@ -94,7 +92,6 @@ export default function AuditLog() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200/80 dark:border-slate-700 overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -167,7 +164,6 @@ export default function AuditLog() {
           </table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500">
             <span>

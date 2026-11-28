@@ -39,7 +39,6 @@ def list_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("Admin"))
 ):
-    """List all staff/admin user accounts (Admin only)."""
     query = db.query(User)
     if role and role.lower() != "all":
         query = query.filter(func.lower(User.role) == role.strip().lower())
@@ -58,7 +57,6 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("Admin"))
 ):
-    """Create a new Admin or Cashier account (Admin only)."""
     username = (data.username or "").strip().lower()
     full_name = (data.full_name or "").strip()
     password = (data.password or "").strip()
@@ -110,7 +108,6 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("Admin"))
 ):
-    """Update user profile, role, or activation status (Admin only)."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User account not found.")
@@ -172,7 +169,6 @@ def admin_reset_user_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("Admin"))
 ):
-    """Reset a staff/admin user's password (Admin only)."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User account not found.")
@@ -201,7 +197,6 @@ def delete_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("Admin"))
 ):
-    """Delete an unused user account or enforce deactivation if linked to records."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User account not found.")

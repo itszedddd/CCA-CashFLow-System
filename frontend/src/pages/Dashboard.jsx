@@ -92,7 +92,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-1">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-cinzel tracking-tight truncate">
@@ -123,7 +122,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 4 Revenue & Collections KPI Cards (Expenses & Expense Vouchers removed per Inspection 2.2.2) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total School Revenue"
@@ -162,7 +160,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 12-Month School Revenue Comparison: 2026 vs 2025 (Inspection Report 2.2.3) */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_6px_26px_-6px_rgba(15,23,42,0.12)] dark:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.5)] border border-slate-200/90 dark:border-slate-700 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div>
@@ -240,9 +237,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Two Column Revenue Breakdowns (Disbursements graph removed per Inspection 2.2.3) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Distribution */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_6px_26px_-6px_rgba(15,23,42,0.12)] dark:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.5)] border border-slate-200/90 dark:border-slate-700 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white font-cinzel tracking-wider uppercase">
@@ -290,7 +285,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Grade Level Collection Performance */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_6px_26px_-6px_rgba(15,23,42,0.12)] dark:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.5)] border border-slate-200/90 dark:border-slate-700 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white font-cinzel tracking-wider uppercase">
@@ -330,7 +324,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Revenue Transactions Table (Expenses removed per Inspection 2.2.4) */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_6px_26px_-6px_rgba(15,23,42,0.12)] dark:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.5)] border border-slate-200/90 dark:border-slate-700 overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
           <div>

@@ -63,7 +63,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
 
   const sidebarContent = (
     <div className="flex flex-col h-full w-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors duration-300">
-      {/* Brand Header - CCA FlowSys [CCA L2.2] Light / [CCA L2.1] Dark */}
       <div className="px-4 py-4 border-b border-slate-100 dark:border-slate-700 flex flex-col justify-center items-center relative">
         <div className="flex items-center justify-center w-full">
           <img
@@ -84,7 +83,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
           />
         </div>
 
-        {/* Close button - mobile only */}
         <button
           onClick={onClose}
           className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition-colors absolute right-2 top-3 cursor-pointer"
@@ -94,7 +92,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto font-cinzel sidebar-scroll">
         <div className="px-4 pb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           {isParent ? 'Parent Services' : isAdmin ? 'Administration' : 'Main Navigation'}
@@ -146,7 +143,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
           })}
         </ul>
 
-        {/* The 5 Core Fee Categories Quick Reference */}
         {!isParent && !isAdmin && (
           <div className="mt-6 px-4 pt-4 border-t border-slate-100 dark:border-slate-700">
             <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 font-cinzel">
@@ -178,7 +174,6 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
         )}
       </nav>
 
-      {/* User Info & Logout — Pinned to bottom */}
       <div className="mt-auto p-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
         {user && (
           <div className="flex items-center space-x-3 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-700/40 border border-slate-200/70 dark:border-slate-700">
@@ -213,12 +208,10 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
 
   return (
     <>
-      {/* Expanded Desktop Sidebar (w-72 = 288px so AI Ledger Intelligence fits without truncation) */}
       <div className="hidden md:flex md:w-72 md:flex-shrink-0 h-full print:hidden">
         {sidebarContent}
       </div>
 
-      {/* Mobile backdrop + drawer */}
       <div
         className={`sidebar-backdrop md:hidden print:hidden ${
           isOpen ? 'sidebar-backdrop-visible' : 'sidebar-backdrop-hidden'

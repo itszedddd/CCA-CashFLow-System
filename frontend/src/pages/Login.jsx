@@ -59,7 +59,6 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
       className={`flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden w-full transition-colors duration-500 font-sans ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'
         }`}
     >
-      {/* Left Panel - CCA FlowSys Primary Branding [CCA L1] */}
       <div className="lg:w-[46%] w-full bg-[#022868] flex flex-col items-center justify-center px-6 py-6 lg:px-10 lg:py-6 lg:h-full relative overflow-hidden text-center order-1 shadow-xl">
         <div className="absolute -top-28 -left-28 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-28 -right-28 w-80 h-80 rounded-full bg-brand-red/15 blur-3xl pointer-events-none" />
@@ -84,9 +83,7 @@ export default function Login({ onLogin, isDarkMode, setIsDarkMode }) {
         </div>
       </div>
 
-      {/* Right Panel - Elevated High-Contrast Sign In Box */}
       <div className="lg:w-[54%] w-full lg:h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative order-2 bg-slate-100 dark:bg-slate-950 overflow-y-auto">
-        {/* Dark Mode Toggle */}
         <button
           onClick={() => setIsDarkMode((p) => !p)}
           className={`absolute top-4 right-4 p-2.5 rounded-2xl transition-all z-10 border cursor-pointer ${isDarkMode

@@ -26,12 +26,12 @@ class EvaluateRequest(BaseModel):
 
 
 class ResolveRequest(BaseModel):
-    action: str  # "verify_clear" | "mark_correction"
+    action: str
     cashier_notes: Optional[str] = None
 
 
 class EnvelopeVerifyRequest(BaseModel):
-    status: int  # 1: Verified, 0: Pending, 2: Discrepancy
+    status: int
     cashier_notes: Optional[str] = None
 
 
@@ -40,32 +40,21 @@ def get_anomaly_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Returns the high-level ML Anomaly Detection summary, health score,
-    3-level threshold breakdown, and generative insights for the Cashier.
-    """
     engine = AnomalyEngine(db)
-    # Summary is a read: never rewrite anomaly scores/statuses just because the
-    # dashboard loaded. Cashier verifications must stay exactly as recorded.
-    # Persisting is done only by the explicit /scan-all endpoint.
     summary = engine.train_and_scan_all(persist=False)
     return summary
 
 
 @router.get("/transactions")
 def list_flagged_transactions(
-    level: Optional[str] = None,  # "All", "High", "Medium", "Low"
-    status: Optional[str] = None,  # "Flagged", "Verified_Cleared", "Normal"
+    level: Optional[str] = None,
+    status: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 25,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Retrieves transaction ledger records enriched with ML Anomaly scores,
-    3-level thresholds, flagged reasons, and cashier verification statuses.
-    """
     query = db.query(Income).filter(Income.is_voided == 0)
 
     if level and level != "All":
@@ -133,9 +122,6 @@ def get_student_decision(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Returns the autonomous AI payment recommendation and settlement plan for a student.
-    """
     from .students import find_student_by_id_or_lrn
     st = find_student_by_id_or_lrn(student_id, db, current_user)
     if not st:
@@ -151,14 +137,9 @@ def evaluate_transaction_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Real-time pre-check endpoint. Returns live anomaly score and instant risk level
-    as the Cashier inputs payment details in the modal, preventing errors before save.
-    """
     cat = db.query(IncomeCategory).filter(IncomeCategory.id == data.category_id).first()
     category_name = data.fee_type or (cat.name if cat else "General")
 
-    # Real-time duplicate check within last 60 minutes
     cutoff_time = (ph_now() - timedelta(minutes=60)).isoformat()
     duplicate_count = 0
     if data.payer_name and data.amount and data.amount > 0:
@@ -190,11 +171,9 @@ def trigger_full_scan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Triggers complete retrain of IsolationForest and re-evaluates all transactions."""
     engine = AnomalyEngine(db)
     result = engine.train_and_scan_all()
 
-    # Log to Audit Log
     log = AuditLog(
         user_id=current_user.id,
         action="Ran ML Anomaly Scan",
@@ -215,10 +194,6 @@ def resolve_anomaly(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Cashier resolves a flagged anomaly by either marking it as verified & cleared,
-    or flagging it for manual correction.
-    """
     income = db.query(Income).filter(Income.id == income_id).first()
     if not income:
         raise HTTPException(status_code=404, detail="Transaction record not found")
@@ -248,7 +223,6 @@ def resolve_anomaly(
         if data.cashier_notes:
             income.cashier_notes = data.cashier_notes
 
-    # Add audit log entry
     log = AuditLog(
         user_id=current_user.id,
         action=action_text,
@@ -275,10 +249,6 @@ def verify_physical_envelope(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Updates the physical brown envelope verification status:
-    1: Verified in Envelope, 0: Pending, 2: Discrepancy Found.
-    """
     income = db.query(Income).filter(Income.id == income_id).first()
     if not income:
         raise HTTPException(status_code=404, detail="Transaction record not found")

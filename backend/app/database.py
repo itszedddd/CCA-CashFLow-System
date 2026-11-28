@@ -6,8 +6,6 @@ from pathlib import Path
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
-    # Accept common hosted-Postgres URL formats and normalize them to the
-    # psycopg driver installed in requirements.txt.
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
     elif DATABASE_URL.startswith("postgresql://"):
@@ -18,7 +16,6 @@ else:
     else:
         backend_dir = Path(__file__).resolve().parent.parent
         repo_dir = backend_dir.parent
-        # Prefer backend/cashflow.db, fallback to root cashflow.db
         if (backend_dir / "cashflow.db").exists():
             db_file = backend_dir / "cashflow.db"
         elif (repo_dir / "cashflow.db").exists():

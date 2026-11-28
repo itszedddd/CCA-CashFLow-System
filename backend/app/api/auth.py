@@ -18,7 +18,6 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
     if not raw_username or not raw_password:
         raise HTTPException(status_code=400, detail="Username/LRN and password are required.")
 
-    # 1. Check Staff / Admin / Cashier user table first
     user = db.query(User).filter(
         (func.lower(func.trim(User.username)) == raw_username) |
         (func.lower(func.trim(User.username)) == f"{raw_username}@cca.edu.ph")
@@ -43,7 +42,6 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
             }
         }
 
-    # 2. Check Parent / Student account via Student LRN or parent_username
     student = db.query(Student).filter(
         (func.lower(func.trim(Student.student_id)) == raw_username) |
         (func.lower(func.trim(Student.parent_username)) == raw_username)
@@ -51,7 +49,6 @@ def login(form_data: LoginRequest, db: Session = Depends(get_db)):
 
     if student:
         is_pw_ok = bool(student.parent_password_hash and verify_password(raw_password, student.parent_password_hash))
-        # Also allow initial_password match if hash somehow wasn't synced
         if not is_pw_ok and student.initial_password and raw_password == student.initial_password:
             student.parent_password_hash = get_password_hash(raw_password)
             db.commit()
@@ -95,10 +92,6 @@ def change_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Allows authenticated Parents (using LRN-generated initial password) or Staff/Admin
-    to change their password after logging in.
-    """
     current_pw = (data.current_password or "").strip()
     new_pw = (data.new_password or "").strip()
 

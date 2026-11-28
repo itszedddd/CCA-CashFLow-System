@@ -26,7 +26,6 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
   const isParent = user?.role === 'Parent';
   const isAdmin = (user?.role || '').toLowerCase() === 'admin';
 
-  // Get active page title based on path
   const getPageTitle = (pathname) => {
     if (pathname.startsWith('/collections/')) return 'Student Profile & Payment Records';
     switch (pathname) {
@@ -63,7 +62,6 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
         setPendingCount(res.data.length);
       }
     } catch {
-      // Quiet fail if offline
     }
   };
 
@@ -77,7 +75,6 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
 
   return (
     <div className="flex h-screen print:h-auto print:block bg-slate-50 dark:bg-slate-900 font-sans transition-colors duration-300 overflow-hidden">
-      {/* Sidebar Navigation */}
       <Sidebar
         user={user}
         onLogout={onLogout}
@@ -86,7 +83,6 @@ function AppLayout({ user, onLogout, isDarkMode, setIsDarkMode, isAccessibleMode
         pendingCount={pendingCount}
       />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden print:overflow-visible print:h-auto">
         <Header
           activeTitle={activeTitle}
@@ -156,13 +152,11 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Dark Mode State
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('cca_cf_dark');
     return saved !== null ? saved === 'true' : false;
   });
 
-  // Accessible Mode State
   const [isAccessibleMode, setIsAccessibleMode] = useState(() => {
     const saved = localStorage.getItem('cca_cf_accessible');
     return saved !== null ? saved === 'true' : false;

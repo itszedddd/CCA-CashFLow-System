@@ -14,7 +14,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
       <div className="bg-white text-slate-800 rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col print:shadow-none print:border-none print:max-w-none print:w-full print:max-h-none print:rounded-none">
-        {/* Modal Controls - hidden on print */}
         <div className="p-3 sm:p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
@@ -40,9 +39,7 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
           </div>
         </div>
 
-        {/* Scrollable / Printable Letter Content */}
         <div className="p-6 sm:p-10 font-sans overflow-y-auto print:overflow-visible print:p-6 print:py-4" id="printable-letter">
-          {/* New Standard [CCA L3] Header Design (Inspection Report Page 7) */}
           <div className="text-center pb-3 mb-4 print:pb-2 print:mb-2.5">
             <img
               src={CCA_OFFICE_INFO.crestLogoUrl}
@@ -65,7 +62,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             <div className="border-b-2 border-slate-800 mt-3 print:mt-2" />
           </div>
 
-          {/* Letter Meta & Date */}
           <div className="flex justify-between items-center text-xs mb-3 print:mb-2">
             <p className="font-semibold text-slate-800">{letter_date}</p>
             <span className="text-[10px] uppercase font-bold text-slate-500 font-cinzel">
@@ -73,7 +69,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             </span>
           </div>
 
-          {/* Addressee & Salutation */}
           <div className="text-xs text-slate-800 mb-3 print:mb-2 space-y-1">
             <p className="font-bold">Dear Mr. &amp; Mrs. {parent?.name || 'Parents / Guardians'}</p>
             <p className="italic font-medium text-slate-700">
@@ -81,7 +76,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             </p>
           </div>
 
-          {/* Formal Body Paragraph */}
           <div className="text-xs text-slate-800 space-y-2 leading-relaxed mb-3.5 print:mb-2.5 print:space-y-1.5 text-justify">
             <p>
               This is a friendly reminder of your account balance here at school. We have decided that we will not be
@@ -96,7 +90,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             <p>Thank you for your kind and immediate attention.</p>
           </div>
 
-          {/* Student Identifier Subhead */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-900 pb-1.5 mb-2 border-b border-slate-200">
             <span>
               Student: <span className="uppercase">{student.full_name}</span> ({student.student_id})
@@ -106,7 +99,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             </span>
           </div>
 
-          {/* Itemized Table of Unpaid Fees */}
           <div className="mb-4 border border-slate-300 rounded-lg overflow-hidden print:mb-3">
             <table className="w-full text-xs">
               <thead className="bg-slate-100 text-slate-700 font-bold text-[10px] uppercase border-b border-slate-300">
@@ -152,7 +144,6 @@ export default function PaymentNoticeLetterModal({ letterData, onClose }) {
             </table>
           </div>
 
-          {/* Signatories */}
           <div className="pt-2 text-xs flex justify-between items-end">
             <div>
               <p className="text-slate-500 mb-4 print:mb-3 text-[11px]">Prepared by:</p>
