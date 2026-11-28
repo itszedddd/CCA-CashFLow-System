@@ -322,6 +322,7 @@ def import_csv(
                 payment_method=method,
                 expected_amount=expected_amt,
                 is_partial=is_partial,
+                use_gemini=False,
             )
 
             income = Income(
