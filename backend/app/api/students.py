@@ -170,6 +170,24 @@ def _lrn_digits(value: str) -> str:
 _SCIENTIFIC_NUMBER = re.compile(r"^\d+(?:\.\d+)?[eE]\+?\d+$")
 
 
+def _normalize_full_name(value) -> str:
+    """
+    Normalize comma-separated names to canonical CCA format: Last, First, Middle.
+    Space-separated legacy names are left untouched because compound surnames
+    (e.g. "Dela Cruz") cannot be inferred safely.
+    """
+    raw = " ".join(str(value or "").split())
+    if not raw or "," not in raw:
+        return raw
+
+    parts = [part.strip() for part in raw.split(",") if part.strip()]
+    last = parts[0] if parts else ""
+    given_words = parts[1].split() if len(parts) > 1 else []
+    first = given_words[0] if given_words else ""
+    middle = " ".join([*given_words[1:], *parts[2:]]).strip()
+    return ", ".join(part for part in (last, first, middle) if part)
+
+
 @router.get("/csv-template")
 def download_student_csv_template():
     """
@@ -186,26 +204,26 @@ def download_student_csv_template():
     # Representative sample rows demonstrating different student payment states:
     # 1. Partially paid student (paid registration, books, and partial tuition)
     writer.writerow([
-        "LRN-109283746501", "Juan Dela Cruz", "Grade 7", "Goodness", "Male",
-        "Pedro Dela Cruz", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "LRN-109283746501", "Dela Cruz, Juan", "Grade 7", "Goodness", "Male",
+        "Dela Cruz, Pedro", "09171234567", "pedro.delacruz@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "5718.00", "5700.00", "6900.00", "0.00", "0.00", ""
     ])
     # 2. Fully paid student (all 5 fee categories settled in full)
     writer.writerow([
-        "LRN-109283746502", "Maria Clara Santos", "Grade 8", "Faithfulness", "Female",
-        "Jose Santos", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "LRN-109283746502", "Santos, Maria, Clara", "Grade 8", "Faithfulness", "Female",
+        "Santos, Jose", "09187654321", "jose.santos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "19060.00", "5700.00", "6900.00", "3000.00", "1500.00", ""
     ])
     # 3. Lump-sum advance payer (auto-allocates across Registration, Books, Tuition, etc.)
     writer.writerow([
-        "LRN-109283746503", "Joshua Ramos", "Kindergarten", "Joy", "Male",
-        "Carlos Ramos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "LRN-109283746503", "Ramos, Joshua", "Kindergarten", "Joy", "Male",
+        "Ramos, Carlos", "09201122334", "carlos.ramos@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "", "", "", "", "", "12600.00"
     ])
     # 4. Enrolled student with zero prior payments (full balance remaining)
     writer.writerow([
-        "LRN-109283746504", "Ana Marie Reyes", "Grade 1", "Faith", "Female",
-        "Elena Reyes", "09192233445", "elena.reyes@email.com", "San Jose del Monte, Bulacan", "2026-2027",
+        "LRN-109283746504", "Reyes, Ana, Marie", "Grade 1", "Faith", "Female",
+        "Reyes, Elena", "09192233445", "elena.reyes@email.com", "San Jose del Monte, Bulacan", "2026-2027",
         "0.00", "0.00", "0.00", "0.00", "0.00", "0.00"
     ])
     csv_bytes = output.getvalue().encode("utf-8")
@@ -246,12 +264,12 @@ async def import_students_csv(
         raw_sid = (row.get("student_id") or row.get("lrn") or row.get("Student ID") or "").strip()
         sid = raw_sid
         sid_digits = _lrn_digits(raw_sid)
-        name = (row.get("full_name") or row.get("name") or row.get("Student Name") or "").strip()
+        name = _normalize_full_name(row.get("full_name") or row.get("name") or row.get("Student Name"))
         grade = (row.get("grade_level") or row.get("grade") or "Grade 7").strip()
         raw_section = (row.get("section") or "Faith").strip()
         section = resolve_section(grade, raw_section)
         gender = (row.get("gender") or "Male").strip()
-        parent_name = (row.get("parent_name") or row.get("parent") or "").strip()
+        parent_name = _normalize_full_name(row.get("parent_name") or row.get("parent"))
         parent_contact_raw = (row.get("parent_contact") or row.get("contact") or "").strip()
         clean_c = re.sub(r"\D", "", parent_contact_raw)
         if clean_c.startswith("63") and len(clean_c) == 12:
@@ -313,10 +331,13 @@ async def import_students_csv(
                 if existing:
                     break
         if not existing and name and grade:
-            existing = db.query(Student).filter(
-                func.lower(func.trim(Student.full_name)) == name.lower().strip(),
+            same_grade = db.query(Student).filter(
                 func.lower(func.trim(Student.grade_level)) == grade.lower().strip()
-            ).first()
+            ).all()
+            existing = next(
+                (st for st in same_grade if _normalize_full_name(st.full_name).lower() == name.lower()),
+                None,
+            )
 
         sid_key = (sid_digits or sid).lower()
         if sid_key and sid_key in seen_sids:
@@ -710,7 +731,7 @@ def create_student(
     auto-generate unique per-LRN parent password, and initialize standard 5 fee schedules.
     """
     clean_sid = (data.student_id or "").strip()
-    clean_name = (data.full_name or "").strip()
+    clean_name = _normalize_full_name(data.full_name)
     clean_grade = (data.grade_level or "").strip()
     clean_contact = re.sub(r"\D", "", data.parent_contact or "")
 
@@ -744,10 +765,13 @@ def create_student(
             detail=f"Student ID / LRN '{clean_sid}' is already registered for {existing_sid.full_name}."
         )
 
-    existing_name = db.query(Student).filter(
-        func.lower(func.trim(Student.full_name)) == clean_name.lower(),
+    same_grade = db.query(Student).filter(
         func.lower(func.trim(Student.grade_level)) == clean_grade.lower()
-    ).first()
+    ).all()
+    existing_name = next(
+        (st for st in same_grade if _normalize_full_name(st.full_name).lower() == clean_name.lower()),
+        None,
+    )
     if existing_name:
         raise HTTPException(
             status_code=400,
@@ -765,7 +789,7 @@ def create_student(
         section=canonical_sec,
         gender=data.gender or "Male",
         birthdate=data.birthdate,
-        parent_name=(data.parent_name or "").strip(),
+        parent_name=_normalize_full_name(data.parent_name),
         parent_contact=clean_contact if clean_contact else (data.parent_contact or "").strip(),
         parent_email=(data.parent_email or "").strip(),
         address=data.address,
@@ -862,14 +886,18 @@ def update_student(student_id: str, data: StudentUpdate, db: Session = Depends(g
             student.student_id = clean_sid
             student.parent_username = clean_sid
 
-    target_name = (data.full_name.strip() if data.full_name else student.full_name).strip()
+    target_name = _normalize_full_name(data.full_name if data.full_name else student.full_name)
     target_grade = (data.grade_level.strip() if data.grade_level else student.grade_level).strip()
-    if target_name.lower() != student.full_name.lower() or target_grade.lower() != student.grade_level.lower():
-        dup_name = db.query(Student).filter(
-            func.lower(func.trim(Student.full_name)) == target_name.lower(),
+    if (target_name.lower() != _normalize_full_name(student.full_name).lower()
+            or target_grade.lower() != student.grade_level.lower()):
+        same_grade = db.query(Student).filter(
             func.lower(func.trim(Student.grade_level)) == target_grade.lower(),
             Student.id != student.id
-        ).first()
+        ).all()
+        dup_name = next(
+            (st for st in same_grade if _normalize_full_name(st.full_name).lower() == target_name.lower()),
+            None,
+        )
         if dup_name:
             raise HTTPException(
                 status_code=400,
@@ -887,6 +915,10 @@ def update_student(student_id: str, data: StudentUpdate, db: Session = Depends(g
             setattr(student, field, clean_c)
         elif field not in ("student_id", "section"):
             setattr(student, field, val)
+
+    # Store names in canonical CCA format: Last, First, Middle
+    student.full_name = _normalize_full_name(student.full_name)
+    student.parent_name = _normalize_full_name(student.parent_name)
 
     # Always synchronize canonical single section per grade level
     student.section = resolve_section(student.grade_level, student.section)

@@ -1,0 +1,5 @@
+student_id,full_name,grade_level,section,gender,parent_name,parent_contact,parent_email,address,school_year,tuition_paid,registration_paid,books_paid,energy_paid,other_paid,total_paid
+LRN-12026050,"Coronel, Kent, Kenji",Grade 7,Goodness,Male,"Mr. Roberto Coronel",09171234501,roberto.coronel@example.com,"San Jose del Monte, Bulacan",2026-2027,5718,5700,6900,0,0,
+LRN-12026051,"Bangsoy, John, Luiz",Grade 8,Faithfulness,Male,"Mr. Luis Bangsoy",09181234502,luis.bangsoy@example.com,"San Jose del Monte, Bulacan",2026-2027,19060,5700,6900,3000,1500,
+LRN-12026052,"Tumalom, John, Loyd",Grade 9,Gentleness,Male,"Mrs. Maria Tumalom",09191234503,maria.tumalom@example.com,"San Jose del Monte, Bulacan",2026-2027,,,,,,12600
+LRN-12026053,"Turreda, Kobe, Bryan",Grade 10,Self-Control,Male,"Mr. Eric Turreda",09201234504,eric.turreda@example.com,"San Jose del Monte, Bulacan",2026-2027,9530,5700,6900,1500,0,

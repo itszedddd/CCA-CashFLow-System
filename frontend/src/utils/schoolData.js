@@ -179,24 +179,20 @@ export function formatStudentFullName(lastName = '', firstName = '', middleName 
   const mn = String(middleName || '').trim();
   if (!ln && !fn) return '';
   if (!ln) return [fn, mn].filter(Boolean).join(' ');
-  const given = [fn, mn].filter(Boolean).join(' ');
-  return given ? `${ln}, ${given}` : ln;
+  // Canonical CCA format: Last, First, Middle
+  return [ln, fn, mn].filter(Boolean).join(', ');
 }
 
 export function splitStudentFullName(fullName = '') {
   const raw = String(fullName || '').trim();
   if (!raw) return { last_name: '', first_name: '', middle_name: '' };
   if (raw.includes(',')) {
-    const [lnPart, restPart = ''] = raw.split(',', 2);
-    const words = restPart.trim().split(/\s+/).filter(Boolean);
-    if (words.length <= 1) {
-      return { last_name: lnPart.trim(), first_name: words[0] || '', middle_name: '' };
-    }
-    return {
-      last_name: lnPart.trim(),
-      first_name: words.slice(0, -1).join(' '),
-      middle_name: words[words.length - 1],
-    };
+    const parts = raw.split(',').map((part) => part.trim()).filter(Boolean);
+    const last_name = parts[0] || '';
+    const givenWords = (parts[1] || '').split(/\s+/).filter(Boolean);
+    const first_name = givenWords[0] || '';
+    const middle_name = [...givenWords.slice(1), ...parts.slice(2)].join(' ').trim();
+    return { last_name, first_name, middle_name };
   }
   const words = raw.split(/\s+/).filter(Boolean);
   if (words.length === 1) return { last_name: words[0], first_name: '', middle_name: '' };

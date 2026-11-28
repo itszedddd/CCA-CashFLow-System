@@ -15,27 +15,27 @@ from .core.timezone import get_grade_fee_benchmarks
 
 STUDENT_DATA = [
     # Kindergarten
-    {"name": "Liam Noah Ramos", "grade": "Kindergarten", "section": "Joy", "gender": "Male", "parent": "Carlos Ramos", "contact": "09171234501"},
+    {"name": "Ramos, Liam, Noah", "grade": "Kindergarten", "section": "Joy", "gender": "Male", "parent": "Ramos, Carlos", "contact": "09171234501"},
     # Grade 1
-    {"name": "Juan Miguel Santos", "grade": "Grade 1", "section": "Faith", "gender": "Male", "parent": "Antonio Santos", "contact": "09175551122"},
+    {"name": "Santos, Juan, Miguel", "grade": "Grade 1", "section": "Faith", "gender": "Male", "parent": "Santos, Antonio", "contact": "09175551122"},
     # Grade 2
-    {"name": "Ana Patricia Lopez", "grade": "Grade 2", "section": "Grace", "gender": "Female", "parent": "Maricel Lopez", "contact": "09205554455"},
+    {"name": "Lopez, Ana, Patricia", "grade": "Grade 2", "section": "Grace", "gender": "Female", "parent": "Lopez, Maricel", "contact": "09205554455"},
     # Grade 3
-    {"name": "Miguel Angelo Torres", "grade": "Grade 3", "section": "Hope", "gender": "Male", "parent": "Ramon Torres", "contact": "09235557788"},
+    {"name": "Torres, Miguel, Angelo", "grade": "Grade 3", "section": "Hope", "gender": "Male", "parent": "Torres, Ramon", "contact": "09235557788"},
     # Grade 4
-    {"name": "Andres Daniel Ramos", "grade": "Grade 4", "section": "Peace", "gender": "Male", "parent": "Manuel Ramos", "contact": "09255559900"},
+    {"name": "Ramos, Andres, Daniel", "grade": "Grade 4", "section": "Peace", "gender": "Male", "parent": "Ramos, Manuel", "contact": "09255559900"},
     # Grade 5
-    {"name": "Diego Alexander Hernandez", "grade": "Grade 5", "section": "Patience", "gender": "Male", "parent": "Vicente Hernandez", "contact": "09275551122"},
+    {"name": "Hernandez, Diego, Alexander", "grade": "Grade 5", "section": "Patience", "gender": "Male", "parent": "Hernandez, Vicente", "contact": "09275551122"},
     # Grade 6
-    {"name": "Mateo Sebastian Gonzales", "grade": "Grade 6", "section": "Kindness", "gender": "Male", "parent": "Alfonso Gonzales", "contact": "09295553344"},
+    {"name": "Gonzales, Mateo, Sebastian", "grade": "Grade 6", "section": "Kindness", "gender": "Male", "parent": "Gonzales, Alfonso", "contact": "09295553344"},
     # Grade 7
-    {"name": "Sebastian Kyle Villanueva", "grade": "Grade 7", "section": "Goodness", "gender": "Male", "parent": "Danilo Villanueva", "contact": "09315555566"},
+    {"name": "Villanueva, Sebastian, Kyle", "grade": "Grade 7", "section": "Goodness", "gender": "Male", "parent": "Villanueva, Danilo", "contact": "09315555566"},
     # Grade 8
-    {"name": "Nicolas Jose Dela Cruz", "grade": "Grade 8", "section": "Faithfulness", "gender": "Male", "parent": "Gregorio Dela Cruz", "contact": "09335557788"},
+    {"name": "Dela Cruz, Nicolas, Jose", "grade": "Grade 8", "section": "Faithfulness", "gender": "Male", "parent": "Dela Cruz, Gregorio", "contact": "09335557788"},
     # Grade 9
-    {"name": "Rafael Dominic Manalo", "grade": "Grade 9", "section": "Gentleness", "gender": "Male", "parent": "Bernardo Manalo", "contact": "09355559900"},
+    {"name": "Manalo, Rafael, Dominic", "grade": "Grade 9", "section": "Gentleness", "gender": "Male", "parent": "Manalo, Bernardo", "contact": "09355559900"},
     # Grade 10
-    {"name": "Jose Lorenzo Fernandez", "grade": "Grade 10", "section": "Self-Control", "gender": "Male", "parent": "Felipe Fernandez", "contact": "09375551122"},
+    {"name": "Fernandez, Jose, Lorenzo", "grade": "Grade 10", "section": "Self-Control", "gender": "Male", "parent": "Fernandez, Felipe", "contact": "09375551122"},
 ]
 
 DEFAULT_FEE_SCHEDULE = [
